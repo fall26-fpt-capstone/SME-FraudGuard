@@ -1,0 +1,10 @@
+# The datasource is provided by Testcontainers (@ServiceConnection) in integration tests.
+fraudguard:
+  ingestion:
+    api-keys:
+      test-key-tenant-a: tenant-a
+    webhook-secret: test-webhook-secret
+
+logging:
+  level:
+    com.fraudguard: DEBUG

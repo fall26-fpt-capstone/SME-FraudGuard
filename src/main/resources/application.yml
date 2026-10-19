@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: fraudguard-service
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # schema is owned by Flyway, Hibernate only verifies it
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+fraudguard:
+  ai:
+    mode: stub             # stub | http (http client is owned by the AI/lab member)
+  ingestion:
+    api-keys: {}           # apiKey -> tenantId, filled per profile
+    webhook-secret: ""     # HMAC-SHA256 secret, filled per profile
+
+logging:
+  level:
+    com.fraudguard: INFO
