@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useDialogFocus } from './useDialogFocus';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import {
   Sliders,
   Copy,
@@ -16,9 +16,9 @@ import type {
   RuleConditionNode,
   RuleTemplate,
   TransactionRisk,
-} from "./types";
+} from "@/types/fraudguard";
 import { fraudGuardTransactions } from "@/data/fraudguard-transactions";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 interface RuleDetailDrawerProps {

@@ -3,15 +3,15 @@
 import { Sun, Moon, Globe, Menu, X } from "lucide-react";
 import { useState } from 'react';
 import type { Enterprise } from '@/data/fraudguard-enterprises';
-import { getSectionsForRole } from './Sidebar';
-import { useDialogFocus } from './useDialogFocus';
-import type { SecondaryView, UserProfile } from "./types";
-import { NotificationCenter } from './NotificationCenter';
-import type { TransactionRisk } from './types';
-import { RoleSwitcher } from "./RoleSwitcher";
-import { UserProfileMenu } from "./UserProfileMenu";
-import { useLanguage } from "./i18n/LanguageContext";
-import styles from "./SecurityDashboard.module.css";
+import { getSectionsForRole } from '@/layouts/Sidebar';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
+import type { SecondaryView, UserProfile } from "@/types/fraudguard";
+import { NotificationCenter } from '@/components/fraudguard-dashboard/NotificationCenter';
+import type { TransactionRisk } from '@/types/fraudguard';
+import { RoleSwitcher } from "@/components/fraudguard-dashboard/RoleSwitcher";
+import { UserProfileMenu } from "@/components/fraudguard-dashboard/UserProfileMenu";
+import { useLanguage } from "@/context/LanguageContext";
+import styles from "@/components/fraudguard-dashboard/SecurityDashboard.module.css";
 
 interface ProductHeaderProps {
   notificationTransactions?: TransactionRisk[];

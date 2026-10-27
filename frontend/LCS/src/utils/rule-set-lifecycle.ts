@@ -1,6 +1,6 @@
-import type { RuleTemplate, RuleSetEvaluation } from '../components/fraudguard-dashboard/types';
-import { canDeploy, type Enterprise } from '../data/fraudguard-enterprises';
-import type { UserProfile } from '../components/fraudguard-dashboard/types';
+import type { RuleTemplate, RuleSetEvaluation } from '@/types/fraudguard';
+import { canDeploy, type Enterprise } from '@/data/fraudguard-enterprises';
+import type { UserProfile } from '@/types/fraudguard';
 import { candidateRule } from './rule-lifecycle';
 import { evaluateRuleSet, type RuleSetSample } from './rule-set';
 import { normalizeFields, type DataField } from './ingestion-validation';

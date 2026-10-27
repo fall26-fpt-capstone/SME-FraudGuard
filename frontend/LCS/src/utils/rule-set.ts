@@ -1,4 +1,4 @@
-import type { RuleTemplate, ConditionGroupNode, RuleConditionNode, TransactionRisk, RuleSetEvaluation } from '../components/fraudguard-dashboard/types';
+import type { RuleTemplate, ConditionGroupNode, RuleConditionNode, TransactionRisk, RuleSetEvaluation } from '@/types/fraudguard';
 import { evaluateSandboxRule, type SandboxTransaction } from './rule-sandbox';
 export interface RuleSetSample extends SandboxTransaction { id: string; ref: string; expected?: 'Normal' | 'Abnormal' | 'Undetermined' }
 export function requiredRuleFields(node: ConditionGroupNode | RuleConditionNode): string[] {

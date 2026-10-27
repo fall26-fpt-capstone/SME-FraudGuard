@@ -12,19 +12,19 @@ import {
   YAxis,
 } from "recharts";
 import { Download, Eye } from "lucide-react";
-import { downloadCSV } from "@/lib/export-csv";
+import { downloadCSV } from "@/utils/export-csv";
 import type {
   CaseStatus,
   InvestigationFinding,
   RolePermissions,
   TransactionRisk,
   UserProfile,
-} from "./types";
+} from "@/types/fraudguard";
 import { RiskLevelBadge } from "./RiskLevelBadge";
 import { ScoringSourceBadge } from "./ScoringSourceBadge";
-import { useToast } from "./ToastProvider";
-import { useLanguage } from "./i18n/LanguageContext";
-import type { TranslationKey } from "./i18n/translations";
+import { useToast } from "@/context/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/config/translations";
 import styles from "./SecurityDashboard.module.css";
 
 interface ReportsViewProps {

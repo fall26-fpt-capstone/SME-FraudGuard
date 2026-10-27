@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isCaseAssignee } from '@/lib/case-workflow';
-import { useDialogFocus } from './useDialogFocus';
+import { isCaseAssignee } from '@/utils/case-workflow';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import type {
   CaseDecision,
   CaseNote,
@@ -12,14 +12,14 @@ import type {
   RolePermissions,
   TransactionRisk,
   UserRole,
-} from "./types";
+} from "@/types/fraudguard";
 import { RuleEvaluationDetails } from "./RuleEvaluationDetails";
 import { transactionLabel } from "./ReadableConditions";
 import { RiskLevelBadge } from "./RiskLevelBadge";
 import { ScoringSourceBadge } from "./ScoringSourceBadge";
-import { useToast } from "./ToastProvider";
-import { useLanguage } from "./i18n/LanguageContext";
-import type { Language, TranslationKey } from "./i18n/translations";
+import { useToast } from "@/context/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
+import type { Language, TranslationKey } from "@/config/translations";
 import styles from "./SecurityDashboard.module.css";
 import {
   CheckCircle2,

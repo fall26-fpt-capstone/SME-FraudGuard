@@ -13,9 +13,9 @@ import {
   ChevronDown,
   ShieldCheck,
 } from "lucide-react";
-import type { SecondaryView, UserProfile } from "./types";
+import type { SecondaryView, UserProfile } from "@/types/fraudguard";
 import { PermissionMatrixModal } from "./PermissionMatrixModal";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 interface UserProfileMenuProps {

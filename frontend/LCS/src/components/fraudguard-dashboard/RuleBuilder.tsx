@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useDialogFocus } from './useDialogFocus';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import type {
   ConditionGroupNode,
   ConditionOperator,
@@ -10,8 +10,8 @@ import type {
   RuleConditionNode,
   RuleLifecycleStatus,
   RuleTemplate,
-} from "./types";
-import { useLanguage } from "./i18n/LanguageContext";
+} from "@/types/fraudguard";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 /* ── Field definitions with Category mapping & smart defaults ── */

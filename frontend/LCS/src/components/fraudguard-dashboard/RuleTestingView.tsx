@@ -3,20 +3,20 @@
 import { useEffect, useState } from "react";
 import type { Enterprise } from '@/data/fraudguard-enterprises';
 import { RuleSetTestingView } from "./RuleSetTestingView";
-import type { TransactionRisk, RuleTemplate, ProjectItem } from "./types";
-import { evaluateSandboxRule, nextSandboxVersion } from "@/lib/rule-sandbox";
-import { candidateRule, publishRuleDraft } from "@/lib/rule-lifecycle";
+import type { TransactionRisk, RuleTemplate, ProjectItem } from "@/types/fraudguard";
+import { evaluateSandboxRule, nextSandboxVersion } from "@/utils/rule-sandbox";
+import { candidateRule, publishRuleDraft } from "@/utils/rule-lifecycle";
 import { ReadableConditions } from "./ReadableConditions";
 import styles from "./SecurityDashboard.module.css";
 import { Play, Check, Sliders } from "lucide-react";
-import { useToast } from "./ToastProvider";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useToast } from "@/context/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface RuleTestingViewProps {
   onOpenDraft?: (enterpriseId: string) => void;
   rules: RuleTemplate[];
   activeRules?: RuleTemplate[];
-  schemasByEnterprise?: Record<string, import('@/lib/ingestion-validation').DataField[]>;
+  schemasByEnterprise?: Record<string, import('@/utils/ingestion-validation').DataField[]>;
   enterprises?: Enterprise[];
   setContext?: Record<string, { id: string; name: string; version: number }>;
   projects?: ProjectItem[];

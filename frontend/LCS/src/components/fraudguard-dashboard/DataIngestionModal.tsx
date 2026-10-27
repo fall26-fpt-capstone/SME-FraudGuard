@@ -1,9 +1,9 @@
 "use client";
-import { readTransactionFile } from '@/lib/transaction-file';
+import { readTransactionFile } from '@/utils/transaction-file';
 import { useState } from 'react';
-import { useDialogFocus } from './useDialogFocus';
-import type { previewTransactionImport } from '@/lib/transaction-import';
-import { useLanguage } from './i18n/LanguageContext';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
+import type { previewTransactionImport } from '@/utils/transaction-import';
+import { useLanguage } from '@/context/LanguageContext';
 import styles from './SecurityDashboard.module.css';
 type Preview = ReturnType<typeof previewTransactionImport>;
 export interface ImportActions { preview: (text:string,filename:string,projectId:string)=>Preview; save:(text:string,filename:string,projectId:string)=>number }

@@ -12,8 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./SecurityDashboard.module.css";
-import type { TransactionRisk } from "./types";
-import { useLanguage } from "./i18n/LanguageContext";
+import type { TransactionRisk } from "@/types/fraudguard";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface RiskDistributionChartProps {
   transactions: TransactionRisk[];

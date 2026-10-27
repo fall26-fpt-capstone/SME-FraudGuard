@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
-import type { UserProfile, UserRole } from './types';
-import { useLanguage } from './i18n/LanguageContext';
+import type { UserProfile, UserRole } from '@/types/fraudguard';
+import { useLanguage } from '@/context/LanguageContext';
 import styles from './SecurityDashboard.module.css';
 
 export function MembersView({ users, currentUser, onSave }: { users: UserProfile[]; currentUser: UserProfile; onSave: (user: UserProfile) => boolean }) {

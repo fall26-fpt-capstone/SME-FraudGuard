@@ -6,7 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --test tests/*.test.cjs",
+    "check": "npm run lint && npm run typecheck && npm test"
+  },
+  "engines": {
+    "node": ">=22.13.0 <23 || >=24.0.0 <25",
+    "npm": ">=10"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
@@ -17,6 +24,8 @@
     "recharts": "^2.15.0"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "15.5.25",
+    "@typescript-eslint/parser": "8.70.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

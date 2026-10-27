@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AuditAction, AuditLogEntry } from "./types";
-import { useLanguage } from "./i18n/LanguageContext";
-import type { TranslationKey } from "./i18n/translations";
+import type { AuditAction, AuditLogEntry } from "@/types/fraudguard";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/config/translations";
 import styles from "./SecurityDashboard.module.css";
 
 interface AuditTrailViewProps {

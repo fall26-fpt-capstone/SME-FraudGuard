@@ -8,13 +8,13 @@ import type {
   RuleConditionNode,
   RuleTemplate,
   TransactionRisk,
-} from "./types";
-import { candidateRule, saveRuleDraft } from "@/lib/rule-lifecycle";
+} from "@/types/fraudguard";
+import { candidateRule, saveRuleDraft } from "@/utils/rule-lifecycle";
 import { RuleBuilder } from "./RuleBuilder";
 import { ReadableConditions } from "./ReadableConditions";
 import { RuleDetailDrawer } from "./RuleDetailDrawer";
-import { useToast } from "./ToastProvider";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useToast } from "@/context/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 interface RulesViewProps {

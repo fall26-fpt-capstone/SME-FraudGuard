@@ -1,4 +1,4 @@
-import type { RuleTemplate } from "../components/fraudguard-dashboard/types";
+import type { RuleTemplate } from "@/types/fraudguard";
 import { nextSandboxVersion } from "./rule-sandbox";
 export function candidateRule(rule: RuleTemplate): RuleTemplate { return rule.draft ?? rule; }
 function definition(rule: RuleTemplate) { return JSON.stringify([rule.name, rule.description, rule.category, rule.conditionGroup, rule.appliesTo]); }

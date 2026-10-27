@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { isCaseAssignee } from '@/lib/case-workflow';
+import { isCaseAssignee } from '@/utils/case-workflow';
 import type {
   CaseStatus,
   InvestigationFinding,
   RolePermissions,
   TransactionRisk,
   UserRole,
-} from "./types";
+} from "@/types/fraudguard";
 import { RiskLevelBadge } from "./RiskLevelBadge";
-import { useToast } from "./ToastProvider";
+import { useToast } from "@/context/ToastProvider";
 import styles from "./SecurityDashboard.module.css";
 import {
   UserCheck,
@@ -23,8 +23,8 @@ import {
   Send,
 } from "lucide-react";
 
-import { useLanguage } from "./i18n/LanguageContext";
-import type { TranslationKey } from "./i18n/translations";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/config/translations";
 
 interface CasesViewProps {
   transactions: TransactionRisk[];

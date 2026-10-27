@@ -2,7 +2,7 @@ import type {
   FallbackHourlyPoint,
   MicroserviceHealth,
   SmeTenantItem,
-} from "../components/fraudguard-dashboard/types";
+} from "@/types/fraudguard";
 
 export const initialMicroservices: MicroserviceHealth[] = [
   {

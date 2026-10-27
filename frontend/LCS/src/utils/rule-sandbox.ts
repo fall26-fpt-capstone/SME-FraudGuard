@@ -1,4 +1,4 @@
-import type { ConditionGroupNode, RuleConditionNode, RuleTemplate } from "../components/fraudguard-dashboard/types";
+import type { ConditionGroupNode, RuleConditionNode, RuleTemplate } from "@/types/fraudguard";
 
 export interface SandboxTransaction {
   projectId: string;

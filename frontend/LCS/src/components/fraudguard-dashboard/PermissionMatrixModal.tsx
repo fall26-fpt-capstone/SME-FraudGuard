@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useDialogFocus } from './useDialogFocus';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { createPortal } from "react-dom";
 import { X, Check, ShieldAlert } from "lucide-react";
 import { PERMISSION_MATRIX_DATA } from "../../data/fraudguard-roles";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 interface PermissionMatrixModalProps {

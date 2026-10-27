@@ -1,4 +1,4 @@
-import { TransactionRisk } from "@/components/fraudguard-dashboard/types";
+import { TransactionRisk } from "@/types/fraudguard";
 
 export const fraudGuardTransactions: TransactionRisk[] = [
   {

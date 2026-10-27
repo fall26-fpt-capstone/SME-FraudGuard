@@ -1,4 +1,4 @@
-import type { ProjectItem } from "../components/fraudguard-dashboard/types";
+import type { ProjectItem } from "@/types/fraudguard";
 
 export const initialProjects: ProjectItem[] = [
   {

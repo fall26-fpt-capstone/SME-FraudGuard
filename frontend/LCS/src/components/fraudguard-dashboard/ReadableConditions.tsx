@@ -1,4 +1,4 @@
-import type { ConditionGroupNode, RuleConditionNode } from './types';
+import type { ConditionGroupNode, RuleConditionNode } from '@/types/fraudguard';
 import styles from './SecurityDashboard.module.css';
 
 const fields: Record<string, [string, string]> = {

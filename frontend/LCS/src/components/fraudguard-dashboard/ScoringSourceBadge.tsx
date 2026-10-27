@@ -1,6 +1,6 @@
 "use client";
-import { useLanguage } from "./i18n/LanguageContext";
-import type { ScoringSource } from "./types";
+import { useLanguage } from "@/context/LanguageContext";
+import type { ScoringSource } from "@/types/fraudguard";
 import styles from "./SecurityDashboard.module.css";
 
 const sourceClass: Record<ScoringSource, string> = {

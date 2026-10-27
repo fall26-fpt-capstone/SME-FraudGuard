@@ -1,6 +1,6 @@
 "use client";
 
-import { canAccessView } from "../../data/fraudguard-roles";
+import { canAccessView } from "@/data/fraudguard-roles";
 import { useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -20,11 +20,11 @@ import {
   ChevronRight,
   TestTube2,
 } from "lucide-react";
-import styles from "./SecurityDashboard.module.css";
-import type { SecondaryView, UserProfile } from "./types";
+import styles from "@/components/fraudguard-dashboard/SecurityDashboard.module.css";
+import type { SecondaryView, UserProfile } from "@/types/fraudguard";
 
-import { useLanguage } from "./i18n/LanguageContext";
-import type { TranslationKey } from "./i18n/translations";
+import { useLanguage } from "@/context/LanguageContext";
+import type { TranslationKey } from "@/config/translations";
 
 interface NavItem {
   label: string;

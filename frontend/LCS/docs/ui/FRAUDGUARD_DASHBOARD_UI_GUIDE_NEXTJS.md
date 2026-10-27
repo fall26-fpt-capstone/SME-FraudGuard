@@ -1,6 +1,6 @@
 # Hướng dẫn xây dựng FraudGuard Dashboard UI với React + Next.js
 
-> **Cập nhật 16/10/2026:** Áp dụng mục “Quy chuẩn hiện hành 1.1” trong `FRAUDGUARD_UI_SYSTEM_SPEC.md` trước mọi ví dụ bên dưới. Các ví dụ 1.0 dùng score/threshold và ma trận quyền cũ chỉ là tài liệu lịch sử, không copy nguyên vào hệ thống hiện hành.
+> HISTORICAL REFERENCE — Áp dụng [UI_RULES.md](UI_RULES.md) và `../../AGENTS.md` cho công việc hiện hành. Các ví dụ bên dưới có đường dẫn, score/threshold và ma trận quyền cũ; không copy nguyên vào hệ thống hiện hành.
 
 ## Hướng triển khai hiện tại
 

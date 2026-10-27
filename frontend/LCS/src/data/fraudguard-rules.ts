@@ -1,4 +1,4 @@
-import type { RuleTemplate } from "@/components/fraudguard-dashboard/types";
+import type { RuleTemplate } from "@/types/fraudguard";
 
 export const fraudGuardRules: RuleTemplate[] = [
   {

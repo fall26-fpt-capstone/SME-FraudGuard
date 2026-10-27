@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, Zap, Info, UserCheck } from "lucide-react";
-import type { SecondaryView, UserProfile } from "./types";
+import type { SecondaryView, UserProfile } from "@/types/fraudguard";
 import styles from "./SecurityDashboard.module.css";
 
 interface RoleNoticeBannerProps {

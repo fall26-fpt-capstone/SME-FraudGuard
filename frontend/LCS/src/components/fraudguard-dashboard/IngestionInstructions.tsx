@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
-import type { DataField } from '@/lib/ingestion-validation';
-import { useLanguage } from './i18n/LanguageContext';
+import type { DataField } from '@/utils/ingestion-validation';
+import { useLanguage } from '@/context/LanguageContext';
 import styles from './SecurityDashboard.module.css';
 
 export function IngestionInstructions({ projectId, schema = [] }: { projectId: string; schema?: DataField[] }) {

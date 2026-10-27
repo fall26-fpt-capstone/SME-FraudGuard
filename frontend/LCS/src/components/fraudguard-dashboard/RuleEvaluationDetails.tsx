@@ -1,6 +1,6 @@
 "use client";
-import type { RuleSetEvaluation } from './types';
-import { useLanguage } from './i18n/LanguageContext';
+import type { RuleSetEvaluation } from '@/types/fraudguard';
+import { useLanguage } from '@/context/LanguageContext';
 import { RiskLevelBadge } from './RiskLevelBadge';
 import styles from './SecurityDashboard.module.css';
 import { ReadableConditions, fieldLabel } from './ReadableConditions';

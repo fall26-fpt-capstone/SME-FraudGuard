@@ -1,4 +1,4 @@
-import type { AuditLogEntry } from "../components/fraudguard-dashboard/types";
+import type { AuditLogEntry } from "@/types/fraudguard";
 
 export const initialAuditLogs: AuditLogEntry[] = [
   {

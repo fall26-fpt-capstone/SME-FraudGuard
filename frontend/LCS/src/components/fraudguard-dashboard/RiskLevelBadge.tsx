@@ -1,7 +1,7 @@
 "use client";
 
-import type { RiskLevel } from "./types";
-import { useLanguage } from "./i18n/LanguageContext";
+import type { RiskLevel } from "@/types/fraudguard";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 interface RiskLevelBadgeProps {

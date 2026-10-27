@@ -7,8 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { ToastMessage, ToastTone } from "./types";
-import styles from "./SecurityDashboard.module.css";
+import type { ToastMessage, ToastTone } from "@/types/fraudguard";
+import styles from "@/components/fraudguard-dashboard/SecurityDashboard.module.css";
 
 interface ToastContextValue {
   toast: (tone: ToastTone, message: string) => void;

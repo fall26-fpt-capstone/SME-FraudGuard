@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { Building2, ArrowRight } from 'lucide-react';
-import type { UserProfile } from './types';
+import type { UserProfile } from '@/types/fraudguard';
 import { canDeploy, type Enterprise, type DeploymentSpecification } from '@/data/fraudguard-enterprises';
-import type { ManagedRuleSet } from '@/lib/rule-set-lifecycle';
-import { parseRuleSetSamples } from '@/lib/rule-set';
-import { normalizeFields, validateDataSchema, type DataField } from '@/lib/ingestion-validation';
-import { useLanguage } from './i18n/LanguageContext';
+import type { ManagedRuleSet } from '@/utils/rule-set-lifecycle';
+import { parseRuleSetSamples } from '@/utils/rule-set';
+import { normalizeFields, validateDataSchema, type DataField } from '@/utils/ingestion-validation';
+import { useLanguage } from '@/context/LanguageContext';
 import styles from './SecurityDashboard.module.css';
 interface Props { enterprises: Enterprise[]; users: UserProfile[]; currentUser: UserProfile; sets: ManagedRuleSet[]; onCreate: (name: string, staffId: string, adminName: string, adminEmail: string) => boolean; onSave: (id: string, specification: DeploymentSpecification) => boolean; onOpenRules: (id: string) => void }
 export function OnboardingView(props: Props) {

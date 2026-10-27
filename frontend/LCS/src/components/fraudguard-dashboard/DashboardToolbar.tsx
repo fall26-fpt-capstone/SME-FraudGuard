@@ -2,10 +2,10 @@
 
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { Download, FileSpreadsheet } from "lucide-react";
-import type { FraudGuardFilters, TransactionRisk } from "./types";
-import { exportTransactionsCSV, downloadCSVTemplate } from "@/lib/export-csv";
+import type { FraudGuardFilters, TransactionRisk } from "@/types/fraudguard";
+import { exportTransactionsCSV, downloadCSVTemplate } from "@/utils/export-csv";
 import { DataIngestionModal, type ImportActions } from "./DataIngestionModal";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { transactionLabel } from "./ReadableConditions";
 import styles from "./SecurityDashboard.module.css";
 

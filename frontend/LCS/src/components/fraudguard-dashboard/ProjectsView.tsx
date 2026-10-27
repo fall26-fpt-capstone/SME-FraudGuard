@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useDialogFocus } from './useDialogFocus';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import {
   Copy,
   Eye,
@@ -11,16 +11,16 @@ import {
   RefreshCw,
    Check,
 } from "lucide-react";
-import type { ProjectItem, RolePermissions, TransactionRisk } from "./types";
-import { useToast } from "./ToastProvider";
-import { useLanguage } from "./i18n/LanguageContext";
+import type { ProjectItem, RolePermissions, TransactionRisk } from "@/types/fraudguard";
+import { useToast } from "@/context/ToastProvider";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 import { IngestionInstructions } from './IngestionInstructions';
 
 import { enterprisePlan, type Enterprise } from '@/data/fraudguard-enterprises';
 
 interface ProjectsViewProps {
-  dataSchema?: import('@/lib/ingestion-validation').DataField[];
+  dataSchema?: import('@/utils/ingestion-validation').DataField[];
   enterprise?: Enterprise;
   transactions: TransactionRisk[];
   initialProjects: ProjectItem[];

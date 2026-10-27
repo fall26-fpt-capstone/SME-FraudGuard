@@ -1,5 +1,5 @@
 import { isSandboxTransaction } from './transaction-origin';
-import type { TransactionRisk } from '../components/fraudguard-dashboard/types';
+import type { TransactionRisk } from '@/types/fraudguard';
 export function platformSummary(transactions: TransactionRisk[]) {
  transactions = transactions.filter(tx => !isSandboxTransaction(tx));
  const ai = transactions.filter(t=>t.scoringSource==='AI');

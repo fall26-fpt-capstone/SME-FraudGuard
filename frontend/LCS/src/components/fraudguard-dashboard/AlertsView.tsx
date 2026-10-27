@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { CaseStatus, TransactionRisk } from "./types";
+import type { CaseStatus, TransactionRisk } from "@/types/fraudguard";
 import { RiskLevelBadge } from "./RiskLevelBadge";
 import { ScoringSourceBadge } from "./ScoringSourceBadge";
 import { transactionLabel } from "./ReadableConditions";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 
 interface AlertsViewProps {

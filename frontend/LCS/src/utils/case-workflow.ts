@@ -1,4 +1,4 @@
-import type { TransactionRisk, UserProfile } from "../components/fraudguard-dashboard/types";
+import type { TransactionRisk, UserProfile } from "@/types/fraudguard";
 export function isCaseAssignee(transaction: TransactionRisk, user: { id?: string; name: string }): boolean {
   return transaction.assignedInvestigatorId
     ? transaction.assignedInvestigatorId === user.id

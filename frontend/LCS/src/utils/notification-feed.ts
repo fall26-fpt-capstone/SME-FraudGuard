@@ -1,5 +1,5 @@
 import { isSandboxTransaction } from './transaction-origin';
-import type { TransactionRisk } from '../components/fraudguard-dashboard/types';
+import type { TransactionRisk } from '@/types/fraudguard';
 export function notificationId(tx: TransactionRisk) {
  return JSON.stringify([tx.id, tx.caseStatus, tx.assignedInvestigatorId ?? tx.assignedInvestigator, tx.assignedAt, tx.caseDecision?.decidedAt, tx.investigationReport?.submittedAt]);
 }

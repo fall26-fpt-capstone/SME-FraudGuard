@@ -1,5 +1,5 @@
 import { isSandboxTransaction } from './transaction-origin';
-import type { RuleTemplate, TransactionRisk } from '../components/fraudguard-dashboard/types';
+import type { RuleTemplate, TransactionRisk } from '@/types/fraudguard';
 import { parseIngestionRows, normalizeFields, type DataField } from './ingestion-validation';
 import { parseRuleSetSamples, evaluateRuleSet, detectionTransaction } from './rule-set';
 export function previewTransactionImport(text: string, filename: string, projectId: string, projectName: string, rules: RuleTemplate[], existing: TransactionRisk[], schema: DataField[] = [], plan: 'Free' | 'Subscription' = 'Free') {

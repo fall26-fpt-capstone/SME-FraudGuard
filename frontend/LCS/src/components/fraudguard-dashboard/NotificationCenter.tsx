@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bell, X } from 'lucide-react';
-import type { TransactionRisk } from './types';
-import { notificationFeed, notificationId, notificationLabel, notificationTime } from '@/lib/notification-feed';
-import { useLanguage } from './i18n/LanguageContext';
-import { useDialogFocus } from './useDialogFocus';
+import type { TransactionRisk } from '@/types/fraudguard';
+import { notificationFeed, notificationId, notificationLabel, notificationTime } from '@/utils/notification-feed';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 import styles from './SecurityDashboard.module.css';
 
 export function NotificationCenter({ userId, transactions, onOpen, theme = 'dark' }: {

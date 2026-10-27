@@ -4,7 +4,7 @@ import type {
   UserProfile,
   UserRole,
   TransactionRisk,
-} from "../components/fraudguard-dashboard/types";
+} from "@/types/fraudguard";
 
 export const DEMO_USERS: UserProfile[] = [
   {

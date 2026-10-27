@@ -12,12 +12,12 @@ function load(relative, imports = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   const exports = {};
-  vm.runInNewContext(output, { exports, structuredClone, require: (name) => name in imports ? imports[name] : name === '@/lib/case-workflow' ? load('src/lib/case-workflow.ts') : ['../lib/transaction-origin','./transaction-origin'].includes(name) ? load('src/lib/transaction-origin.ts') : require(name) }, { filename });
+  vm.runInNewContext(output, { exports, structuredClone, require: (name) => name in imports ? imports[name] : /^@\/(utils|data)\//.test(name) ? load(`src/${name.slice(2)}.ts`) : name === './transaction-origin' ? load('src/utils/transaction-origin.ts') : require(name) }, { filename });
   return exports;
 }
 
 test('CSV preserves Vietnamese and special characters while neutralizing spreadsheet formulas', () => {
-  const { serializeCSV } = load('src/lib/export-csv.ts');
+  const { serializeCSV } = load('src/utils/export-csv.ts');
   const csv = serializeCSV([['Tên dự án', 'Số tiền'], ['An "Phúc", #1\nDòng 2', 15000000], ['=1+1', -5]]);
   assert.equal(csv.charCodeAt(0), 0xFEFF);
   assert.ok(csv.includes('"An ""Phúc"", #1\nDòng 2","15000000"'));
@@ -37,7 +37,7 @@ test('member role changes wait until assigned cases are reassigned or closed', (
 });
 
 test('case lifecycle keeps assignment by ID through renamed users and enterprise decisions', () => {
-  const { canUpdateCase, isCaseAssignee } = load('src/lib/case-workflow.ts');
+  const { canUpdateCase, isCaseAssignee } = load('src/utils/case-workflow.ts');
   const operator = { id: 'op', name: 'Operator', role: 'Operator' };
   const investigator = { id: 'inv', name: 'New name', role: 'Investigator' };
   const alert = { id: 'tx', projectId: 'p', riskLevel: 'Abnormal', scoringSource: 'AI' };
@@ -59,13 +59,13 @@ test('case lifecycle keeps assignment by ID through renamed users and enterprise
 test('investigator report uses account ID first and supports legacy name assignments', () => {
   const React = require('react');
   const { renderToStaticMarkup } = require('react-dom/server');
-  const translations = load('src/components/fraudguard-dashboard/i18n/translations.ts').translations;
+  const translations = load('src/config/translations.ts').translations;
   const component = load('src/components/fraudguard-dashboard/ReportsView.tsx', {
-    '@/lib/export-csv': {},
+    '@/utils/export-csv': {},
     './RiskLevelBadge': { RiskLevelBadge: () => null },
     './ScoringSourceBadge': { ScoringSourceBadge: () => null },
-    './ToastProvider': { useToast: () => ({ toast() {} }) },
-    './i18n/LanguageContext': { useLanguage: () => ({ language: 'vi', t: translations.vi }) },
+    '@/context/ToastProvider': { useToast: () => ({ toast() {} }) },
+    '@/context/LanguageContext': { useLanguage: () => ({ language: 'vi', t: translations.vi }) },
     './SecurityDashboard.module.css': { default: {} },
   }).ReportsView;
   const base = { scoringSource: 'AI', caseId: 'CASE', caseStatus: 'Assigned', riskLevel: 'Abnormal', processedAt: new Date().toISOString(), projectId: 'p1', projectName: 'Wallet' };
@@ -81,9 +81,9 @@ test('investigator report uses account ID first and supports legacy name assignm
   assert.match(html, /LEGACY-OWNED/);
   assert.doesNotMatch(html, /OTHER-OWNER/);
 });
-const engine = load('src/lib/rule-sandbox.ts');
+const engine = load('src/utils/rule-sandbox.ts');
 const { evaluateSandboxRule: evaluate, nextSandboxVersion } = engine;
-const lifecycle = load('src/lib/rule-lifecycle.ts', { './rule-sandbox': engine });
+const lifecycle = load('src/utils/rule-lifecycle.ts', { './rule-sandbox': engine });
 const rules = load('src/data/fraudguard-rules.ts').fraudGuardRules;
 const condition = (field, operator, value) => ({ type: 'condition', id: field, field, operator, value });
 const group = (logic, children) => ({ type: 'group', id: 'group', logic, children });
@@ -152,13 +152,13 @@ function harness(initialRules = rules, withPublisher = true, extraProps = {}) {
       if (!effectDeps[slot] || deps.some((d, i) => !Object.is(d, effectDeps[slot][i]))) { effectDeps[slot] = deps; effects.push(effect); }
     },
   };
-  const translations = load('src/components/fraudguard-dashboard/i18n/translations.ts').translations;
+  const translations = load('src/config/translations.ts').translations;
   const component = load('src/components/fraudguard-dashboard/RuleTestingView.tsx', {
     './ReadableConditions': load('src/components/fraudguard-dashboard/ReadableConditions.tsx', { './SecurityDashboard.module.css': { default: {} } }),
-    react, './RuleSetTestingView': { RuleSetTestingView: () => null }, '@/lib/rule-sandbox': engine, '@/lib/rule-lifecycle': lifecycle, './SecurityDashboard.module.css': { default: {} },
+    react, './RuleSetTestingView': { RuleSetTestingView: () => null }, '@/utils/rule-sandbox': engine, '@/utils/rule-lifecycle': lifecycle, './SecurityDashboard.module.css': { default: {} },
     'lucide-react': { Play: 'icon', Check: 'icon', Sliders: 'icon' },
-    './ToastProvider': { useToast: () => ({ toast: (...args) => toasts.push(args) }) },
-    './i18n/LanguageContext': { useLanguage: () => ({ language: 'en', t: translations.en }) },
+    '@/context/ToastProvider': { useToast: () => ({ toast: (...args) => toasts.push(args) }) },
+    '@/context/LanguageContext': { useLanguage: () => ({ language: 'en', t: translations.en }) },
   }).RuleTestingView;
   props = { rules: initialRules, onPublishRule: withPublisher ? (r) => { published.push(r); props.rules = props.rules.map((old) => old.id === r.id ? r : old); } : undefined };
   function render() {
@@ -256,7 +256,7 @@ test('demo rule and fallback transactions agree with triggered rules and alerts'
 
 test('CSV exports classification, source and explanation without a score', async () => {
   let blob;
-  const code = ts.transpileModule(fs.readFileSync(path.join(root, 'src/lib/export-csv.ts'), 'utf8'), {
+  const code = ts.transpileModule(fs.readFileSync(path.join(root, 'src/utils/export-csv.ts'), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const exports = {};
@@ -302,7 +302,7 @@ test('unchanged published rule cannot be republished after a passing sandbox run
   assert.equal(ui.action('handlePublishVersion').props.disabled, true);
 });
 
-const ingestion = load('src/lib/ingestion-validation.ts');
+const ingestion = load('src/utils/ingestion-validation.ts');
 test('CSV and JSON validation reads content and rejects incomplete transactions', () => {
   const row = { timestamp: '2026-10-12T01:00:00Z', amount: 100, currency: 'VND', transaction_type: 'payment', user_hash: 'user,one' };
   assert.equal(ingestion.validateIngestion(JSON.stringify([row]), 'sample.json'), 1);
@@ -328,7 +328,7 @@ test('custom dataset supports new rules, rejects out-of-scope samples, and edits
   assert.ok(ui.nodes().some(n => n.props.role === 'alert' && JSON.stringify(n.props.children).includes('scope')));
 });
 
-const cases = load('src/lib/case-workflow.ts');
+const cases = load('src/utils/case-workflow.ts');
 test('case mutations require the assigned investigator and nonempty authored findings', () => {
   const previous = { id: 'tx', scoringSource: 'AI', caseId: 'case', caseStatus: 'Investigating', assignedInvestigator: 'Owner', riskLevel: 'Abnormal' };
   const owner = { role: 'Investigator', name: 'Owner' };
@@ -348,7 +348,7 @@ test('final case decisions need a reason; closed cases and normal transactions c
   assert.equal(cases.canUpdateCase({ id: 'tx', riskLevel: 'Normal' }, previous, actor), false);
 });
 
-const ruleSet = load('src/lib/rule-set.ts', { './rule-sandbox': engine });
+const ruleSet = load('src/utils/rule-set.ts', { './rule-sandbox': engine });
 const active = (id, node, extra = {}) => ({ ...rules[0], id, name: id, status: 'Published', enabled: true, conditionGroup: group('AND', [node]), appliesTo: { projects: ['p1'], transactionTypes: ['payment'] }, ...extra });
 const inputTx = { projectId: 'p1', transactionType: 'payment', fields: { amount: 12 } };
 test('rule set checks all 10 applicable rules and one match is abnormal', () => {
@@ -445,7 +445,7 @@ test('SME admins cannot mutate cases and investigators cannot change transaction
  for (const changed of [{ ...updated, projectId: 'p2' }, { ...updated, assignedInvestigatorId: 'other' }]) assert.equal(cases.canUpdateCase(previous, changed, { id: 'owner', name: 'Owner', role: 'Investigator' }), false);
  assert.equal(cases.canUpdateCase(previous, { ...previous, caseStatus: 'Resolved', caseDecision: { directive: 'Done' } }, { role: 'SME Admin' }), false);
 });
-const managed = load('src/lib/rule-set-lifecycle.ts', { './ingestion-validation': load('src/lib/ingestion-validation.ts'), '../data/fraudguard-enterprises': enterpriseData, './rule-lifecycle': lifecycle, './rule-set': ruleSet });
+const managed = load('src/utils/rule-set-lifecycle.ts', { './ingestion-validation': load('src/utils/ingestion-validation.ts'), '../data/fraudguard-enterprises': enterpriseData, './rule-lifecycle': lifecycle, './rule-set': ruleSet });
 function draftSet(id = 'set1') { return { id, name: id, enterpriseId: 'e1', projectIds: ['p1'], versions: [], draft: { rules: managed.snapshotRules([active('r1', condition('amount', '>', 10))], 'p1') } }; }
 const labeledSample = { ...inputTx, id: 's1', ref: 'TX-1', expected: 'Abnormal' };
 test('set publication requires complete current tests and reviewer evidence', () => {
@@ -516,8 +516,8 @@ test('rule set UI creates, tests, reviews, publishes and activates a version', (
  const Tester = () => null;
  const component = load('src/components/fraudguard-dashboard/RuleSetsView.tsx', {
   './ReadableConditions': load('src/components/fraudguard-dashboard/ReadableConditions.tsx', { './SecurityDashboard.module.css': { default: {} } }),
-  react, './EnterpriseRulesView': { EnterpriseRulesView: () => null }, '@/data/fraudguard-enterprises': enterpriseData, '@/data/fraudguard-roles': roleData, '@/lib/rule-set': ruleSet, '@/lib/rule-set-lifecycle': managed, './RuleSetTestingView': { RuleSetTestingView: Tester }, '@/lib/rule-lifecycle': lifecycle,
-  './i18n/LanguageContext': { useLanguage: () => ({ language: 'vi' }) }, './SecurityDashboard.module.css': { default: {} }
+  react, './EnterpriseRulesView': { EnterpriseRulesView: () => null }, '@/data/fraudguard-enterprises': enterpriseData, '@/data/fraudguard-roles': roleData, '@/utils/rule-set': ruleSet, '@/utils/rule-set-lifecycle': managed, './RuleSetTestingView': { RuleSetTestingView: Tester }, '@/utils/rule-lifecycle': lifecycle,
+  '@/context/LanguageContext': { useLanguage: () => ({ language: 'vi' }) }, './SecurityDashboard.module.css': { default: {} }
  }).RuleSetsView;
  const s = draftSet();
  const props = { sets: [s], rules: s.draft.rules, projects: [{ id: 'p1', name: 'Wallet' }], enterprises: [{ id: 'e1', name: 'Enterprise', projectIds: ['p1'], deploymentStaffId: 'staff' }], currentUser: { id: 'staff', role: 'Implementation Staff' }, onAssign() {}, reviewer: 'Admin', onOpenLibrary() {}, onChange(next) { props.sets = next; } };
@@ -599,7 +599,7 @@ test('legacy duplicate active rules are reported as errors instead of inflated s
 });
 const businessView = load('src/components/fraudguard-dashboard/EnterpriseRulesView.tsx', {
  './ReadableConditions': readable,
- './i18n/LanguageContext': { useLanguage: () => ({ language: 'vi' }) },
+ '@/context/LanguageContext': { useLanguage: () => ({ language: 'vi' }) },
  './SecurityDashboard.module.css': { default: {} }
 }).EnterpriseRulesView;
 const business = { id: 'e1', name: 'Enterprise', projectIds: ['p1'], deploymentStaffId: 'staff' };
@@ -671,11 +671,11 @@ test('initial and switched demo accounts land on their role homepage', () => {
 
 function caseDrawerHarness(source, role = 'Operator') {
  const states=[]; let cursor=0, tree;
- const translations=load('src/components/fraudguard-dashboard/i18n/translations.ts').translations;
+ const translations=load('src/config/translations.ts').translations;
  const props={open:true,currentRole:role,currentUserName:'Owner',onClose:()=>{},transaction:{id:'tx',transactionReference:'TX',scoringSource:source,riskLevel:'Abnormal',triggeredRules:[],processedAt:new Date().toISOString(),caseId:'case',caseStatus:'Open'},onUpdateTransaction(next){assert.equal(cases.canUpdateCase(props.transaction,next,{role,name:'Owner'}),true);props.transaction=next;}};
  const component=load('src/components/fraudguard-dashboard/AlertCaseDrawer.tsx',{
  react:{useState(initial){const slot=cursor++;if(!(slot in states))states[slot]=initial;return [states[slot],v=>states[slot]=v];},useEffect(){}},
- './ReadableConditions':readable, './useDialogFocus':{useDialogFocus:()=>null}, './RuleEvaluationDetails':{RuleEvaluationDetails:()=>null}, './RiskLevelBadge':{RiskLevelBadge:()=>null}, './ScoringSourceBadge':{ScoringSourceBadge:()=>null}, './ToastProvider':{useToast:()=>({toast(){}})}, './i18n/LanguageContext':{useLanguage:()=>({language:'en',t:translations.en})}, './SecurityDashboard.module.css':{default:{}}
+ './ReadableConditions':readable, '@/hooks/useDialogFocus':{useDialogFocus:()=>null}, './RuleEvaluationDetails':{RuleEvaluationDetails:()=>null}, './RiskLevelBadge':{RiskLevelBadge:()=>null}, './ScoringSourceBadge':{ScoringSourceBadge:()=>null}, '@/context/ToastProvider':{useToast:()=>({toast(){}})}, '@/context/LanguageContext':{useLanguage:()=>({language:'en',t:translations.en})}, './SecurityDashboard.module.css':{default:{}}
  }).AlertCaseDrawer;
  function render(){cursor=0;tree=component(props);}
  function nodes(){const result=[];function walk(n){if(Array.isArray(n))n.forEach(walk);else if(n?.props){result.push(n);walk(n.props.children);}}walk(tree);return result;}
@@ -729,7 +729,7 @@ test('unconfirmed onboarding permits drafts but blocks publishing, activation an
  assert.equal(managed.canChangeEnterpriseSets([], [draft], {id:'other',role:'Implementation Staff'}, [owner]),false);
 });
 
-const importPipeline = load('src/lib/transaction-import.ts', { './rule-set': ruleSet, './ingestion-validation': load('src/lib/ingestion-validation.ts') });
+const importPipeline = load('src/utils/transaction-import.ts', { './rule-set': ruleSet, './ingestion-validation': load('src/utils/ingestion-validation.ts') });
 
 test('configured schema validates required fields and normalizes CSV without losing text identifiers', () => {
  const schema = [{ name: 'amount', type: 'number', required: true }, { name: 'user_hash', type: 'string', required: true }, { name: 'flag', type: 'boolean', required: false }];
@@ -754,7 +754,7 @@ test('publication freezes the schema and rejects samples that do not satisfy it'
 
 test('Excel import preserves text IDs and rejects formulas and ambiguous worksheets', async () => {
  const { Workbook } = require('exceljs');
- const reader = load('src/lib/transaction-file.ts');
+ const reader = load('src/utils/transaction-file.ts');
  const workbook = new Workbook(); const sheet = workbook.addWorksheet('Transactions');
  sheet.addRow(['transaction_reference','transaction_type','amount','user_hash']);
  sheet.addRow(['00001','payment',20,'00123']);
@@ -788,9 +788,9 @@ test('ingestion blocks cross-scope data, missing rule fields, duplicate referenc
 
 test('import dialog requires preview and saves only after explicit confirmation',async()=>{
  const states=[];let cursor=0,tree,saves=0;
- const component=load('src/components/fraudguard-dashboard/DataIngestionModal.tsx',{ '@/lib/transaction-file': load('src/lib/transaction-file.ts'),
+ const component=load('src/components/fraudguard-dashboard/DataIngestionModal.tsx',{ '@/utils/transaction-file': load('src/utils/transaction-file.ts'),
  react:{useState(initial){const slot=cursor++;if(!(slot in states))states[slot]=initial;return [states[slot],v=>states[slot]=v];}},
- './useDialogFocus':{useDialogFocus:()=>null},'./i18n/LanguageContext':{useLanguage:()=>({language:'vi'})},'./SecurityDashboard.module.css':{default:{}}
+ '@/hooks/useDialogFocus':{useDialogFocus:()=>null},'@/context/LanguageContext':{useLanguage:()=>({language:'vi'})},'./SecurityDashboard.module.css':{default:{}}
  }).DataIngestionModal;
  const rules=[active('import-rule',condition('amount','>',10))];
  const preview=(text,name,project)=>importPipeline.previewTransactionImport(text,name,project,'Wallet',rules,[]);
@@ -823,11 +823,11 @@ test('enterprise usage separates AI, rules and fallback and respects enterprise 
 });
 test('platform view uses shared enterprises and shows no Free allowance',()=>{
  const component=load('src/components/fraudguard-dashboard/PlatformHealthView.tsx',{
- '@/lib/platform-summary':load('src/lib/platform-summary.ts'),
+ '@/utils/platform-summary':load('src/utils/platform-summary.ts'),
  '@/data/fraudguard-enterprises':enterpriseData,
  '../../data/fraudguard-platform':load('src/data/fraudguard-platform.ts'),
- './useDialogFocus':{useDialogFocus:()=>null},'./ToastProvider':{useToast:()=>({toast(){}})},
- './i18n/LanguageContext':{useLanguage:()=>({language:'vi',t:load('src/components/fraudguard-dashboard/i18n/translations.ts').translations.vi})},
+ '@/hooks/useDialogFocus':{useDialogFocus:()=>null},'@/context/ToastProvider':{useToast:()=>({toast(){}})},
+ '@/context/LanguageContext':{useLanguage:()=>({language:'vi',t:load('src/config/translations.ts').translations.vi})},
  './SecurityDashboard.module.css':{default:{}}
  }).PlatformHealthView;
  const html=renderToStaticMarkup(React.createElement(component,{enterprises:[{id:'new-company',name:'Shared Company',plan:'Free',projectIds:['p1'],deploymentStaffId:'staff'}],transactions:[],onPlanChange(){}}));
@@ -860,13 +860,13 @@ test('paid imports record unavailable AI as rules fallback without AI confidence
 });
 
 test('platform metrics use recorded AI and fallback only and confirmed AI feedback',()=>{
- const summary=load('src/lib/platform-summary.ts').platformSummary;
+ const summary=load('src/utils/platform-summary.ts').platformSummary;
  const base={processedAt:'2026-10-23T01:20:00Z'};
  const result=summary([{...base,scoringSource:'RULE'}, {...base,scoringSource:'AI',caseDecision:{status:'False Alarm'}},{...base,scoringSource:'RULE_FALLBACK',caseDecision:{status:'Confirmed Fraud'}}]);
  assert.equal(result.fallbackRate,50);assert.equal(result.feedback.length,1);assert.equal(result.trend.length,1);assert.equal(result.trend[0].aiRequests,1);assert.equal(result.trend[0].fallbackRequests,1);assert.equal(summary([]).fallbackRate,null);
 });
 
-const notifications=load('src/lib/notification-feed.ts');
+const notifications=load('src/utils/notification-feed.ts');
 test('notification feed follows enterprise and investigator scope',()=>{
  const enterprise={id:'e1',projectIds:['p1']};
  const own={id:'a',projectId:'p1',scoringSource:'AI',riskLevel:'Abnormal',caseId:'c1',assignedInvestigatorId:'i1',processedAt:'2026-10-24T01:00:00Z'};
@@ -898,12 +898,12 @@ test('sandbox records are excluded from usage, health, feedback and notification
  const data=load('src/data/fraudguard-enterprises.ts');
  const usage=data.enterpriseUsage({projectIds:['p1']},[sample,real]);
  assert.equal(usage.total,1);assert.equal(usage.ai,1);
- const health=load('src/lib/platform-summary.ts').platformSummary([sample,real]);
+ const health=load('src/utils/platform-summary.ts').platformSummary([sample,real]);
  assert.equal(health.trend[0].aiRequests,1);assert.equal(health.feedback.length,1);
  assert.equal(notifications.notificationFeed([sample,real]).length,1);
 });
 test('legacy sandbox recognition requires both generated ID and sandbox explanation',()=>{
- const {isSandboxTransaction}=load('src/lib/transaction-origin.ts');
+ const {isSandboxTransaction}=load('src/utils/transaction-origin.ts');
  assert.equal(isSandboxTransaction({id:'demo-abc-0',explanation:'Sandbox demo: 1/1 rules matched; 0 errors.'}),true);
  assert.equal(isSandboxTransaction({id:'demo-abc-0',explanation:'Imported payment'}),false);
  assert.equal(isSandboxTransaction({id:'import:x',explanation:'Sandbox demo: copied text'}),false);
@@ -924,9 +924,9 @@ test('saved draft results remain visible after reopening and stale results are h
  const samples=[{id:'saved-1',ref:'saved-1',projectId:'p1',transactionType:'payment',fields:{amount:20},expected:'Abnormal'}];
  const saved=managed.testDraft({projectIds:['p1'],draft:{rules:targetRules},versions:[]},samples);
  const component=load('src/components/fraudguard-dashboard/RuleSetTestingView.tsx',{
- '@/lib/ingestion-validation':load('src/lib/ingestion-validation.ts'),'@/lib/rule-set':ruleSet,
+ '@/utils/ingestion-validation':load('src/utils/ingestion-validation.ts'),'@/utils/rule-set':ruleSet,
  './RuleEvaluationDetails':{RuleEvaluationDetails:()=>null},'./RiskLevelBadge':{RiskLevelBadge:({riskLevel})=>React.createElement('span',null,riskLevel)},
- './i18n/LanguageContext':{useLanguage:()=>({language:'vi'})},'./SecurityDashboard.module.css':{default:{}}
+ '@/context/LanguageContext':{useLanguage:()=>({language:'vi'})},'./SecurityDashboard.module.css':{default:{}}
  }).RuleSetTestingView;
  const props={rules:targetRules,initialSamples:samples,initialTest:saved,allowedProjectIds:['p1'],draftMode:true};
  const render=extra=>renderToStaticMarkup(React.createElement(component,{...props,...extra}));

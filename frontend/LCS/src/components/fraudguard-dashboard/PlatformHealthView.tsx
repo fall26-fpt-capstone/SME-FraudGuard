@@ -11,17 +11,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { MicroserviceHealth, TransactionRisk } from "./types";
+import type { MicroserviceHealth, TransactionRisk } from "@/types/fraudguard";
 import {
 
   initialMicroservices,
 
 } from "../../data/fraudguard-platform";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
-import { useDialogFocus } from './useDialogFocus';
+import { useDialogFocus } from '@/hooks/useDialogFocus';
 
-import { platformSummary } from '@/lib/platform-summary';
+import { platformSummary } from '@/utils/platform-summary';
 import { enterprisePlan, enterpriseUsage, type Enterprise, type ServicePlan } from '@/data/fraudguard-enterprises';
 export function PlatformHealthView({ enterprises, transactions, onPlanChange }: { enterprises: Enterprise[]; transactions: TransactionRisk[]; onPlanChange: (id: string, plan: ServicePlan) => void }) {
   const { t, language } = useLanguage();

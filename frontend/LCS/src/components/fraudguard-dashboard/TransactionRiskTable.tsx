@@ -10,10 +10,10 @@ import type {
   SortState,
   TableTab,
   TransactionRisk,
-} from "./types";
+} from "@/types/fraudguard";
 import { RiskLevelBadge } from "./RiskLevelBadge";
 import { ScoringSourceBadge } from "./ScoringSourceBadge";
-import { useLanguage } from "./i18n/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { transactionLabel } from "./ReadableConditions";
 import styles from "./SecurityDashboard.module.css";
 

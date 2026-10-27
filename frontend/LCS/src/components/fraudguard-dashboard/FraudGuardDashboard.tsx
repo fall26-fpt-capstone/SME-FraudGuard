@@ -1,5 +1,5 @@
 "use client";
-import { isSandboxTransaction } from '@/lib/transaction-origin';
+import { isSandboxTransaction } from '@/utils/transaction-origin';
 import { enterprisePlan } from '@/data/fraudguard-enterprises';
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
@@ -14,15 +14,15 @@ import type {
   ProjectItem,
   AuditLogEntry,
   UserProfile,
-} from "./types";
-import { previewTransactionImport } from "@/lib/transaction-import";
-import { normalizeFields, validateDataSchema } from '@/lib/ingestion-validation';
-import { parseRuleSetSamples } from "@/lib/rule-set";
-import { canUpdateCase, isActiveInvestigation, isCaseAssignee } from "@/lib/case-workflow";
+} from "@/types/fraudguard";
+import { previewTransactionImport } from "@/utils/transaction-import";
+import { normalizeFields, validateDataSchema } from '@/utils/ingestion-validation';
+import { parseRuleSetSamples } from "@/utils/rule-set";
+import { canUpdateCase, isActiveInvestigation, isCaseAssignee } from "@/utils/case-workflow";
 import { auditForUser, demoEnterprises, visibleEnterprises, canDeploy, transactionsForEnterprise, type Enterprise } from '@/data/fraudguard-enterprises';
 import { MembersView } from "./MembersView";
-import { Sidebar } from "./Sidebar";
-import { ProductHeader } from "./ProductHeader";
+import { Sidebar } from "@/layouts/Sidebar";
+import { ProductHeader } from "@/layouts/ProductHeader";
 import { DashboardToolbar } from "./DashboardToolbar";
 import { StatCard } from "./StatCard";
 import { Panel } from "./Panel";
@@ -33,7 +33,7 @@ import { AlertCaseDrawer } from "./AlertCaseDrawer";
 import { AlertsView } from "./AlertsView";
 import { CasesView } from "./CasesView";
 import { RuleSetsView } from './RuleSetsView';
-import { activeSetRules, migrateProjectSets, canChangeEnterpriseSets, type LegacyRuleSet, type ManagedRuleSet } from '@/lib/rule-set-lifecycle';
+import { activeSetRules, migrateProjectSets, canChangeEnterpriseSets, type LegacyRuleSet, type ManagedRuleSet } from '@/utils/rule-set-lifecycle';
 import { RulesView } from "./RulesView";
 import { ProjectsView } from "./ProjectsView";
 import { ReportsView } from "./ReportsView";
@@ -42,8 +42,8 @@ import { PlatformHealthView } from "./PlatformHealthView";
 import { initialProjects } from "../../data/fraudguard-projects";
 import { initialAuditLogs } from "../../data/fraudguard-audit-logs";
 import { DEMO_USERS, DEFAULT_DEMO_USER, canSaveMember, canProvisionEnterpriseAdmin, getRoleHomeView, getRolePermissions, canAccessView } from "../../data/fraudguard-roles";
-import { ToastProvider } from "./ToastProvider";
-import { LanguageProvider, useLanguage } from "./i18n/LanguageContext";
+import { ToastProvider } from "@/context/ToastProvider";
+import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { OnboardingView } from "./OnboardingView";
 import { RuleTestingView } from "./RuleTestingView";
 import styles from "./SecurityDashboard.module.css";

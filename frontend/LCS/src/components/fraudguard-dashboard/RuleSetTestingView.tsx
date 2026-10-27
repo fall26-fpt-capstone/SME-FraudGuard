@@ -1,14 +1,14 @@
 "use client";
-import { normalizeFields, type DataField } from '@/lib/ingestion-validation';
+import { normalizeFields, type DataField } from '@/utils/ingestion-validation';
 import { Fragment, useMemo, useState } from 'react';
 import { Play, Upload, Sliders } from 'lucide-react';
-import type { ProjectItem, RuleTemplate, TransactionRisk } from './types';
-import type { SetTest } from '@/lib/rule-set-lifecycle';
-import type { RuleSetSample } from '@/lib/rule-set';
-import { applicableRules, requiredRuleFields, evaluateRuleSet, parseRuleSetSamples, detectionTransaction } from '@/lib/rule-set';
+import type { ProjectItem, RuleTemplate, TransactionRisk } from '@/types/fraudguard';
+import type { SetTest } from '@/utils/rule-set-lifecycle';
+import type { RuleSetSample } from '@/utils/rule-set';
+import { applicableRules, requiredRuleFields, evaluateRuleSet, parseRuleSetSamples, detectionTransaction } from '@/utils/rule-set';
 import { RuleEvaluationDetails } from './RuleEvaluationDetails';
 import { RiskLevelBadge } from './RiskLevelBadge';
-import { useLanguage } from './i18n/LanguageContext';
+import { useLanguage } from '@/context/LanguageContext';
 import styles from './SecurityDashboard.module.css';
 const EXAMPLE = JSON.stringify([{ id: 'sample-1', ref: 'DEMO-TX-1', projectId: 'proj-abc-cod', transactionType: 'payment', fields: { amount: 12500000, currency: 'VND', channel: 'COD', 'device.is_new': true, 'velocity.failed_tx.24h': 4, 'identity.address_reuse_count': 3, 'velocity.tx_count.1h': 1, 'velocity.tx_count.24h': 1, 'geo.distance_km': 0, time_since_last_tx_min: 60, 'device.is_blacklisted': false, 'entity.age_days': 100 } }], null, 2);
 export function RuleSetTestingView({ rules, validationSchema, projects = [], onAddDemoTransactions, lockedProjectId, allowedProjectIds, enterpriseLabel, draftMode, initialSamples, initialTest, onTestCompleted, onTestInvalidated, setContext }: { initialTest?: SetTest; validationSchema?: DataField[]; allowedProjectIds?: string[]; enterpriseLabel?: string; initialSamples?: RuleSetSample[]; lockedProjectId?: string; draftMode?: boolean; onTestCompleted?: (samples: RuleSetSample[]) => void; onTestInvalidated?: () => void; setContext?: Record<string, { id: string; name: string; version: number }>; rules: RuleTemplate[]; projects?: ProjectItem[]; onAddDemoTransactions?: (transactions: TransactionRisk[]) => void }) {

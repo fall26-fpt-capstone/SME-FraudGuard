@@ -1,4 +1,4 @@
-import type { TransactionRisk } from "@/components/fraudguard-dashboard/types";
+import type { TransactionRisk } from "@/types/fraudguard";
 
 export function serializeCSV(rows: readonly (readonly unknown[])[]): string {
   return '\uFEFF' + rows.map(row => row.map(cell => {

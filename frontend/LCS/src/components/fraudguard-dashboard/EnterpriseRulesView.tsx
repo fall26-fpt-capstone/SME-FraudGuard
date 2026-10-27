@@ -1,10 +1,10 @@
 "use client";
 import { useState } from 'react';
-import type { ManagedRuleSet } from '@/lib/rule-set-lifecycle';
+import type { ManagedRuleSet } from '@/utils/rule-set-lifecycle';
 import type { Enterprise } from '@/data/fraudguard-enterprises';
-import type { ProjectItem } from './types';
+import type { ProjectItem } from '@/types/fraudguard';
 import { ReadableConditions, transactionLabel } from './ReadableConditions';
-import { useLanguage } from './i18n/LanguageContext';
+import { useLanguage } from '@/context/LanguageContext';
 import styles from './SecurityDashboard.module.css';
 
 export function EnterpriseRulesView({ set, enterprise, projects }: { set?: ManagedRuleSet; enterprise?: Enterprise; projects: ProjectItem[] }) {
