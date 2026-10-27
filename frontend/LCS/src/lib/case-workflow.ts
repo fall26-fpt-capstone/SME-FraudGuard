@@ -1,0 +1,35 @@
+import type { TransactionRisk, UserProfile } from "../components/fraudguard-dashboard/types";
+export function isCaseAssignee(transaction: TransactionRisk, user: { id?: string; name: string }): boolean {
+  return transaction.assignedInvestigatorId
+    ? transaction.assignedInvestigatorId === user.id
+    : !!user.name && transaction.assignedInvestigator === user.name;
+}
+
+export function canUpdateCase(previous: TransactionRisk, updated: TransactionRisk, user: UserProfile): boolean {
+  if (previous.id !== updated.id || previous.projectId !== updated.projectId || previous.riskLevel !== updated.riskLevel) return false;
+  if (previous.scoringSource !== 'AI' || updated.scoringSource !== 'AI' || previous.riskLevel !== 'Abnormal') return false;
+  if (user.role === 'Viewer' || user.role === 'Platform Admin') return false;
+  if (['Confirmed Fraud', 'False Alarm', 'Resolved'].includes(previous.caseStatus ?? '')) return false;
+  if (user.role === 'Investigator') {
+    if (!isCaseAssignee(previous, user) || !isCaseAssignee(updated, user)) return false;
+    if (previous.caseStatus === 'Assigned') return updated.caseStatus === 'Investigating';
+    if (previous.caseStatus !== 'Investigating') return false;
+    if (updated.caseStatus === 'Reported') return !!updated.investigationReport?.notes.trim() && updated.investigationReport.submittedBy === user.name;
+    return updated.caseStatus === 'Investigating';
+  }
+  if (user.role !== 'Operator') return false;
+  if (updated.caseStatus === 'Investigating' && isCaseAssignee(updated, user) && (!previous.caseId || previous.caseStatus === 'Open')) return !!updated.caseId;
+  if (previous.caseStatus === 'Investigating' && isCaseAssignee(previous, user) && isCaseAssignee(updated, user)) {
+    if (updated.caseStatus === 'Investigating') return true;
+    if (updated.caseStatus === 'Reported') return !!updated.investigationReport?.notes.trim() && updated.investigationReport.submittedBy === user.name;
+  }
+  if (!previous.caseId) return previous.riskLevel === 'Abnormal' && !!updated.caseId && (updated.caseStatus === 'Open' || updated.caseStatus === 'Assigned');
+  if (updated.caseStatus === 'Assigned') return !!updated.assignedInvestigator;
+  if (['Confirmed Fraud', 'False Alarm', 'Resolved'].includes(updated.caseStatus ?? '')) return !!updated.caseDecision?.directive?.trim();
+  if (updated.caseStatus === 'Investigating') return previous.caseStatus === 'Reported';
+  return false;
+}
+
+export function isActiveInvestigation(transaction: TransactionRisk): boolean {
+  return transaction.scoringSource === 'AI' && transaction.riskLevel === 'Abnormal' && !!transaction.caseId && ['Open', 'Assigned', 'Investigating', 'Reported'].includes(transaction.caseStatus ?? '');
+}
