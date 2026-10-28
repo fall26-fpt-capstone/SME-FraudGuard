@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { Building2, ArrowRight } from 'lucide-react';
 import type { UserProfile } from '@/types/fraudguard';
-import { canDeploy, type Enterprise, type DeploymentSpecification } from '@/data/fraudguard-enterprises';
+import { canDeploy } from "@/utils/enterprise";
+import { type Enterprise, type DeploymentSpecification } from "@/types/enterprise";
 import type { ManagedRuleSet } from '@/utils/rule-set-lifecycle';
 import { parseRuleSetSamples } from '@/utils/rule-set';
 import { normalizeFields, validateDataSchema, type DataField } from '@/utils/ingestion-validation';

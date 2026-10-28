@@ -12,7 +12,7 @@ function load(relative, imports = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   const exports = {};
-  vm.runInNewContext(output, { exports, structuredClone, require: (name) => name in imports ? imports[name] : /^@\/(utils|data)\//.test(name) ? load(`src/${name.slice(2)}.ts`) : name === './transaction-origin' ? load('src/utils/transaction-origin.ts') : require(name) }, { filename });
+  vm.runInNewContext(output, { exports, structuredClone, require: (name) => name in imports ? imports[name] : /^@\/(utils|data|config|routes)\//.test(name) ? load(`src/${name.slice(2)}.ts`) : name === './transaction-origin' ? load('src/utils/transaction-origin.ts') : require(name) }, { filename });
   return exports;
 }
 
@@ -25,7 +25,7 @@ test('CSV preserves Vietnamese and special characters while neutralizing spreads
 });
 
 test('member role changes wait until assigned cases are reassigned or closed', () => {
-  const { canSaveMember } = load('src/data/fraudguard-roles.ts');
+  const { canSaveMember } = loadRoles();
   const admin = { id: 'admin', name: 'Admin', email: 'admin@example.test', role: 'SME Admin', enterpriseId: 'company' };
   const member = { id: 'member', name: 'Member', email: 'member@example.test', role: 'Investigator', enterpriseId: 'company' };
   const changed = { ...member, role: 'Operator' };
@@ -389,7 +389,7 @@ test('dataset parser accepts unlabeled samples but rejects duplicate IDs and inv
   assert.throws(() => ruleSet.parseRuleSetSamples(JSON.stringify([{ ...sample, fields: { amount: null } }])), /fields/);
 });
 
-const enterpriseData = load('src/data/fraudguard-enterprises.ts');
+const enterpriseData = loadEnterprises();
 test('SME transaction scope excludes foreign projects and fails closed without an enterprise', () => {
  const data = load('src/data/fraudguard-transactions.ts').fraudGuardTransactions;
  for (const role of ['SME Admin', 'Operator']) {
@@ -404,7 +404,7 @@ test('SME transaction scope excludes foreign projects and fails closed without a
  assert.equal(enterpriseData.transactionsForEnterprise(data, { role: 'SME Admin' }, enterpriseData.demoEnterprises).length, 0);
  assert.equal(enterpriseData.transactionsForEnterprise(data, { role: 'SME Admin', enterpriseId: 'unknown' }, enterpriseData.demoEnterprises).length, 0);
 });
-const roleData = load('src/data/fraudguard-roles.ts');
+const roleData = loadRoles();
 
 test('route access follows each role and rejects legacy or unknown roles', () => {
  assert.equal(roleData.canAccessView('Investigator', 'reports'), true);
@@ -445,7 +445,7 @@ test('SME admins cannot mutate cases and investigators cannot change transaction
  for (const changed of [{ ...updated, projectId: 'p2' }, { ...updated, assignedInvestigatorId: 'other' }]) assert.equal(cases.canUpdateCase(previous, changed, { id: 'owner', name: 'Owner', role: 'Investigator' }), false);
  assert.equal(cases.canUpdateCase(previous, { ...previous, caseStatus: 'Resolved', caseDecision: { directive: 'Done' } }, { role: 'SME Admin' }), false);
 });
-const managed = load('src/utils/rule-set-lifecycle.ts', { './ingestion-validation': load('src/utils/ingestion-validation.ts'), '../data/fraudguard-enterprises': enterpriseData, './rule-lifecycle': lifecycle, './rule-set': ruleSet });
+const managed = load('src/utils/rule-set-lifecycle.ts', { './ingestion-validation': load('src/utils/ingestion-validation.ts'), '@/utils/enterprise': enterpriseData, './rule-lifecycle': lifecycle, './rule-set': ruleSet });
 function draftSet(id = 'set1') { return { id, name: id, enterpriseId: 'e1', projectIds: ['p1'], versions: [], draft: { rules: managed.snapshotRules([active('r1', condition('amount', '>', 10))], 'p1') } }; }
 const labeledSample = { ...inputTx, id: 's1', ref: 'TX-1', expected: 'Abnormal' };
 test('set publication requires complete current tests and reviewer evidence', () => {
@@ -516,7 +516,7 @@ test('rule set UI creates, tests, reviews, publishes and activates a version', (
  const Tester = () => null;
  const component = load('src/components/fraudguard-dashboard/RuleSetsView.tsx', {
   './ReadableConditions': load('src/components/fraudguard-dashboard/ReadableConditions.tsx', { './SecurityDashboard.module.css': { default: {} } }),
-  react, './EnterpriseRulesView': { EnterpriseRulesView: () => null }, '@/data/fraudguard-enterprises': enterpriseData, '@/data/fraudguard-roles': roleData, '@/utils/rule-set': ruleSet, '@/utils/rule-set-lifecycle': managed, './RuleSetTestingView': { RuleSetTestingView: Tester }, '@/utils/rule-lifecycle': lifecycle,
+  react, './EnterpriseRulesView': { EnterpriseRulesView: () => null }, '@/utils/enterprise': enterpriseData, '@/data/fraudguard-roles': roleData, '@/utils/rule-set': ruleSet, '@/utils/rule-set-lifecycle': managed, './RuleSetTestingView': { RuleSetTestingView: Tester }, '@/utils/rule-lifecycle': lifecycle,
   '@/context/LanguageContext': { useLanguage: () => ({ language: 'vi' }) }, './SecurityDashboard.module.css': { default: {} }
  }).RuleSetsView;
  const s = draftSet();
@@ -638,7 +638,7 @@ test('readable conditions preserve nested AND/OR and strict versus inclusive com
 
 
 test('initial and switched demo accounts land on their role homepage', () => {
-  const { DEFAULT_DEMO_USER, DEMO_USERS, getRoleHomeView } = load('src/data/fraudguard-roles.ts');
+  const { DEFAULT_DEMO_USER, DEMO_USERS, getRoleHomeView } = loadRoles();
   assert.equal(DEFAULT_DEMO_USER.id, 'usr-deployment');
   assert.equal(getRoleHomeView(DEFAULT_DEMO_USER.role), 'rule-sets');
   const expected = {
@@ -703,7 +703,7 @@ test('operator detail UI supports self-investigation, notes and report submissio
 });
 
 test('demo membership enforces enterprise boundary, role restrictions and unique identity',()=>{
- const {canSaveMember,DEMO_USERS}=load('src/data/fraudguard-roles.ts');
+ const {canSaveMember,DEMO_USERS}=loadRoles();
  assert.equal(new Set(DEMO_USERS.map(u=>u.role)).size,5);
  assert.ok(!DEMO_USERS.some(u=>['Viewer','Operation','Deployment Staff'].includes(u.role)));
  const admin=DEMO_USERS.find(u=>u.id==='usr-sme-admin');
@@ -824,7 +824,7 @@ test('enterprise usage separates AI, rules and fallback and respects enterprise 
 test('platform view uses shared enterprises and shows no Free allowance',()=>{
  const component=load('src/components/fraudguard-dashboard/PlatformHealthView.tsx',{
  '@/utils/platform-summary':load('src/utils/platform-summary.ts'),
- '@/data/fraudguard-enterprises':enterpriseData,
+ '@/utils/enterprise':enterpriseData,
  '../../data/fraudguard-platform':load('src/data/fraudguard-platform.ts'),
  '@/hooks/useDialogFocus':{useDialogFocus:()=>null},'@/context/ToastProvider':{useToast:()=>({toast(){}})},
  '@/context/LanguageContext':{useLanguage:()=>({language:'vi',t:load('src/config/translations.ts').translations.vi})},
@@ -855,7 +855,7 @@ test('paid imports record unavailable AI as rules fallback without AI confidence
  const free=importPipeline.previewTransactionImport(text,'x.json','p1','Wallet',targetRules,[],[],'Free')[0].transaction;
  assert.equal(paid.scoringSource,'RULE_FALLBACK'); assert.equal(free.scoringSource,'RULE');
  assert.equal(paid.riskLevel,'Abnormal');assert.equal(paid.confidence,undefined);assert.equal(paid.caseId,undefined);assert.ok(paid.alertId);
- const usage=load('src/data/fraudguard-enterprises.ts').enterpriseUsage({projectIds:['p1']},[paid,free]);
+ const usage=loadEnterprises().enterpriseUsage({projectIds:['p1']},[paid,free]);
  assert.equal(usage.ai,0);assert.equal(usage.rule,1);assert.equal(usage.fallback,1);
 });
 
@@ -871,7 +871,7 @@ test('notification feed follows enterprise and investigator scope',()=>{
  const enterprise={id:'e1',projectIds:['p1']};
  const own={id:'a',projectId:'p1',scoringSource:'AI',riskLevel:'Abnormal',caseId:'c1',assignedInvestigatorId:'i1',processedAt:'2026-10-24T01:00:00Z'};
  const rows=[own,{...own,id:'b',projectId:'p2'},{...own,id:'c',assignedInvestigatorId:'i2'},{...own,id:'d',riskLevel:'Normal'}];
- const data=load('src/data/fraudguard-enterprises.ts');
+ const data=loadEnterprises();
  const visible=data.transactionsForEnterprise(rows,{id:'i1',role:'Investigator',enterpriseId:'e1'},[enterprise]);
  assert.deepEqual(Array.from(notifications.notificationFeed(visible),x=>x.id),['a']);
  assert.equal(notifications.notificationFeed(data.transactionsForEnterprise(rows,{role:'Platform Admin'},[enterprise])).length,0);
@@ -895,7 +895,7 @@ test('notifications ignore normal transactions and do not invent invalid timesta
 test('sandbox records are excluded from usage, health, feedback and notifications',()=>{
  const sample={id:'demo-batch-1',dataOrigin:'sandbox',projectId:'p1',riskLevel:'Abnormal',scoringSource:'AI',alertId:'a1',processedAt:'2026-10-24T00:00:00Z',caseDecision:{status:'Confirmed Fraud'}};
  const real={...sample,id:'import:p1:A',dataOrigin:'import'};
- const data=load('src/data/fraudguard-enterprises.ts');
+ const data=loadEnterprises();
  const usage=data.enterpriseUsage({projectIds:['p1']},[sample,real]);
  assert.equal(usage.total,1);assert.equal(usage.ai,1);
  const health=load('src/utils/platform-summary.ts').platformSummary([sample,real]);
@@ -934,3 +934,7 @@ test('saved draft results remain visible after reopening and stale results are h
  assert.match(render({initialSamples:[{...samples[0],fields:{amount:5}}]}),/Chờ chạy/);
  assert.match(render({rules:[{...targetRules[0],conditionGroup:group('AND',[condition('amount','>',30)])}]}),/Chờ chạy/);
 });
+
+// Compose fixtures and helpers for existing regression scenarios after the module split.
+function loadRoles() { return { ...load('src/data/fraudguard-roles.ts'), ...load('src/utils/permissions.ts'), ...load('src/routes/role-home.ts') }; }
+function loadEnterprises() { return { ...load('src/data/fraudguard-enterprises.ts'), ...load('src/utils/enterprise.ts') }; }

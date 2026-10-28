@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check, FileSpreadsheet } from "lucide-react";
 import type { UserProfile } from "@/types/fraudguard";
 
-import type { Enterprise } from '@/data/fraudguard-enterprises';
+import { type Enterprise } from "@/types/enterprise";
 import { PermissionMatrixModal } from "./PermissionMatrixModal";
 import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";

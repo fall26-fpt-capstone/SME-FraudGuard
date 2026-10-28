@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import { createPortal } from "react-dom";
 import { X, Check, ShieldAlert } from "lucide-react";
-import { PERMISSION_MATRIX_DATA } from "../../data/fraudguard-roles";
+import { PERMISSION_MATRIX_DATA } from "@/config/permissions";
 import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 

@@ -21,16 +21,15 @@ Open http://localhost:3000. Landing page is a separate application in `../LCS_la
 | `src/app/` | Next.js URL routes, root layout, loading/error boundaries and global CSS |
 | `src/assets/` | Imported assets; reserved until needed |
 | `src/components/` | Dashboard views, reusable controls, dialogs and their CSS Modules |
-| `src/config/` | Shared configuration and bilingual translation dictionaries |
+| `src/config/` | Shared configuration, permission matrix and bilingual translations |
 | `src/context/` | Language and toast providers |
 | `src/hooks/` | Shared React hooks, including accessible dialog focus |
 | `src/layouts/` | Dashboard navigation/sidebar and product header |
-| `src/pages/` | Reserved placeholder only; see routing note below |
-| `src/routes/` | Reserved for shared navigation metadata; not a separate router |
+| `src/routes/` | Shared desktop/mobile menus and role home views; not a separate router |
 | `src/services/` | Reserved for future approved API integration; currently empty |
 | `src/types/` | Shared TypeScript domain/UI contracts |
-| `src/utils/` | Detection, lifecycle, validation, import/export and other business helpers |
-| `src/data/` | Existing demo fixtures and local access helpers |
+| `src/utils/` | Detection, lifecycle, validation, import/export, permissions and enterprise scope helpers |
+| `src/data/` | Demo fixtures only; access checks belong in utils |
 | `tests/` | Node test runner regression scenarios |
 | `docs/ui/` | UI rules and historical design references |
 
@@ -41,6 +40,12 @@ Git does not track empty directories. Reserved directories contain only `.gitkee
 The reference folder structure is adapted to Next.js rather than switching frameworks. `src/app/page.tsx`, `src/app/login/page.tsx` and `src/app/fraud-monitoring/page.tsx` remain the route entry points. They compose existing components. Do not add `.tsx` screens to `src/pages`: Next.js would register them as Pages Router URLs. Keep view components in `src/components` and register actual routes through `src/app`.
 
 Use `@/types/fraudguard`, `@/context/LanguageContext`, `@/hooks/useDialogFocus` and `@/utils/...` for shared imports. CSS remains beside its owning components; moving files must not change visual behavior.
+
+There is no `src/pages` directory. Dashboard sections still switch within `/fraud-monitoring`; `src/routes/navigation.ts` shares menu definitions between Sidebar and ProductHeader, while `src/routes/role-home.ts` selects the initial section for each role. Neither creates URL routes.
+
+Permission checks live in `src/utils/permissions.ts`; enterprise access and usage helpers live in `src/utils/enterprise.ts`. The display permission matrix is in `src/config/permissions.ts`. Enterprise and permission matrix types are in `src/types`. These are frontend demo controls, not backend authorization.
+
+Sidebar and ProductHeader intentionally reuse `src/components/fraudguard-dashboard/SecurityDashboard.module.css`. Their location in `layouts` does not make their styling independent of the dashboard.
 
 ## Shared commands
 

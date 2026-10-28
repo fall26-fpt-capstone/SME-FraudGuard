@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Enterprise } from '@/data/fraudguard-enterprises';
+import { type Enterprise } from "@/types/enterprise";
 import { RuleSetTestingView } from "./RuleSetTestingView";
 import type { TransactionRisk, RuleTemplate, ProjectItem } from "@/types/fraudguard";
 import { evaluateSandboxRule, nextSandboxVersion } from "@/utils/rule-sandbox";

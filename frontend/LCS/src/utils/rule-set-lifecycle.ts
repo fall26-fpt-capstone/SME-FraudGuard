@@ -1,5 +1,6 @@
 import type { RuleTemplate, RuleSetEvaluation } from '@/types/fraudguard';
-import { canDeploy, type Enterprise } from '@/data/fraudguard-enterprises';
+import { canDeploy } from "@/utils/enterprise";
+import { type Enterprise } from "@/types/enterprise";
 import type { UserProfile } from '@/types/fraudguard';
 import { candidateRule } from './rule-lifecycle';
 import { evaluateRuleSet, type RuleSetSample } from './rule-set';

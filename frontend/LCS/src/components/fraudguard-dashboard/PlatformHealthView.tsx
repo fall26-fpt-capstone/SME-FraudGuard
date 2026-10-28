@@ -22,7 +22,8 @@ import styles from "./SecurityDashboard.module.css";
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 
 import { platformSummary } from '@/utils/platform-summary';
-import { enterprisePlan, enterpriseUsage, type Enterprise, type ServicePlan } from '@/data/fraudguard-enterprises';
+import { enterprisePlan, enterpriseUsage } from "@/utils/enterprise";
+import { type Enterprise, type ServicePlan } from "@/types/enterprise";
 export function PlatformHealthView({ enterprises, transactions, onPlanChange }: { enterprises: Enterprise[]; transactions: TransactionRisk[]; onPlanChange: (id: string, plan: ServicePlan) => void }) {
   const { t, language } = useLanguage();
   const summary = platformSummary(transactions);

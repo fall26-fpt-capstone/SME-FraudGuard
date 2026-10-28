@@ -2,8 +2,8 @@
 
 import { Sun, Moon, Globe, Menu, X } from "lucide-react";
 import { useState } from 'react';
-import type { Enterprise } from '@/data/fraudguard-enterprises';
-import { getSectionsForRole } from '@/layouts/Sidebar';
+import { type Enterprise } from "@/types/enterprise";
+import { getSectionsForRole } from "@/routes/navigation";
 import { useDialogFocus } from '@/hooks/useDialogFocus';
 import type { SecondaryView, UserProfile } from "@/types/fraudguard";
 import { NotificationCenter } from '@/components/fraudguard-dashboard/NotificationCenter';

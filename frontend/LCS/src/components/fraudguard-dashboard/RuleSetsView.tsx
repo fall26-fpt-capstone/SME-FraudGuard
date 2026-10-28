@@ -4,8 +4,9 @@ import { ArrowLeft, ArrowRight, Building2, Search, Layers, Plus, CheckCircle2 } 
 import type { ProjectItem, RuleTemplate, UserProfile } from '@/types/fraudguard';
 import { type ManagedRuleSet, snapshotRules, testDraft, canPublishSet, publishSet, handoverSet } from '@/utils/rule-set-lifecycle';
 import { RuleSetTestingView } from './RuleSetTestingView';
-import { canDeploy, visibleEnterprises, type Enterprise } from '@/data/fraudguard-enterprises';
-import { DEMO_USERS } from '@/data/fraudguard-roles';
+import { canDeploy, visibleEnterprises } from "@/utils/enterprise";
+import { type Enterprise } from "@/types/enterprise";
+import { DEMO_USERS } from "@/data/fraudguard-roles";
 import { parseRuleSetSamples } from '@/utils/rule-set';
 import { candidateRule } from '@/utils/rule-lifecycle';
 import { useLanguage } from '@/context/LanguageContext';

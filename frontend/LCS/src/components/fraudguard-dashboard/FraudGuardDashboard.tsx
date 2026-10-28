@@ -1,6 +1,6 @@
 "use client";
 import { isSandboxTransaction } from '@/utils/transaction-origin';
-import { enterprisePlan } from '@/data/fraudguard-enterprises';
+import { enterprisePlan } from "@/utils/enterprise";
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import type {
@@ -19,7 +19,9 @@ import { previewTransactionImport } from "@/utils/transaction-import";
 import { normalizeFields, validateDataSchema } from '@/utils/ingestion-validation';
 import { parseRuleSetSamples } from "@/utils/rule-set";
 import { canUpdateCase, isActiveInvestigation, isCaseAssignee } from "@/utils/case-workflow";
-import { auditForUser, demoEnterprises, visibleEnterprises, canDeploy, transactionsForEnterprise, type Enterprise } from '@/data/fraudguard-enterprises';
+import { auditForUser, visibleEnterprises, canDeploy, transactionsForEnterprise } from "@/utils/enterprise";
+import { demoEnterprises } from "@/data/fraudguard-enterprises";
+import { type Enterprise } from "@/types/enterprise";
 import { MembersView } from "./MembersView";
 import { Sidebar } from "@/layouts/Sidebar";
 import { ProductHeader } from "@/layouts/ProductHeader";
@@ -41,7 +43,9 @@ import { AuditTrailView } from "./AuditTrailView";
 import { PlatformHealthView } from "./PlatformHealthView";
 import { initialProjects } from "../../data/fraudguard-projects";
 import { initialAuditLogs } from "../../data/fraudguard-audit-logs";
-import { DEMO_USERS, DEFAULT_DEMO_USER, canSaveMember, canProvisionEnterpriseAdmin, getRoleHomeView, getRolePermissions, canAccessView } from "../../data/fraudguard-roles";
+import { DEMO_USERS, DEFAULT_DEMO_USER } from "@/data/fraudguard-roles";
+import { canSaveMember, canProvisionEnterpriseAdmin, getRolePermissions, canAccessView } from "@/utils/permissions";
+import { getRoleHomeView } from "@/routes/role-home";
 import { ToastProvider } from "@/context/ToastProvider";
 import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { OnboardingView } from "./OnboardingView";

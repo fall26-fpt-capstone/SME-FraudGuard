@@ -17,7 +17,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import styles from "./SecurityDashboard.module.css";
 import { IngestionInstructions } from './IngestionInstructions';
 
-import { enterprisePlan, type Enterprise } from '@/data/fraudguard-enterprises';
+import { enterprisePlan } from "@/utils/enterprise";
+import { type Enterprise } from "@/types/enterprise";
 
 interface ProjectsViewProps {
   dataSchema?: import('@/utils/ingestion-validation').DataField[];

@@ -23,7 +23,7 @@ Tài liệu dành cho thành viên nhóm và AI hỗ trợ code. Đọc cùng `A
 | Operator | Theo dõi cảnh báo AI, điều tra/phân công và xem xét kết quả |
 | Investigator | Điều tra hồ sơ được giao và gửi báo cáo |
 
-Không tạo thêm Viewer/Auditor hay đổi lại tên Deployment Staff/Operation. Reuse các hàm phân quyền trong `src/data/fraudguard-roles.ts` và kiểm tra cả thao tác lẫn dữ liệu; không chỉ ẩn nút. Dashboard, bảng, chi tiết, báo cáo và export phải dùng cùng phạm vi doanh nghiệp.
+Không tạo thêm Viewer/Auditor hay đổi lại tên Deployment Staff/Operation. Reuse các hàm phân quyền trong `src/utils/permissions.ts` và phạm vi doanh nghiệp trong `src/utils/enterprise.ts`; kiểm tra cả thao tác lẫn dữ liệu, không chỉ ẩn nút. Dashboard, bảng, chi tiết, báo cáo và export phải dùng cùng phạm vi doanh nghiệp.
 
 ## 3. Ngôn ngữ cho doanh nghiệp
 
@@ -57,7 +57,8 @@ Không tạo thêm Viewer/Auditor hay đổi lại tên Deployment Staff/Operati
 - Hiện tại chưa có backend. `src/services` giữ trống bằng `.gitkeep`; không dựng API giả để lấp thư mục.
 - Chỉ thêm service khi nhóm xác nhận contract, authentication, lỗi và dữ liệu trả về. Dữ liệu mẫu ở `src/data`; helper xử lý ở `src/utils`.
 - Dùng package đang có: Next.js/React/TypeScript, CSS Modules, lucide-react, recharts và exceljs. Thêm dependency cần có nhu cầu cụ thể; commit package-lock cùng package.json.
-- `src/app` là nơi đăng ký URL của Next.js. Các thư mục còn lại không thay thế App Router; `src/pages` chỉ giữ chỗ, chưa chứa route.
+- `src/app` là nơi đăng ký URL của Next.js; không tạo `src/pages`. Menu desktop/mobile dùng chung `src/routes/navigation.ts`, trang đầu theo vai trò dùng `src/routes/role-home.ts`. Các mục dashboard vẫn chuyển trong `/fraud-monitoring`, không phải URL riêng.
+- Sidebar và ProductHeader trong `src/layouts` vẫn dùng CSS chung của dashboard; không sao chép CSS để làm chúng độc lập chỉ vì khác thư mục.
 
 ## 7. Trước khi bàn giao
 

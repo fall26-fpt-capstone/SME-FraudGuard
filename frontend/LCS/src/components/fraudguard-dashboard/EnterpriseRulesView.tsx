@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import type { ManagedRuleSet } from '@/utils/rule-set-lifecycle';
-import type { Enterprise } from '@/data/fraudguard-enterprises';
+import { type Enterprise } from "@/types/enterprise";
 import type { ProjectItem } from '@/types/fraudguard';
 import { ReadableConditions, transactionLabel } from './ReadableConditions';
 import { useLanguage } from '@/context/LanguageContext';
