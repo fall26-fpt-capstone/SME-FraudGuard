@@ -2,6 +2,8 @@
 
 > HISTORICAL REFERENCE — Quy chuẩn hiện hành là [UI_RULES.md](UI_RULES.md). Các role, risk score, quota và luồng trong tài liệu này có phần đã lỗi thời. Không dùng tài liệu này để quyết định nghiệp vụ hoặc ghi đè UI_RULES.md.
 
+> Quy chuẩn font, kích thước và component hiện hành: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+
 **Phiên bản:** 1.1 — cập nhật 16/10/2026  
 **Phạm vi:** SaaS đa tenant phát hiện giao dịch bất thường cho SME  
 **Tech stack mục tiêu:** React, Next.js App Router, TypeScript, CSS Modules  

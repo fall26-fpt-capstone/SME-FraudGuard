@@ -63,6 +63,6 @@ The build currently downloads Inter through `next/font/google`, so it requires n
 
 ## UI and AI collaboration
 
-Start with `AGENTS.md` and [UI_RULES.md](docs/ui/UI_RULES.md). They explain current UI behavior, roles, terminology, tokens, responsive design and review checks. Older UI guides contain superseded examples and are not the current business specification.
+Start with `AGENTS.md`, [UI_RULES.md](docs/ui/UI_RULES.md) and [DESIGN_SYSTEM.md](docs/ui/DESIGN_SYSTEM.md). UI_RULES covers business-facing behavior and language. DESIGN_SYSTEM covers font, header/sidebar dimensions, theme tokens, component states, responsive behavior and known legacy differences. This README owns folder and package setup. Older UI guides contain superseded examples and are historical references, not current specifications.
 
 Before pushing, run `npm run check` and `npm run build`, then inspect `git diff` from the repository root. Commit only the intended frontend changes to a feature branch and let the team leader merge the PR.
