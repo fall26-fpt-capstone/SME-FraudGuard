@@ -35,6 +35,8 @@ Không tạo thêm Viewer/Auditor hay đổi lại tên Deployment Staff/Operati
 
 ## 4. Thiết kế và CSS
 
+Đọc [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) để biết font, cỡ chữ, kích thước, bảng token hai theme, trạng thái component và các ngoại lệ CSS hiện có. Đây là quy chuẩn thiết kế frontend hiện hành đi cùng tài liệu này.
+
 - Dùng CSS Modules và token hiện có trong `src/app/globals.css`; không thêm UI framework hay bộ màu mới chỉ cho một trang.
 - Tái sử dụng `Panel`, `StatCard`, bảng, badge và nút hiện có. Shared dashboard CSS ở `src/components/fraudguard-dashboard/SecurityDashboard.module.css`; login có CSS Module riêng.
 - Màu hành động: `--action-bg: #2563eb`, chữ `--action-text: #ffffff`. Nền/chữ/viền dùng `--security-*` theo theme. Không lấy màu link làm nền CTA nếu thiếu tương phản.

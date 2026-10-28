@@ -2,6 +2,8 @@
 
 > HISTORICAL REFERENCE — Áp dụng [UI_RULES.md](UI_RULES.md) và `../../AGENTS.md` cho công việc hiện hành. Các ví dụ bên dưới có đường dẫn, score/threshold và ma trận quyền cũ; không copy nguyên vào hệ thống hiện hành.
 
+> Quy chuẩn font, kích thước và component hiện hành: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+
 ## Hướng triển khai hiện tại
 
 - Kết quả phát hiện: Normal/Abnormal/Undetermined, không risk score. Khớp ít nhất một rule áp dụng → Abnormal; doanh nghiệp quyết định xử lý.
