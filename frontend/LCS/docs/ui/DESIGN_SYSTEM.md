@@ -1,137 +1,137 @@
 # FraudGuard Frontend Design System
 
-Quy chuẩn thiết kế cho dashboard `frontend/LCS`, dành cho thành viên nhóm và AI trước khi code. Đối chiếu mã nguồn ngày 28/10/2026. Đây là tài liệu frontend, không phải thiết kế kiến trúc backend hoặc API. Landing page là ứng dụng riêng, không tự áp dụng toàn bộ bố cục dashboard cho landing page.
+Design standards for the `frontend/LCS` dashboard, for team members and AI to read before coding. Checked against source code on 28/10/2026. This is frontend documentation, not a backend architecture or API design. The landing page is a separate application; do not automatically apply the entire dashboard layout to it.
 
-## 1. Đọc gì trước khi làm
+## 1. What to read before starting
 
-1. Đọc `../../AGENTS.md`: phạm vi công việc và quy trình kiểm tra.
-2. Đọc `../../README.md`: cấu trúc thư mục, package và lệnh chạy.
-3. Đọc `UI_RULES.md`: nghiệp vụ thể hiện trên UI, vai trò, ngôn ngữ và quyền.
-4. Đọc tài liệu này: font, kích thước, màu và hành vi component.
-5. Đọc component cùng CSS thực tế của màn hình sắp sửa; kiểm tra cả rule ghi đè và media query cuối file.
+1. Read `../../AGENTS.md`: task scope and validation workflow.
+2. Read `../../README.md`: directory structure, packages and run commands.
+3. Read `UI_RULES.md`: business presentation in the UI, roles, language and permissions.
+4. Read this document: fonts, dimensions, colors and component behavior.
+5. Read the actual component and CSS for the screen you will change; also check overrides and media queries at the end of the file.
 
-Proposal được phê duyệt quyết định nghiệp vụ. `UI_RULES.md` quyết định cách thể hiện nghiệp vụ; tài liệu này quyết định quy chuẩn hình thức và tương tác. Nếu hai quy chuẩn hiện hành mâu thuẫn, báo rõ trước khi thay đổi. Hai file `FRAUDGUARD_UI_SYSTEM_SPEC.md` và `FRAUDGUARD_DASHBOARD_UI_GUIDE_NEXTJS.md` chỉ để tham khảo lịch sử.
+The approved proposal governs business scope. `UI_RULES.md` governs business presentation; this document governs appearance and interaction standards. If the two current standards conflict, report it before making changes. `FRAUDGUARD_UI_SYSTEM_SPEC.md` and `FRAUDGUARD_DASHBOARD_UI_GUIDE_NEXTJS.md` are historical references only.
 
-Các bảng ghi **hiện tại** mô tả CSS đang có, không khẳng định mọi màn hình đều đã tuân thủ. Các mục ghi **chuẩn khi làm mới/sửa UI** là yêu cầu cho phần được giao; không tự sửa toàn ứng dụng chỉ để đồng bộ.
+Tables marked **current** describe existing CSS, without asserting that every screen already complies. Sections marked **standard for new/modified UI** are requirements for the assigned work; do not update the entire application merely for consistency.
 
-## 2. Nguồn triển khai
+## 2. Implementation sources
 
-| Nguồn | Trách nhiệm |
+| Source | Responsibility |
 | --- | --- |
-| `src/app/layout.tsx` | Nạp Inter qua `next/font/google`, hỗ trợ latin và vietnamese |
-| `src/app/globals.css` | Theme, token màu/kích thước, font nền và focus |
-| `src/components/fraudguard-dashboard/SecurityDashboard.module.css` | CSS chung dashboard, sidebar, header và các màn hình |
-| `src/components/auth/Login.module.css` | Bố cục đăng nhập riêng |
-| `src/layouts/Sidebar.tsx`, `ProductHeader.tsx` | Khung điều hướng; vẫn dùng CSS chung dashboard |
-| `src/routes/navigation.ts`, `role-home.ts` | Menu chung desktop/mobile và màn hình đầu theo vai trò |
-| `src/config/translations.ts` | Nội dung tiếng Việt/Anh dùng chung |
-| `src/hooks/useDialogFocus.ts` | Quản lý focus của dialog |
+| `src/app/layout.tsx` | Loads Inter through `next/font/google`, with latin and vietnamese support |
+| `src/app/globals.css` | Themes, color/dimension tokens, base font and focus |
+| `src/components/fraudguard-dashboard/SecurityDashboard.module.css` | Shared CSS for the dashboard, sidebar, header and screens |
+| `src/components/auth/Login.module.css` | Separate login layout |
+| `src/layouts/Sidebar.tsx`, `ProductHeader.tsx` | Navigation shell; still uses shared dashboard CSS |
+| `src/routes/navigation.ts`, `role-home.ts` | Shared desktop/mobile menus and role home views |
+| `src/config/translations.ts` | Shared Vietnamese/English content |
+| `src/hooks/useDialogFocus.ts` | Dialog focus management |
 
-Các đường dẫn `src/...` tính từ thư mục LCS. Dùng CSS Modules; không thêm Tailwind, UI framework hoặc font mới để xử lý riêng một màn hình. Không tạo token giả trong tài liệu rồi dùng nó khi CSS chưa khai báo.
+`src/...` paths are relative to the LCS directory. Use CSS Modules; do not add Tailwind, a UI framework or a new font for a single screen. Do not invent tokens in documentation and then use them before they exist in CSS.
 
-## 3. Font và phân cấp chữ
+## 3. Fonts and typography hierarchy
 
-Font chính: **Inter**, được nạp tại root layout. CSS nền khai báo fallback `"Segoe UI", Arial, sans-serif`. Body hiện tại **14px**. Input, select và button kế thừa font; textarea mới phải khai báo kế thừa font để tránh font mặc định khác biệt.
+Primary font: **Inter**, loaded in the root layout. Base CSS declares the fallback `"Segoe UI", Arial, sans-serif`. The current body size is **14px**. Inputs, selects and buttons inherit the font; new textareas must explicitly inherit it to avoid a different default font.
 
-| Vị trí | CSS hiện tại tiêu biểu | Chuẩn khi làm mới/sửa UI |
+| Location | Representative current CSS | Standard for new/modified UI |
 | --- | --- | --- |
-| Tiêu đề trang `.pageHeading h1` | 26px, weight 600; 23px ở ≤680px | Tái sử dụng class, một h1 mỗi trang |
-| Mô tả trang `.pageHeading p` | 13px | 13–14px, màu muted hoặc secondary, nội dung ngắn |
-| Tiêu đề panel `.panelHeader h2` | 13px, weight 600 | Giữ variant panel hiện có; section lớn có thể dùng 16px/600 như workflow panel |
-| Nội dung chính | Body 14px, nhiều control 12px | Nội dung SME ưu tiên 14px; không thu nhỏ để nhét nhiều dữ liệu |
-| Label/control | Các class hiện tại thường 12–13px | 12–14px, label rõ ràng, weight 500–600 nếu cần nhấn mạnh |
-| KPI `.statValue` | 31px/600, line-height 1.1 | Dùng StatCard; summary tập rule có variant 28px |
-| Metadata | Một số class 11px, còn class cũ 9–10px | Tối thiểu 11px; không dùng cho hướng dẫn quan trọng |
-| Bảng | Header cũ 10px/600, cell 11px | Khi sửa bảng cho SME ưu tiên 12–14px; không lấy chữ 10px làm chuẩn mới |
+| Page heading `.pageHeading h1` | 26px, weight 600; 23px at ≤680px | Reuse the class, one h1 per page |
+| Page description `.pageHeading p` | 13px | 13–14px, muted or secondary color, short content |
+| Panel heading `.panelHeader h2` | 13px, weight 600 | Preserve existing panel variants; large sections may use 16px/600 as in the workflow panel |
+| Main content | Body 14px, many controls 12px | Prefer 14px for SME content; do not shrink it to fit more data |
+| Label/control | Existing classes are usually 12–13px | 12–14px, clear labels, weight 500–600 when emphasis is needed |
+| KPI `.statValue` | 31px/600, line-height 1.1 | Use StatCard; rule-set summaries have a 28px variant |
+| Metadata | Some classes are 11px; legacy classes remain at 9–10px | At least 11px; do not use for important instructions |
+| Table | Legacy headers 10px/600, cells 11px | Prefer 12–14px when modifying SME tables; do not establish 10px text as a new standard |
 
-Weight: 400 nội dung, 500 nhãn/hành động vừa, 600 tiêu đề/giá trị, 700 nhấn mạnh ngắn. Đoạn mô tả nhiều dòng dùng line-height 1.5–1.6; đây là chuẩn khi bổ sung, không phải token line-height toàn cục đang có. Giữ nguyên dấu tiếng Việt; không viết hoa toàn đoạn. JSON/code kỹ thuật có thể dùng monospace trong vùng chi tiết riêng.
+Weights: 400 for content, 500 for labels/moderate action emphasis, 600 for headings/values, 700 for brief emphasis. Multiline descriptions use line-height 1.5–1.6; this is a standard for additions, not an existing global line-height token. Preserve Vietnamese diacritics; do not uppercase entire paragraphs. Technical JSON/code may use monospace in a separate detail area.
 
-## 4. Màu và theme
+## 4. Colors and themes
 
-Luôn dùng token thay vì sao chép mã hex vào component. Giá trị dưới đây đối chiếu `globals.css`; khi đổi token phải cập nhật tài liệu cùng thay đổi đó.
+Always use tokens instead of copying hex values into components. The values below were checked against `globals.css`; update the documentation when changing tokens.
 
-| Token | Dark | Light | Cách dùng |
+| Token | Dark | Light | Usage |
 | --- | --- | --- | --- |
-| `--security-bg` | #17181c | #f3f4f7 | Nền trang |
+| `--security-bg` | #17181c | #f3f4f7 | Page background |
 | `--security-header` | #1f2025 | #ffffff | Header |
 | `--security-panel` | #202126 | #ffffff | Card/panel |
-| `--security-panel-hover` | #292c35 | #f8fafc | Hover hàng/card |
+| `--security-panel-hover` | #292c35 | #f8fafc | Row/card hover |
 | `--security-control` | #292a32 | #f0f2f6 | Control |
-| `--security-control-hover` | #353640 | #e2e5ec | Hover control |
-| `--security-border` | #35363e | #e2e5eb | Viền phân chia |
-| `--security-border-strong` | #454752 | #cbd2df | Viền control |
-| `--security-text` | #e5e5ec | #0f172a | Chữ chính |
-| `--security-text-secondary` | #b5b8c4 | #334155 | Chữ bổ trợ |
-| `--security-muted` | #9799a7 | #64748b | Mô tả |
-| `--security-subtle` | #777b8b | #64748b | Chữ phụ; kiểm tra tương phản trước khi dùng chữ nhỏ |
-| `--security-blue` | #71b9f4 | #2563eb | Link, focus, lựa chọn |
-| `--action-bg` / `--action-text` | #2563eb / #ffffff | #2563eb / #ffffff | Nút hành động chính |
+| `--security-control-hover` | #353640 | #e2e5ec | Control hover |
+| `--security-border` | #35363e | #e2e5eb | Separators |
+| `--security-border-strong` | #454752 | #cbd2df | Control borders |
+| `--security-text` | #e5e5ec | #0f172a | Primary text |
+| `--security-text-secondary` | #b5b8c4 | #334155 | Supporting text |
+| `--security-muted` | #9799a7 | #64748b | Descriptions |
+| `--security-subtle` | #777b8b | #64748b | Subtle text; check contrast before using small text |
+| `--security-blue` | #71b9f4 | #2563eb | Links, focus, selection |
+| `--action-bg` / `--action-text` | #2563eb / #ffffff | #2563eb / #ffffff | Primary action buttons |
 
-Badge dùng bộ ba token `--critical-text/bg/border`, `--high-text/bg/border`, `--medium-text/bg/border`, `--low-text/bg/border` hiện có. Không suy ra risk score hoặc thêm mức kết luận nghiệp vụ từ tên token cũ. Trạng thái luôn có chữ, không chỉ màu. Không mặc định mọi cặp màu hiện tại đều đã đạt tương phản; mục được sửa phải kiểm tra tối thiểu 4.5:1 cho chữ thường và 3:1 cho chữ lớn.
+Badges use the existing token trios `--critical-text/bg/border`, `--high-text/bg/border`, `--medium-text/bg/border`, `--low-text/bg/border`. Do not infer risk scores or add business outcome levels from legacy token names. States always have text, not only color. Do not assume every current color pair meets contrast requirements; changed areas must be checked for at least 4.5:1 for normal text and 3:1 for large text.
 
-## 5. Kích thước và bố cục
+## 5. Dimensions and layout
 
-| Thành phần | Giá trị/ứng xử hiện tại |
+| Element | Current value/behavior |
 | --- | --- |
-| Header | `--product-header-height: 60px`; ≤680px được tăng chiều cao khi wrap, tối thiểu 60px |
-| Sidebar mở | `--sidebar-width: 240px`; ≤1150px thành 210px; ≤900px ẩn và hiện menu mobile |
-| Vùng nội dung | `--content-max-width: 1900px`; padding 24px 28px 40px; ≤1150px padding ngang 18px; ≤680px là 20px 14px 0 |
-| Panel | `--panel-radius: 5px`; border 1px; phần mới thường padding 16px mobile, 20–24px desktop |
-| Control | Radius 4px; nhóm control thông dụng trong `.root` min-height 40px, ≤680px min-height 44px |
-| Badge | Chuẩn mới radius 3px, padding khoảng 3px 6px hoặc 4px 8px; variant cũ có 4px |
-| Spacing | Chuẩn mới 4/8/12/16/20/24/28/32px; không thêm giá trị tùy hứng cho cùng loại bố cục |
-| Icon | Dùng lucide-react; chuẩn mới 16px trong nút/bảng, 18–20px điều hướng, 20–24px đầu section |
+| Header | `--product-header-height: 60px`; at ≤680px its height may grow when wrapping, with a 60px minimum |
+| Expanded sidebar | `--sidebar-width: 240px`; 210px at ≤1150px; hidden at ≤900px and replaced by a mobile menu |
+| Content area | `--content-max-width: 1900px`; padding 24px 28px 40px; horizontal padding 18px at ≤1150px; 20px 14px 0 at ≤680px |
+| Panel | `--panel-radius: 5px`; 1px border; new areas usually use 16px padding on mobile, 20–24px on desktop |
+| Control | Radius 4px; common control groups in `.root` have min-height 40px, min-height 44px at ≤680px |
+| Badge | New standard: radius 3px, padding around 3px 6px or 4px 8px; legacy variants use 4px |
+| Spacing | New standard: 4/8/12/16/20/24/28/32px; do not add arbitrary values for the same kind of layout |
+| Icon | Use lucide-react; new standard: 16px in buttons/tables, 18–20px for navigation, 20–24px at section starts |
 
-Icon size không phải vùng chạm: nút icon mới cần vùng chạm tối thiểu 40px desktop, 44px mobile. Các nút header/collapse cũ nhỏ hơn vẫn tồn tại; không nhân rộng chúng làm chuẩn.
+Icon size is not touch-target size: new icon buttons need at least 40px on desktop, 44px on mobile. Smaller legacy header/collapse buttons still exist; do not propagate them as the standard.
 
-Các breakpoint là `max-width` (bao gồm giá trị biên). Ở ≤680px, toolbar chuyển dọc và nội dung cần wrap; chart về một cột. KPI thông thường về hai cột; riêng case metrics về một cột ở ≤420px. Không buộc mọi loại grid có cùng số cột. Menu mobile dùng cùng danh sách quyền với desktop và đóng sau khi chọn.
+Breakpoints use `max-width` (including the boundary). At ≤680px, toolbars stack vertically and content must wrap; charts become a single column. Standard KPIs become two columns; case metrics specifically become one column at ≤420px. Do not force all grid types to have the same number of columns. The mobile menu uses the same permission list as desktop and closes after selection.
 
-## 6. Component và tương tác
+## 6. Components and interactions
 
-| Thành phần | Quy tắc sử dụng |
+| Element | Usage rules |
 | --- | --- |
-| Panel | Tái sử dụng `Panel.tsx`: title, description, action, children, className; không tự bọc panel lồng nhiều lớp |
-| KPI | Tái sử dụng `StatCard.tsx`: label, value, description, tone; số liệu có phạm vi và đơn vị rõ |
-| Button | Hiện tại dùng phần tử button + CSS class, chưa có component Button dùng chung. Dùng `.button`, `.btnPrimary`, `.btnSecondary` phù hợp, không import component chưa tồn tại |
-| Input/select/textarea | Label luôn nhìn thấy; placeholder chỉ là ví dụ. Dùng control hiện có, lỗi cạnh trường và `aria-invalid`/`aria-describedby` khi phù hợp |
-| Table | Dùng table ngữ nghĩa với th/td, vùng cuộn ngang riêng; hành động có tên rõ; empty state thay cho bảng trống khó hiểu |
-| Chi tiết quy tắc | Tái sử dụng `ReadableConditions.tsx`; ưu tiên diễn giải nghiệp vụ, JSON chỉ trong phần kỹ thuật có thể mở |
-| Dialog/drawer | Tái sử dụng cấu trúc hiện có và `useDialogFocus`; title, focus đầu, trap Tab, Escape, trả focus; không để nội dung vượt viewport |
-| Toast | Dùng `ToastProvider`; báo kết quả sau thao tác thực sự thành công, lỗi cần hướng xử lý |
-| Menu/dropdown | Giới hạn chiều cao và cuộn nội bộ; hoạt động bằng bàn phím, không che mất thao tác cuối; đóng khi chọn/đóng menu |
+| Panel | Reuse `Panel.tsx`: title, description, action, children, className; do not add multiple nested panel wrappers |
+| KPI | Reuse `StatCard.tsx`: label, value, description, tone; metrics have clear scopes and units |
+| Button | Currently uses button elements + CSS classes; no shared Button component exists yet. Use `.button`, `.btnPrimary`, `.btnSecondary` as appropriate; do not import nonexistent components |
+| Input/select/textarea | Always-visible labels; placeholders are examples only. Use existing controls, errors next to fields and `aria-invalid`/`aria-describedby` where appropriate |
+| Table | Use semantic tables with th/td and a separate horizontal scroll area; clearly named actions; an empty state instead of a confusing blank table |
+| Rule details | Reuse `ReadableConditions.tsx`; prioritize business explanations, with JSON only in an expandable technical section |
+| Dialog/drawer | Reuse existing structure and `useDialogFocus`; title, initial focus, Tab trapping, Escape, focus restoration; keep content within the viewport |
+| Toast | Use `ToastProvider`; report results only after actual success, and give guidance for errors |
+| Menu/dropdown | Limit height and scroll internally; keyboard-operable, without hiding the last action; close on selection/menu dismissal |
 
-Trạng thái bắt buộc khi áp dụng:
+Required states where applicable:
 
-- **Default/hover:** giữ cùng kích thước; dùng control-hover/panel-hover, không đổi bố cục khi rê chuột.
-- **Focus:** giữ outline `2px solid var(--security-blue)`, offset 3px từ globals; không xóa outline mà không thay thế tương đương.
-- **Selected:** chữ và nền thể hiện lựa chọn; thêm `aria-current`, `aria-selected` hoặc thuộc tính phù hợp ngữ nghĩa, không chỉ đổi màu.
-- **Disabled:** dùng thuộc tính disabled thực sự, kèm lý do nhìn thấy khi người dùng cần biết bước tiếp theo. Opacity không phải kiểm tra quyền.
-- **Loading:** ngăn thao tác gửi lặp, giữ label dễ hiểu, dùng aria-busy khi phù hợp. Không tạo loading giả cho thao tác local đồng bộ.
-- **Error/empty/success:** phân biệt lỗi hệ thống, không có dữ liệu và không có kết quả lọc; cung cấp hành động phù hợp, không bịa kết quả thành công.
+- **Default/hover:** keep dimensions stable; use control-hover/panel-hover without changing layout on hover.
+- **Focus:** preserve the globals outline `2px solid var(--security-blue)`, offset 3px; do not remove it without an equivalent replacement.
+- **Selected:** text and background indicate selection; add `aria-current`, `aria-selected` or the semantically appropriate attribute, rather than only changing color.
+- **Disabled:** use the actual disabled attribute, with a visible reason when users need to know the next step. Opacity is not an authorization check.
+- **Loading:** prevent duplicate submissions, keep labels understandable, and use aria-busy where appropriate. Do not create fake loading for synchronous local actions.
+- **Error/empty/success:** distinguish system errors, no data and no filter results; provide appropriate actions without fabricating success.
 
-Các lớp overlay hiện có dùng nhiều z-index khác nhau; chưa có hệ token lớp phủ thống nhất. Reuse lớp overlay của component, kiểm tra menu/dialog/toast khi mở cùng nhau; không chữa lỗi che bằng cách thêm tùy ý `z-index: 99999`. Dashboard đã có giảm animation/transition khi `prefers-reduced-motion: reduce`.
+Existing overlays use several z-index values; there is no unified overlay token system yet. Reuse the component's overlay layer and check menus/dialogs/toasts when open together; do not fix overlap by arbitrarily adding `z-index: 99999`. The dashboard already reduces animations/transitions for `prefers-reduced-motion: reduce`.
 
-## 7. Phân chia code để nhóm cùng làm
+## 7. Code organization for team collaboration
 
-README là nguồn mô tả đầy đủ thư mục. Quy tắc quyết định nhanh:
+README is the complete source for directory descriptions. Quick decision rules:
 
-- URL/layout gốc → `app`; màn hình và control → `components`; khung sidebar/header → `layouts`.
-- Menu và trang đầu theo role → `routes`; không tạo router khác hoặc `pages`.
-- State/provider dùng chung → `context`; logic React tái sử dụng → `hooks`.
-- Kiểu dữ liệu → `types`; hàm xử lý thuần/phân quyền → `utils`; cấu hình và bản dịch → `config`.
-- Dữ liệu mẫu → `data`; tài nguyên import → `assets`; file truy cập URL → `public`.
-- `services` vẫn chỉ có `.gitkeep` cho đến khi nhóm chốt API contract. Không biến mock thành API giả.
+- Root URLs/layouts → `app`; screens and controls → `components`; sidebar/header shell → `layouts`.
+- Menus and role home views → `routes`; do not create another router or `pages`.
+- Shared state/providers → `context`; reusable React logic → `hooks`.
+- Data types → `types`; pure processing/permission functions → `utils`; configuration and translations → `config`.
+- Sample data → `data`; imported assets → `assets`; URL-accessible files → `public`.
+- `services` still contains only `.gitkeep` until the team finalizes the API contract. Do not turn mocks into fake APIs.
 
-Không cần package mới cho tài liệu/quy chuẩn này. Dùng npm và package-lock hiện tại; hướng dẫn Node và package trong README. UI phải giữ dễ hiểu với SME, không hiển thị tên thư mục, schema hay chi tiết triển khai vào luồng nghiệp vụ.
+No new package is needed for this documentation/standard. Use npm and the current package-lock; Node and package guidance is in README. The UI must remain understandable to SMEs; do not expose directory names, schemas or implementation details in business workflows.
 
-## 8. Khoảng lệch đã biết và checklist
+## 8. Known differences and checklist
 
-Hiện còn label/badge 8–10px ở vài nơi, header control 26–34px, padding cũ 15/17px và radius một số dialog 8px. CSS còn các khai báo 34px bị override bởi `.root` ở cuối file. Đây là hiện trạng cần lưu ý, không phải chuẩn cho màn hình mới. Chưa thực hiện đợt đồng bộ UI toàn bộ trong lần viết tài liệu này.
+Some areas still have 8–10px labels/badges, 26–34px header controls, legacy 15/17px padding and 8px radius on some dialogs. CSS still contains 34px declarations overridden by `.root` near the end of the file. These are existing conditions to be aware of, not standards for new screens. No application-wide UI alignment was performed when writing this document.
 
-Trước khi bàn giao thay đổi UI:
+Before handing off UI changes:
 
-1. Kiểm tra phần được sửa trên 375px, 768px, desktop và hai theme; kiểm tra biên 900px/680px nếu sửa layout.
-2. Kiểm tra tiếng Việt dài, zoom 200%, keyboard/focus, cuộn bảng, menu và dialog.
-3. Kiểm tra trạng thái rỗng/lỗi/disabled/loading và vai trò/phạm vi doanh nghiệp liên quan.
-4. Chạy `npm run check` và `npm run build` theo AGENTS.md; chúng không thay thế kiểm tra trực quan.
-5. Ghi rõ những gì đã kiểm tra, chưa kiểm tra và ngoại lệ còn lại. Push nhánh riêng, leader review/merge.
+1. Check the changed area at 375px, 768px, desktop and in both themes; check the 900px/680px boundaries when changing layouts.
+2. Check long Vietnamese text, 200% zoom, keyboard/focus, table scrolling, menus and dialogs.
+3. Check empty/error/disabled/loading states and relevant roles/enterprise scopes.
+4. Run `npm run check` and `npm run build` as required by AGENTS.md; they do not replace visual inspection.
+5. State what was checked, what was not checked and remaining exceptions. Push a separate branch; the leader reviews/merges.

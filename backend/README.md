@@ -1,42 +1,42 @@
 # FraudGuard-as-a-Service
 
-Hệ thống phát hiện gian lận giao dịch cho SME, dạng SaaS multi-tenant (single-schema: mọi bảng nghiệp vụ có `tenant_id`).
+A transaction fraud detection system for SMEs, delivered as multi-tenant SaaS (single schema: every business table has `tenant_id`).
 
 **Stack:** Java 21 · Spring Boot 3.3 · Maven (wrapper) · PostgreSQL 16 · Flyway · JUnit 5 · ArchUnit · Testcontainers
 
-> Đây là **khung sườn** (skeleton): cấu trúc package, hợp đồng giữa các module và luật kiến trúc đã có;
-> logic nghiệp vụ thật (parse CSV, rule evaluation, severity, state machine của case, AI scoring...) để trống kèm `TODO`.
+> This is a **skeleton**: the package structure, inter-module contracts and architecture rules are in place;
+> actual business logic (CSV parsing, rule evaluation, severity, case state machine, AI scoring, etc.) is left empty with `TODO` markers.
 
-## Vì sao modular monolith
+## Why a modular monolith
 
-- Nhóm nhỏ, 2 backend dev: một process, một DB, một lần deploy — không tốn công vận hành microservices.
-- Vẫn chia ranh giới rõ theo tính năng (package-by-feature) để hai dev code song song mà không giẫm chân nhau.
-- Ranh giới được **máy kiểm tra** (ArchUnit) chứ không dựa vào kỷ luật cá nhân. Sau này nếu cần tách service,
-  `api` của mỗi module chính là điểm cắt tự nhiên.
+- Small team, 2 backend developers: one process, one DB, one deployment — without the operational overhead of microservices.
+- Clear feature boundaries (package-by-feature) still let both developers work in parallel without interfering with each other.
+- Boundaries are **automatically checked** (ArchUnit), rather than relying on individual discipline. If services need to be extracted later,
+  each module's `api` is the natural separation point.
 
-## Sơ đồ package
+## Package diagram
 
 ```
 com.fraudguard
 ├── ingestion/                       Dev A
 │   ├── api/        TransactionIngestedEvent, IngestionResult, IngestionChannel
 │   └── internal/
-│       ├── transaction/  Transaction entity, repository, service lưu + publish event, TransactionPayload (mapping dùng chung)
+│       ├── transaction/  Transaction entity, repository, persistence + event publishing service, TransactionPayload (shared mapping)
 │       ├── csv/          upload CSV/Excel
-│       ├── restapi/      REST + xác thực X-API-Key
-│       └── webhook/      webhook (X-Signature), dùng chung TransactionPayload với restapi
+│       ├── restapi/      REST + X-API-Key authentication
+│       └── webhook/      webhook (X-Signature), shares TransactionPayload with restapi
 ├── ruleengine/                      Dev B
 │   ├── api/        CaseQueryPort, CaseSummary, CaseStatus, Severity
 │   └── internal/
-│       ├── TransactionIngestedListener   lắng nghe event từ ingestion
+│       ├── TransactionIngestedListener   listens for ingestion events
 │       ├── rule/        Rule, RuleVersion, evaluation + dry-run (stub)
-│       ├── scoring/     gọi AI qua aiclient
-│       └── casemgmt/    FraudCase (bảng `cases`), repository, CaseQueryPort impl
+│       ├── scoring/     calls AI through aiclient
+│       └── casemgmt/    FraudCase (`cases` table), repository, CaseQueryPort impl
 ├── dashboard/                       Dev A
 │   ├── api/
-│   └── internal/reporting/   case queue, thống kê, export (gọi ruleengine qua CaseQueryPort)
-├── aiclient/       contract tới AI service (FraudScoringClient + DTO) + stub trả điểm giả
-└── common/         TenantContext, exception gốc, BaseTenantEntity (id, tenant_id, audit)
+│   └── internal/reporting/   case queue, statistics, export (calls ruleengine through CaseQueryPort)
+├── aiclient/       AI service contract (FraudScoringClient + DTO) + stub returning fake scores
+└── common/         TenantContext, base exception, BaseTenantEntity (id, tenant_id, audit)
 ```
 
 ```
@@ -45,36 +45,36 @@ com.fraudguard
                                        dashboard ─(CaseQueryPort)
 ```
 
-## Luật `api` / `internal`
+## `api` / `internal` rules
 
-1. Mỗi module tính năng (`ingestion`, `ruleengine`, `dashboard`) có đúng 2 sub-package: `api` và `internal`.
-2. **Không** package nào ngoài module được import `*.internal.*` của module đó — chỉ được dùng `*.api.*`.
-3. `api` không được tham chiếu bất kỳ type nào trong `internal`.
-4. Hướng phụ thuộc: `ruleengine → ingestion.api`, `dashboard → ruleengine.api`. Ingestion không biết ai nghe event của nó.
-5. `common` và `aiclient` không phụ thuộc vào module tính năng; giữa các module không có vòng phụ thuộc.
+1. Each feature module (`ingestion`, `ruleengine`, `dashboard`) has exactly 2 subpackages: `api` and `internal`.
+2. **No** package outside a module may import that module's `*.internal.*` — only `*.api.*` may be used.
+3. `api` must not reference any type in `internal`.
+4. Dependency direction: `ruleengine → ingestion.api`, `dashboard → ruleengine.api`. Ingestion does not know who listens to its events.
+5. `common` and `aiclient` do not depend on feature modules; there are no circular dependencies between modules.
 
-Các luật này nằm trong [`ArchitectureTest`](src/test/java/com/fraudguard/ArchitectureTest.java) — **vi phạm là `./mvnw verify` fail**.
-[`ArchitectureRulesSelfTest`](src/test/java/com/fraudguard/ArchitectureRulesSelfTest.java) chứng minh các luật bắt được lỗi thật
-(dùng class vi phạm cố ý trong `src/test/java/com/archfixture`). Javadoc của `ArchitectureTest` có ví dụ tự tay gây lỗi để xem build fail.
+These rules are in [`ArchitectureTest`](src/test/java/com/fraudguard/ArchitectureTest.java) — **violations cause `./mvnw verify` to fail**.
+[`ArchitectureRulesSelfTest`](src/test/java/com/fraudguard/ArchitectureRulesSelfTest.java) proves that the rules catch real violations
+(using intentionally invalid classes in `src/test/java/com/archfixture`). The `ArchitectureTest` Javadoc includes examples of deliberately causing violations to see the build fail.
 
 ### Event ingestion → ruleengine
 
-`ingestion` lưu transaction rồi `ApplicationEventPublisher.publishEvent(new TransactionIngestedEvent(...))`.
-`ruleengine` nghe bằng `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)` — chỉ chạy sau khi transaction của
-ingestion đã commit. Lỗi bên ruleengine được log chứ không làm hỏng request ingest (TODO: outbox/retry).
+`ingestion` saves the transaction, then calls `ApplicationEventPublisher.publishEvent(new TransactionIngestedEvent(...))`.
+`ruleengine` listens with `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)` — it runs only after the ingestion
+transaction has committed. Errors in ruleengine are logged without failing the ingestion request (TODO: outbox/retry).
 
-## Chạy local
+## Local development
 
-Yêu cầu: JDK 21, Docker. Không cần cài Maven (dùng `mvnw`).
+Requirements: JDK 21, Docker. No Maven installation is needed (use `mvnw`).
 
 ```bash
 docker compose up -d
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 ```
 
-Flyway tự migrate khi app khởi động (profile mặc định là `local`). Muốn migrate tay: `./mvnw flyway:migrate`.
+Flyway runs migrations automatically when the app starts (the default profile is `local`). To migrate manually: `./mvnw flyway:migrate`.
 
-Thử luồng end-to-end (log sẽ in `stored + published` rồi `consumed TransactionIngestedEvent`):
+Try the end-to-end flow (logs show `stored + published`, followed by `consumed TransactionIngestedEvent`):
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/ingest/transactions \
@@ -84,9 +84,9 @@ curl -X POST http://localhost:8080/api/v1/ingest/transactions \
 curl http://localhost:8080/api/v1/dashboard/cases -H "X-Tenant-Id: tenant-a"
 ```
 
-Các endpoint khác: `POST /api/v1/ingest/csv` (multipart `file`, header `X-Tenant-Id`),
-`POST /api/v1/ingest/webhook` (header `X-Tenant-Id`, `X-Signature`). Xác thực hiện chỉ là stub dev
-(`X-Tenant-Id`, API key trong `application-local.yml`) — thay bằng auth thật sau.
+Other endpoints: `POST /api/v1/ingest/csv` (multipart `file`, `X-Tenant-Id` header),
+`POST /api/v1/ingest/webhook` (`X-Tenant-Id`, `X-Signature` headers). Authentication is currently only a development stub
+(`X-Tenant-Id`, API key in `application-local.yml`) — replace it with real authentication later.
 
 ## Build & test
 
@@ -94,11 +94,11 @@ Các endpoint khác: `POST /api/v1/ingest/csv` (multipart `file`, header `X-Tena
 ./mvnw clean verify
 ```
 
-- `*Test` (surefire): ArchUnit + unit test, không cần Docker.
-- `*IT` (failsafe): chạy app với PostgreSQL thật qua Testcontainers; tự bỏ qua nếu máy không có Docker.
+- `*Test` (surefire): ArchUnit + unit tests; no Docker required.
+- `*IT` (failsafe): runs the app with real PostgreSQL through Testcontainers; automatically skipped when Docker is unavailable.
 
-## Ghi chú thiết kế
+## Design notes
 
-- Entity `Case` tên là `FraudCase` (bảng `cases`) vì `CASE` là từ khóa của JPQL/HQL.
-- `cases.transaction_id` là id nghiệp vụ, **không** có foreign key sang `transactions` — các module không chia sẻ ràng buộc DB.
-- Cô lập tenant hiện mới ở mức cột `tenant_id` + `TenantContext`. TODO: ép lọc theo tenant ở tầng repository (Hibernate filter).
+- The `Case` entity is named `FraudCase` (`cases` table) because `CASE` is a JPQL/HQL keyword.
+- `cases.transaction_id` is a business identifier, with **no** foreign key to `transactions` — modules do not share DB constraints.
+- Tenant isolation currently consists only of the `tenant_id` column + `TenantContext`. TODO: enforce tenant filtering at the repository layer (Hibernate filter).

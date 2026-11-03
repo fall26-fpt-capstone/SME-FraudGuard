@@ -1,43 +1,43 @@
-# Hướng dẫn xây dựng FraudGuard Dashboard UI với React + Next.js
+# Guide to building the FraudGuard Dashboard UI with React + Next.js
 
-> HISTORICAL REFERENCE — Áp dụng [UI_RULES.md](UI_RULES.md) và `../../AGENTS.md` cho công việc hiện hành. Các ví dụ bên dưới có đường dẫn, score/threshold và ma trận quyền cũ; không copy nguyên vào hệ thống hiện hành.
+> HISTORICAL REFERENCE — Follow [UI_RULES.md](UI_RULES.md) and `../../AGENTS.md` for current work. The examples below contain old paths, scores/thresholds and permission matrices; do not copy them unchanged into the current system.
 
-> Quy chuẩn font, kích thước và component hiện hành: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+> Current font, dimension and component standards: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
-## Hướng triển khai hiện tại
+## Current implementation direction
 
-- Kết quả phát hiện: Normal/Abnormal/Undetermined, không risk score. Khớp ít nhất một rule áp dụng → Abnormal; doanh nghiệp quyết định xử lý.
-- Một tập quy tắc/doanh nghiệp; Deployment Staff phụ trách bản nháp, kiểm thử, review, phát hành, kích hoạt và bàn giao. Platform Admin chỉ quản trị; SME xem bản đã bàn giao.
-- Dùng `transactionsForEnterprise` để cấp dữ liệu đã giới hạn cho dashboard, cảnh báo, hồ sơ và báo cáo; export và filter được tính từ cùng nguồn. Đây chỉ là scope frontend demo, không thay authorization backend.
-- Desktop dùng Sidebar; mobile có menu trong ProductHeader với `getSectionsForRole` dùng chung. Không để navigation biến mất dưới 900px.
-- Modal/drawer dùng `useDialogFocus`, aria-modal và accessible title. Các form có label/aria-label.
-- Dùng token `--action-bg`/`--action-text` cho CTA, semantic token cho trạng thái, control 40px desktop/44px mobile, panel radius 5px.
-- Route `/fraud-monitoring` có loading.tsx và error.tsx. API errors từng panel cần được nối vào cùng pattern khi backend sẵn sàng.
-- “Chuyển tài khoản demo” thể hiện từng tài khoản, role và phạm vi; không gọi danh sách tài khoản là danh sách role.
+- Detection outcomes: Normal/Abnormal/Undetermined, without risk scores. Matching at least one applicable rule → Abnormal; the enterprise decides the response.
+- One rule set per enterprise; Deployment Staff handle drafts, testing, review, release, activation and handover. Platform Admin only administers; SMEs see the handed-over version.
+- Use `transactionsForEnterprise` to supply scoped data for dashboards, alerts, cases and reports; exports and filters derive from the same source. This is frontend demo scoping only, not a replacement for backend authorization.
+- Desktop uses Sidebar; mobile has a menu in ProductHeader using the shared `getSectionsForRole`. Do not let navigation disappear below 900px.
+- Modals/drawers use `useDialogFocus`, aria-modal and an accessible title. Forms have labels/aria-labels.
+- Use `--action-bg`/`--action-text` tokens for CTAs, semantic tokens for states, 40px desktop/44px mobile controls, and 5px panel radius.
+- Route `/fraud-monitoring` has loading.tsx and error.tsx. Per-panel API errors should follow the same pattern when the backend is ready.
+- “Switch demo account” shows individual accounts, roles and scopes; do not call an account list a role list.
 
-## Baseline 1.0 — ví dụ cấu trúc tham khảo
+## Baseline 1.0 — reference structure example
 
-Tài liệu này chuyển phong cách dashboard mẫu thành giao diện cho **FraudGuard-as-a-Service**: nền tảng SaaS đa tenant phát hiện giao dịch bất thường cho SME. Nội dung bám theo proposal: tiếp nhận transaction qua API hoặc CSV/Excel, chấm điểm bằng Dynamic Rule Engine hoặc AI, chuẩn hóa risk score 0–100 qua Risk Score Gateway, tạo alert/case và hỗ trợ nhân sự điều tra.
+This document adapts the sample dashboard style into a UI for **FraudGuard-as-a-Service**: a multi-tenant SaaS platform detecting abnormal transactions for SMEs. It follows the proposal: ingest transactions through API or CSV/Excel, score with the Dynamic Rule Engine or AI, normalize risk scores to 0–100 through the Risk Score Gateway, create alerts/cases and support investigators.
 
-> FraudGuard chỉ cảnh báo và hỗ trợ ra quyết định. UI không được diễn đạt risk score như kết luận pháp lý rằng giao dịch chắc chắn là gian lận, và không cung cấp hành động tự động khóa tài khoản hoặc hủy giao dịch.
+> FraudGuard only alerts and supports decision-making. The UI must not present risk scores as a legal conclusion that a transaction is definitely fraudulent, or provide actions that automatically block accounts or cancel transactions.
 
-### Phạm vi dashboard theo proposal
+### Dashboard scope according to the proposal
 
-| Khu vực | Nội dung FraudGuard |
+| Area | FraudGuard content |
 |---|---|
-| Tổng quan | Giao dịch đã phân tích, phân bố risk, alert mở, case đang xử lý |
-| Transactions | Transaction ID, loại giao dịch, project, risk score, risk level, scoring source |
-| Alerts | Alert vượt threshold, triggered rules hoặc AI explanation |
-| Cases | Phân công, ghi chú và trạng thái Open, Reviewing, Confirmed Fraud, False Alarm, Resolved |
-| Rules | Rule template, điều kiện AND/OR, risk point, threshold và enable/disable |
-| Reports | Báo cáo theo project, thời gian, transaction type, risk level và case status |
-| Platform health | Trạng thái backend, AI Service, queue và số lần dùng rule fallback |
+| Overview | Analyzed transactions, risk distribution, open alerts, cases in progress |
+| Transactions | Transaction ID, transaction type, project, risk score, risk level, scoring source |
+| Alerts | Alerts exceeding thresholds, triggered rules or AI explanations |
+| Cases | Assignment, notes and states Open, Reviewing, Confirmed Fraud, False Alarm, Resolved |
+| Rules | Rule templates, AND/OR conditions, risk points, thresholds and enable/disable |
+| Reports | Reports by project, time, transaction type, risk level and case status |
+| Platform health | Backend, AI Service and queue status, and rule fallback counts |
 
-Các vai trò chính gồm `Platform Admin`, `SME Admin`, `Risk/Operation Staff` và `Viewer/Auditor`. Mỗi màn hình phải kiểm tra role cùng phạm vi tenant/project.
+The main roles are `Platform Admin`, `SME Admin`, `Risk/Operation Staff` and `Viewer/Auditor`. Every screen must check the role and tenant/project scope.
 
-## 1. Kết quả cần đạt
+## 1. Target outcome
 
-Dashboard gồm các vùng chính:
+The dashboard contains these main regions:
 
 ```text
 ┌──────┬────────────────────────────────────────────────────────────┐
@@ -51,19 +51,19 @@ Dashboard gồm các vùng chính:
 └──────┴──────────────┴─────────────────────────────────────────────┘
 ```
 
-Nguyên tắc thị giác:
+Visual principles:
 
-- Nền tổng thể gần đen; card sáng hơn nền khoảng một cấp.
-- Border mỏng, tương phản thấp; tránh shadow lớn.
-- Màu xanh dùng cho navigation và hành động.
-- Tím dùng cho nhận diện sản phẩm và mức độ Medium.
-- Đỏ, cam, xanh lá chỉ dùng khi biểu đạt trạng thái.
-- Border radius nhỏ, khoảng `4–6px`, để giữ cảm giác của công cụ kỹ thuật.
-- Font nhỏ nhưng có phân cấp rõ; nội dung chính không nhỏ hơn `12px`.
+- Near-black overall background; cards about one level brighter.
+- Thin, low-contrast borders; avoid large shadows.
+- Blue for navigation and actions.
+- Purple for product identity and Medium severity.
+- Red, orange and green only for states.
+- Small border radius, around `4–6px`, to retain the feel of a technical tool.
+- Small fonts with a clear hierarchy; main content no smaller than `12px`.
 
-## 2. Cấu trúc thư mục đề xuất
+## 2. Proposed directory structure
 
-Ví dụ này dùng Next.js App Router và CSS Modules.
+This example uses Next.js App Router and CSS Modules.
 
 ```text
 src/
@@ -89,16 +89,16 @@ src/
     └── fraudguard-transactions.ts
 ```
 
-Quy ước:
+Conventions:
 
-- `page.tsx` là Server Component, dùng để lấy dữ liệu ban đầu.
-- `FraudGuardDashboard.tsx` là Client Component vì chứa filter, tab, drawer và state tương tác.
-- Design tokens và reset đặt trong `globals.css`.
-- CSS riêng của dashboard đặt trong `SecurityDashboard.module.css`.
+- `page.tsx` is a Server Component for initial data fetching.
+- `FraudGuardDashboard.tsx` is a Client Component because it contains filters, tabs, drawers and interactive state.
+- Design tokens and resets belong in `globals.css`.
+- Dashboard-specific CSS belongs in `SecurityDashboard.module.css`.
 
-## 3. Design tokens dùng toàn dự án
+## 3. Project-wide design tokens
 
-Thêm vào `src/app/globals.css`:
+Add to `src/app/globals.css`:
 
 ```css
 :root {
@@ -191,7 +191,7 @@ a {
 }
 ```
 
-Nếu dự án chưa có font, có thể cấu hình bằng `next/font` trong `layout.tsx`:
+If the project does not have a font yet, configure one with `next/font` in `layout.tsx`:
 
 ```tsx
 import { Inter } from "next/font/google";
@@ -210,9 +210,9 @@ export default function RootLayout({
 }
 ```
 
-## 4. Kiểu dữ liệu TypeScript
+## 4. TypeScript data types
 
-Tạo `src/components/fraudguard-dashboard/types.ts`:
+Create `src/components/fraudguard-dashboard/types.ts`:
 
 ```ts
 export type RiskLevel = "Critical" | "High" | "Medium" | "Low";
@@ -282,11 +282,11 @@ export interface FraudGuardFilters {
 </FraudGuardDashboard>
 ```
 
-Mỗi component chỉ nên đảm nhiệm một vùng giao diện. Transaction data và filter state được giữ ở `FraudGuardDashboard`, sau đó truyền xuống bằng props. API key chỉ được quản lý ở màn hình project settings; không đưa API key vào dashboard hoặc Client Component.
+Each component should own only one UI region. Transaction data and filter state are kept in `FraudGuardDashboard` and passed down as props. Manage API keys only on the project settings screen; do not put API keys in the dashboard or Client Components.
 
-## 6. CSS layout có thể dùng trực tiếp
+## 6. Ready-to-use CSS layout
 
-Tạo `src/components/fraudguard-dashboard/SecurityDashboard.module.css`:
+Create `src/components/fraudguard-dashboard/SecurityDashboard.module.css`:
 
 ```css
 .root {
@@ -872,7 +872,7 @@ Tạo `src/components/fraudguard-dashboard/SecurityDashboard.module.css`:
 }
 ```
 
-## 7. Các component nền tảng
+## 7. Foundation components
 
 ### `Panel.tsx`
 
@@ -967,11 +967,11 @@ export function RiskLevelBadge({ riskLevel }: { riskLevel: RiskLevel }) {
 }
 ```
 
-Không tạo class CSS bằng chuỗi động như `styles[riskLevel]` nếu dữ liệu API chưa được chuẩn hóa. Mapping tường minh giúp TypeScript kiểm tra đủ bốn mức `Low`, `Medium`, `High`, `Critical` do Risk Score Gateway trả về.
+Do not construct CSS classes dynamically, such as `styles[riskLevel]`, if API data has not been normalized. Explicit mapping lets TypeScript check all four levels `Low`, `Medium`, `High`, `Critical` returned by the Risk Score Gateway.
 
-## 8. Dashboard container và filter state
+## 8. Dashboard container and filter state
 
-Tạo `FraudGuardDashboard.tsx`:
+Create `FraudGuardDashboard.tsx`:
 
 ```tsx
 "use client";
@@ -1066,7 +1066,7 @@ export function FraudGuardDashboard({
               <div>
                 <h1>Transaction risk overview</h1>
                 <p>
-                  Theo dõi risk score, cảnh báo và case cần nhân sự kiểm tra.
+                  Monitor risk scores, alerts and cases requiring human review.
                 </p>
               </div>
             </div>
@@ -1077,28 +1077,28 @@ export function FraudGuardDashboard({
               <StatCard
                 label="Transactions analyzed"
                 value={metrics.analyzed}
-                description="Trong khoảng thời gian đã chọn"
+                description="Within the selected time range"
               />
               <StatCard
                 label="High-risk transactions"
                 value={metrics.highRisk}
-                description="High hoặc Critical"
+                description="High or Critical"
                 tone="critical"
               />
               <StatCard
                 label="Open alerts"
                 value={metrics.openAlerts}
-                description="Chưa chuyển thành case"
+                description="Not yet converted into cases"
               />
               <StatCard
                 label="Active cases"
                 value={metrics.activeCases}
-                description="Open hoặc Reviewing"
+                description="Open or Reviewing"
                 tone="warning"
               />
             </section>
 
-            {/* Chart panels đặt ở đây */}
+            {/* Chart panels go here */}
 
             <TransactionRiskTable
               transactions={visibleTransactions}
@@ -1113,9 +1113,9 @@ export function FraudGuardDashboard({
 }
 ```
 
-`useDeferredValue` giúp nhập từ khóa mượt hơn khi bảng lớn. Với dữ liệu giao dịch thực tế, filter, sort và pagination nên được thực hiện ở API. Tenant và project phải được xác thực phía server; không dựa vào filter phía client để bảo đảm tenant isolation.
+`useDeferredValue` keeps keyword entry responsive with large tables. For real transaction data, filtering, sorting and pagination should run in the API. Tenant and project must be verified server-side; do not rely on client-side filtering for tenant isolation.
 
-## 9. Toolbar có kiểm soát bằng React
+## 9. React-controlled toolbar
 
 ```tsx
 import type { Dispatch, SetStateAction } from "react";
@@ -1212,7 +1212,7 @@ export function DashboardToolbar({
 }
 ```
 
-## 10. Bảng giao dịch và rủi ro
+## 10. Transaction and risk table
 
 ```tsx
 "use client";
@@ -1242,7 +1242,7 @@ export function TransactionRiskTable({
         <div>
           <h2>Scored transactions</h2>
           <p className={styles.muted}>
-            Kết quả do Risk Score Gateway chuẩn hóa trên thang 0–100
+            Results normalized to a 0–100 scale by the Risk Score Gateway
           </p>
         </div>
         <span className={styles.muted}>{transactions.length} transactions</span>
@@ -1308,7 +1308,7 @@ export function TransactionRiskTable({
             {transactions.length === 0 ? (
               <tr>
                 <td className={styles.emptyState} colSpan={7}>
-                  Không có kết quả phù hợp với bộ lọc hiện tại.
+                  No results match the current filters.
                 </td>
               </tr>
             ) : (
@@ -1350,9 +1350,9 @@ export function TransactionRiskTable({
 }
 ```
 
-Không gắn `onClick` lên toàn bộ `<tr>` nếu row bên trong có button hoặc link. Nút `Review` mở drawer gồm dữ liệu giao dịch, risk score, scoring source, triggered rules hoặc AI explanation. Giao diện chỉ cho phép tạo/phân công case và cập nhật kết luận của nhân sự; không cung cấp hành động tự động hủy giao dịch hoặc khóa tài khoản.
+Do not attach `onClick` to an entire `<tr>` when the row contains buttons or links. The `Review` button opens a drawer with transaction data, risk score, scoring source, triggered rules or AI explanation. The UI only allows creating/assigning cases and updating human conclusions; it does not provide actions to automatically cancel transactions or block accounts.
 
-## 11. Gắn vào route Next.js
+## 11. Connect to the Next.js route
 
 `src/app/fraud-monitoring/page.tsx`:
 
@@ -1367,7 +1367,7 @@ export default function FraudMonitoringPage() {
 }
 ```
 
-Khi nối API thật:
+When connecting a real API:
 
 ```tsx
 import { FraudGuardDashboard } from "@/components/fraudguard-dashboard/FraudGuardDashboard";
@@ -1379,7 +1379,7 @@ async function getTransactions(): Promise<TransactionRisk[]> {
   });
 
   if (!response.ok) {
-    throw new Error("Không thể tải dữ liệu giao dịch đã chấm điểm");
+    throw new Error("Unable to load scored transaction data");
   }
 
   return response.json();
@@ -1391,17 +1391,17 @@ export default async function FraudMonitoringPage() {
 }
 ```
 
-Không đưa token bí mật hoặc API key ingestion vào Client Component. Server phải kiểm tra session, role, tenant và project trước khi trả transaction data. API key của project chỉ xuất hiện trong luồng quản lý key với cơ chế mask, regenerate và revoke.
+Do not put secret tokens or ingestion API keys in Client Components. The server must check session, role, tenant and project before returning transaction data. Project API keys appear only in key-management workflows with masking, regeneration and revocation.
 
-## 12. Biểu đồ
+## 12. Charts
 
-Có ba hướng triển khai:
+There are three implementation options:
 
-1. **SVG thuần**: phù hợp funnel đơn giản, sparkline nhỏ và ít dependency.
-2. **Recharts**: phù hợp dashboard đồ án, dễ tạo line chart, area chart, tooltip và responsive container.
-3. **ECharts**: phù hợp dữ liệu lớn và biểu đồ phức tạp hơn.
+1. **Plain SVG**: suitable for simple funnels, small sparklines and few dependencies.
+2. **Recharts**: suitable for capstone dashboards; easy line charts, area charts, tooltips and responsive containers.
+3. **ECharts**: suitable for larger datasets and more complex charts.
 
-Nếu dùng Recharts, component biểu đồ phải là Client Component:
+If using Recharts, chart components must be Client Components:
 
 ```tsx
 "use client";
@@ -1452,32 +1452,32 @@ export function TransactionRiskTrend({
 }
 ```
 
-Các chart chính của FraudGuard nên gồm: số transaction theo thời gian, phân bố risk level, tỷ lệ scoring source `AI/RULE/RULE_FALLBACK`, alert/case theo trạng thái và top triggered rules. Không đặt màu trực tiếp ở nhiều component. Nếu thư viện chart không đọc được CSS variable, tạo một file `chart-colors.ts` để giữ màu tập trung.
+The main FraudGuard charts should include: transactions over time, risk-level distribution, `AI/RULE/RULE_FALLBACK` scoring-source proportions, alerts/cases by status and top triggered rules. Do not scatter direct color values across components. If the chart library cannot read CSS variables, create a `chart-colors.ts` file to centralize colors.
 
-## 13. Quy tắc responsive
+## 13. Responsive rules
 
-| Breakpoint | Thay đổi |
+| Breakpoint | Change |
 |---|---|
-| `> 1150px` | Hiển thị đầy đủ rail, subnav, 4 KPI và chart 2 cột |
-| `901–1150px` | Thu hẹp subnav và khoảng cách nội dung |
-| `681–900px` | Ẩn subnav, giữ rail và chart 2 cột hẹp |
-| `421–680px` | Header xuống 2 hàng, chart thành 1 cột, KPI 2 cột |
-| `≤ 420px` | KPI thành 1 cột nếu nội dung dài |
+| `> 1150px` | Full rail, subnav, 4 KPIs and 2-column charts |
+| `901–1150px` | Narrower subnav and content spacing |
+| `681–900px` | Hide subnav; retain rail and narrow 2-column charts |
+| `421–680px` | Header wraps to 2 rows, charts to 1 column, KPIs to 2 columns |
+| `≤ 420px` | KPIs become 1 column if content is long |
 
-Với bảng, giữ `overflow-x: auto`; không ép tất cả cột co lại vì sẽ làm mất khả năng đọc. Trên mobile có thể thay table bằng card list nếu luồng sử dụng mobile quan trọng.
+For tables, keep `overflow-x: auto`; do not force all columns to shrink, which harms readability. On mobile, a card list may replace the table if mobile usage is important.
 
-## 14. Trạng thái bắt buộc
+## 14. Required states
 
-Dashboard hoàn chỉnh cần có:
+A complete dashboard needs:
 
-- `loading.tsx`: skeleton cho KPI, chart và bảng.
-- `error.tsx`: thông báo lỗi cùng nút thử lại.
-- Empty state khi bộ lọc không có kết quả.
-- Trạng thái disabled/loading khi export hoặc thay đổi status.
-- Toast sau thao tác thành công.
-- Drawer cho chi tiết transaction/alert/case.
+- `loading.tsx`: skeletons for KPIs, charts and tables.
+- `error.tsx`: error message and retry button.
+- Empty state when filters return no results.
+- Disabled/loading states during export or status changes.
+- Toast after successful actions.
+- Drawer for transaction/alert/case details.
 
-Ví dụ skeleton:
+Skeleton example:
 
 ```css
 .skeleton {
@@ -1507,18 +1507,18 @@ Ví dụ skeleton:
 
 ## 15. Accessibility checklist
 
-- Dùng `<button>` cho hành động và `<a>`/`Link` cho điều hướng.
-- Mỗi `<select>` và `<input>` cần label hoặc `aria-label`.
-- Tab cần `role="tablist"`, `role="tab"` và `aria-selected`.
-- Icon-only button phải có `aria-label` hoặc tooltip truy cập được.
-- Không chỉ dùng màu để truyền đạt risk level; luôn có chữ `Critical`, `High`, v.v.
-- Modal cần focus trap, nút đóng và hỗ trợ phím `Escape`. Nên dùng Radix Dialog hoặc component dialog sẵn có của hệ thống UI.
-- Chart cần phần mô tả chữ hoặc bảng dữ liệu tương đương cho screen reader.
-- Giữ focus ring rõ ràng; không dùng `outline: none`.
+- Use `<button>` for actions and `<a>`/`Link` for navigation.
+- Each `<select>` and `<input>` needs a label or `aria-label`.
+- Tabs need `role="tablist"`, `role="tab"` and `aria-selected`.
+- Icon-only buttons must have `aria-label` or an accessible tooltip.
+- Do not communicate risk levels through color alone; always include `Critical`, `High`, etc.
+- Modals need focus trapping, a close button and `Escape` support. Prefer Radix Dialog or an existing dialog component in the UI system.
+- Charts need text descriptions or equivalent data tables for screen readers.
+- Keep focus rings visible; do not use `outline: none`.
 
-## 16. Quy ước khi nối backend
+## 16. Backend integration conventions
 
-Đề xuất response của API:
+Proposed API response:
 
 ```json
 {
@@ -1539,67 +1539,67 @@ Ví dụ skeleton:
 }
 ```
 
-Khi filter được thực hiện ở server, đồng bộ filter với URL:
+When filtering server-side, synchronize filters with the URL:
 
 ```text
 /fraud-monitoring?project=checkout&riskLevel=critical&source=ai&page=1
 ```
 
-Ưu điểm:
+Benefits:
 
-- Reload không làm mất bộ lọc.
-- Có thể chia sẻ đường dẫn đang xem.
-- Back/forward của trình duyệt hoạt động đúng.
-- Server có thể cache từng bộ lọc.
+- Reload preserves filters.
+- The current view URL can be shared.
+- Browser back/forward works correctly.
+- The server can cache each filter combination.
 
-Trong Next.js, dùng `useSearchParams()` để đọc query và `router.replace()` để cập nhật URL. Debounce ô search khoảng `250–400ms` trước khi thay URL.
+In Next.js, use `useSearchParams()` to read the query and `router.replace()` to update the URL. Debounce search by around `250–400ms` before changing the URL.
 
-## 17. Các màn hình cần triển khai cho FraudGuard
+## 17. Screens to implement for FraudGuard
 
-| Route | Mục đích | Actor chính |
+| Route | Purpose | Primary actors |
 |---|---|---|
-| `/fraud-monitoring` | Tổng quan transaction, risk distribution, scoring source | SME Admin, Risk Staff, Viewer |
-| `/transactions` | Danh sách và chi tiết giao dịch đã validate/scoring | SME Admin, Risk Staff, Viewer |
-| `/alerts` | Cảnh báo vượt threshold và evidence | Risk Staff |
-| `/cases` | Điều tra, phân công, ghi chú và kết luận | Risk Staff, SME Admin |
+| `/fraud-monitoring` | Transaction overview, risk distribution, scoring source | SME Admin, Risk Staff, Viewer |
+| `/transactions` | List and details of validated/scored transactions | SME Admin, Risk Staff, Viewer |
+| `/alerts` | Alerts exceeding thresholds and evidence | Risk Staff |
+| `/cases` | Investigation, assignment, notes and conclusions | Risk Staff, SME Admin |
 | `/rules` | Rule, AND/OR conditions, risk point, threshold, publish history | SME Admin, Platform/Technical Staff |
-| `/projects` | Project, đặc tả, custom field đã xác nhận, quota, API key | SME Admin |
-| `/reports` | Xuất CSV/PDF theo phạm vi quyền | SME Admin, Risk Staff, Viewer |
+| `/projects` | Projects, specifications, confirmed custom fields, quotas, API keys | SME Admin |
+| `/reports` | CSV/PDF export within permission scope | SME Admin, Risk Staff, Viewer |
 | `/platform` | SME accounts, plan, system health, queue, AI health, audit | Platform Admin |
 
-Free Plan dùng Rule Engine làm scoring source chính. Subscription Plan dùng AI làm đường chính và hiển thị `RULE_FALLBACK` rõ ràng khi AI timeout hoặc unavailable. UI phải giữ cùng thang điểm 0–100 và cùng risk level cho cả hai đường xử lý.
+Free Plan uses the Rule Engine as the primary scoring source. Subscription Plan uses AI as the primary path and clearly displays `RULE_FALLBACK` when AI times out or is unavailable. The UI must retain the same 0–100 scale and risk levels for both processing paths.
 
-## 18. Thứ tự triển khai nhanh
+## 18. Quick implementation order
 
-1. Thêm tokens vào `globals.css`.
-2. Tạo `types.ts` và dữ liệu mock đúng shape API.
-3. Dựng `AppRail`, `ProductHeader`, `SecondaryNav` và responsive layout.
-4. Tạo `Panel`, `StatCard`, `RiskLevelBadge`.
-5. Thêm toolbar và filter state.
-6. Thêm bảng, empty state và drawer chi tiết.
-7. Thêm chart sau khi layout và data flow đã ổn định.
-8. Thay mock data bằng API.
-9. Kiểm tra keyboard, mobile, loading, error và empty state.
+1. Add tokens to `globals.css`.
+2. Create `types.ts` and mock data matching the API shape.
+3. Build `AppRail`, `ProductHeader`, `SecondaryNav` and the responsive layout.
+4. Create `Panel`, `StatCard`, `RiskLevelBadge`.
+5. Add the toolbar and filter state.
+6. Add the table, empty state and detail drawer.
+7. Add charts after layout and data flow are stable.
+8. Replace mock data with the API.
+9. Check keyboard, mobile, loading, error and empty states.
 
 ## 19. Definition of Done
 
-- Giao diện đúng dark theme và hierarchy của dashboard.
-- Không có horizontal scroll toàn trang ở desktop/mobile.
-- Chỉ vùng bảng được scroll ngang khi cần.
-- Filter, search, tab và sort hoạt động bằng state React.
-- URL lưu filter nếu dữ liệu được filter từ backend.
-- Component không chứa màu rải rác ngoài hệ thống token.
-- Có loading, error và empty state.
-- Có focus ring, label và keyboard navigation.
-- Không đưa secret vào Client Component.
-- Dữ liệu mock có thể thay bằng Transaction Ingestion, Risk Score Gateway và Case API mà không phải sửa cấu trúc UI.
-- Mọi màn hình kiểm tra role cùng tenant/project; không dựa vào việc ẩn button để bảo vệ quyền.
-- Chi tiết alert luôn hiển thị scoring source và triggered rules hoặc AI explanation.
-- Không có action tự động hủy giao dịch hoặc khóa tài khoản khách hàng.
+- The UI follows the dashboard dark theme and hierarchy.
+- No page-wide horizontal scrolling on desktop/mobile.
+- Only tables scroll horizontally when needed.
+- Filters, search, tabs and sorting work through React state.
+- URLs retain filters when data is filtered by the backend.
+- Components do not contain scattered colors outside the token system.
+- Loading, error and empty states exist.
+- Focus rings, labels and keyboard navigation exist.
+- No secrets in Client Components.
+- Mock data can be replaced by Transaction Ingestion, Risk Score Gateway and Case APIs without changing the UI structure.
+- Every screen checks role and tenant/project; hiding buttons is not authorization.
+- Alert details always show the scoring source and triggered rules or AI explanation.
+- No actions automatically cancel transactions or block customer accounts.
 
-## 20. Tài liệu Next.js liên quan
+## 20. Related Next.js documentation
 
-- CSS và CSS Modules: <https://nextjs.org/docs/app/getting-started/css>
-- Server và Client Components: <https://nextjs.org/docs/app/getting-started/server-and-client-components>
+- CSS and CSS Modules: <https://nextjs.org/docs/app/getting-started/css>
+- Server and Client Components: <https://nextjs.org/docs/app/getting-started/server-and-client-components>
 - Data fetching: <https://nextjs.org/docs/app/getting-started/fetching-data>
 - Route handlers: <https://nextjs.org/docs/app/building-your-application/routing/route-handlers>

@@ -1,59 +1,60 @@
-# Hướng dẫn chung cho coding agent
+# General guidelines for coding agents
 
-Áp dụng cho toàn bộ repo SME-FraudGuard, đồ án phát hiện gian lận giao dịch cho SME của nhóm 4 thành viên. Mỗi thành viên chịu trách nhiệm hiểu, kiểm tra và giải thích được thay đổi do agent hỗ trợ.
+These guidelines apply to the entire SME-FraudGuard repository, a transaction fraud detection capstone project for SMEs developed by a four-member team. Each member is responsible for understanding, checking and explaining changes made with agent assistance.
 
-## Trước khi làm
+## Before starting
 
-- Đọc yêu cầu, `README.md` ở gốc và README của phần sắp sửa. Đọc thêm `AGENTS.md` trong thư mục liên quan; hướng dẫn ở thư mục con bổ sung quy định riêng cho phạm vi đó.
-- Kiểm tra nhánh và `git status` trước khi sửa. Thay đổi có sẵn có thể là công việc của thành viên khác; không ghi đè, hoàn tác hoặc xóa nếu chưa được yêu cầu.
-- Xác định phạm vi: phần nào cần sửa, nơi gọi, hợp đồng API, dữ liệu và kiểm thử bị ảnh hưởng. Chỉ đọc thêm tài liệu cần cho công việc hiện tại.
-- Bám theo phạm vi nghiệp vụ đã được nhóm thống nhất. Nếu yêu cầu mâu thuẫn với tài liệu hoặc cần đổi hợp đồng dùng chung, nêu rõ để nhóm thống nhất trước khi thực hiện phần phụ thuộc.
+- Read the request, the root `README.md` and the README for the area you will change. Also read any `AGENTS.md` in the relevant directories; instructions in subdirectories add rules for their own scope.
+- Check the branch and `git status` before editing. Existing changes may belong to another team member; do not overwrite, revert or delete them unless requested.
+- Identify the scope: the area to change, callers, API contracts, data and tests affected. Read only additional documentation needed for the current task.
+- Stay within the business scope agreed by the team. If a request conflicts with documentation or requires a shared contract change, explain this so the team can agree before implementing the dependent work.
 
-## Cấu trúc và ranh giới
+## Structure and boundaries
 
-- `backend/`: Java 21, Spring Boot, Maven Wrapper; giữ kiến trúc modular monolith và ranh giới `api` / `internal` theo `backend/README.md`.
-- `frontend/LCS/`: dashboard Next.js; tuân thủ `frontend/LCS/AGENTS.md` và tài liệu UI mà file đó chỉ định.
-- `frontend/LCS_landingpage/`: ứng dụng landing page độc lập; dùng README và package scripts riêng.
-- `ai-service/`, `database/`, `infra/`: kiểm tra nội dung thực tế trước khi làm; không tự giả định đã có triển khai hay hợp đồng tích hợp.
-- `docs/`: tài liệu đồ án; tuân thủ `docs/README.md`. Phân biệt tính năng đã chạy với kế hoạch, stub và dữ liệu demo khi viết tài liệu.
+- `backend/`: Java 21, Spring Boot, Maven Wrapper; preserve the modular monolith architecture and `api` / `internal` boundaries described in `backend/README.md`.
+- `frontend/LCS/`: Next.js dashboard; follow `frontend/LCS/AGENTS.md` and the UI documentation it references.
+- `frontend/LCS_landingpage/`: independent landing page application; use its own README and package scripts.
+- `ai-service/`, `database/`, `infra/`: inspect the actual contents before working; do not assume an implementation or integration contract already exists.
+- `docs/`: capstone documentation; follow `docs/README.md`. Distinguish working features from plans, stubs and demo data when writing documentation.
 
-## Cách thay đổi code
+## Making code changes
 
-- Làm thay đổi nhỏ nhất giải quyết đầy đủ yêu cầu. Tái sử dụng helper, component, thư viện và cách tổ chức sẵn có.
-- Không tự mở rộng tính năng, thêm dependency, đổi kiến trúc, refactor diện rộng hoặc format file không liên quan.
-- Khi sửa lỗi, tìm các nơi gọi và sửa nguyên nhân ở chỗ dùng chung. Khi đổi hợp đồng, cập nhật đầy đủ bên sử dụng và kiểm thử liên quan trong phạm vi đã thống nhất.
-- Giữ kiểm tra đầu vào, xử lý lỗi, phân quyền và cô lập tenant. Không coi dữ liệu phía trình duyệt là bằng chứng xác thực hay quyền truy cập.
-- Không đưa mật khẩu, token, API key, file môi trường cá nhân hoặc dữ liệu khách hàng thật lên Git hay vào log.
-- Không sửa migration đã được áp dụng trên môi trường dùng chung; thêm migration mới. Không xóa dữ liệu, reset database hay chạy lệnh phá hủy nếu chưa được cho phép cụ thể.
-- Với logic mới hoặc sửa hành vi, thêm hoặc cập nhật kiểm thử phù hợp. Thay đổi tài liệu thuần túy không cần chạy toàn bộ ứng dụng.
+- Make the smallest change that fully resolves the request. Reuse existing helpers, components, libraries and organization patterns.
+- Do not expand features, add dependencies, change the architecture, refactor broadly or format unrelated files on your own.
+- When fixing a bug, find its callers and fix the root cause in the shared implementation. When changing a contract, update all consumers and related tests within the agreed scope.
+- Preserve input validation, error handling, authorization and tenant isolation. Do not treat browser-side data as proof of authentication or access rights.
+- Do not put passwords, tokens, API keys, personal environment files or real customer data in Git or logs.
+- Do not modify migrations already applied in shared environments; add a new migration. Do not delete data, reset databases or run destructive commands without specific permission.
+- Add or update appropriate tests for new logic or behavior changes. Documentation-only changes do not require running the entire application.
 
-## Git và phối hợp nhóm
+## Git and team coordination
 
-- Mỗi công việc dùng một nhánh riêng, theo quy ước tên nhánh của nhóm; chưa có quy ước thì dùng `feat/`, `fix/` hoặc `docs/` kèm tên việc.
-- Không triển khai thay đổi trực tiếp trên `main`. Không tự commit, push, merge PR hoặc force-push nếu chưa được yêu cầu; trưởng nhóm review và merge vào `main`.
-- Trước khi sửa hợp đồng API, schema hoặc file dùng chung, nêu phạm vi ảnh hưởng để thành viên phụ trách phối hợp. Nhánh riêng vẫn có thể xung đột khi cùng sửa một file.
-- Không tự stash, reset, clean hoặc giải quyết xung đột bằng cách bỏ thay đổi của người khác. Nếu không xác định được ý định của hai bên, dừng phần xung đột và báo lại.
-- Giữ diff đúng phạm vi công việc. Chỉ cập nhật lockfile khi thay đổi dependency có liên quan.
+- Use a separate branch for each task, following the team's naming convention; if none exists, use `feat/`, `fix/` or `docs/` followed by the task name.
+- Do not implement changes directly on `main`. Do not commit, push, merge PRs or force-push unless requested; the team leader reviews and merges into `main`.
+- Before changing an API contract, schema or shared file, explain the impact so the responsible members can coordinate. Separate branches can still conflict when editing the same file.
+- Do not stash, reset, clean or resolve conflicts by discarding someone else's changes on your own. If the intent of both sides is unclear, stop work on the conflicting part and report it.
+- Keep the diff within the task scope. Update lockfiles only for related dependency changes.
 
-## Context và tài liệu của agent
+## Agent context and documentation
 
-- `AGENTS.md` gốc chứa quy ước chung, không chứa nhật ký phiên làm việc, tiến độ cá nhân hoặc danh sách việc tạm.
-- Không tự tạo thêm file memory, context, plan, handoff, báo cáo phiên hoặc bản sao hướng dẫn trong repo. Chỉ tạo khi được yêu cầu hoặc công việc cần một tài liệu bàn giao cụ thể.
-- Nếu cần ghi nhớ riêng, dùng nơi lưu cá nhân ngoài repo hoặc thư mục local đã được Git bỏ qua. Kiểm tra ignore thực tế trước khi lưu; có thể dùng `.git/info/exclude` cho quy tắc chỉ áp dụng trên máy cá nhân.
-- Tài liệu dùng chung phải có ích cho nhóm: hướng dẫn chạy, quyết định thiết kế, hợp đồng, kiểm thử. Cập nhật tài liệu hiện có trước khi tạo file mới.
-- Không tự sửa hướng dẫn chung để hợp thức hóa cách làm trong một tác vụ. Thay đổi quy ước phải được nhóm review như code.
+- The root `AGENTS.md` contains shared conventions, not session logs, personal progress or temporary task lists.
+- Write all repository Markdown (`.md`) files in English, including new documentation and updates to existing files. Preserve the meaning of translated content and keep technical identifiers, commands and paths unchanged. This documentation rule does not change the application's UI language.
+- Do not create memory, context, plan, handoff or session-report files, or copies of instructions in the repository on your own. Create them only when requested or when the task requires a specific handoff document.
+- If private notes are needed, use personal storage outside the repository or a local directory ignored by Git. Verify the actual ignore rules before saving; `.git/info/exclude` may be used for machine-local rules.
+- Shared documentation must be useful to the team: run instructions, design decisions, contracts and tests. Update existing documentation before creating a new file.
+- Do not change shared instructions on your own to justify how a task is performed. Convention changes must be reviewed by the team like code.
 
-## Kiểm tra và bàn giao
+## Validation and handoff
 
-Chạy lệnh trong đúng thư mục của phần đã thay đổi:
+Run commands from the correct directory for the changed area:
 
-| Phần | Kiểm tra |
+| Area | Validation |
 | --- | --- |
-| Backend | Trong `backend/`: `./mvnw.cmd clean verify` trên Windows hoặc `./mvnw clean verify` trên Unix; integration test cần Docker. |
-| Dashboard | Trong `frontend/LCS/`: `npm run check` và `npm run build`. |
-| Landing page | Trong `frontend/LCS_landingpage/`: `npm run typecheck` và `npm run build`. |
-| Phần khác | Theo README và công cụ kiểm tra hiện có của phần đó. |
+| Backend | In `backend/`: `./mvnw.cmd clean verify` on Windows or `./mvnw clean verify` on Unix; integration tests require Docker. |
+| Dashboard | In `frontend/LCS/`: `npm run check` and `npm run build`. |
+| Landing page | In `frontend/LCS_landingpage/`: `npm run typecheck` and `npm run build`. |
+| Other areas | Follow the README and existing validation tools for that area. |
 
-- Dùng npm với lockfile đã commit cho frontend; khi cần cài dependency, dùng `npm ci`.
-- Báo chính xác lệnh đã chạy, kết quả, kiểm thử bị bỏ qua và hạn chế môi trường. Không khẳng định đã kiểm chứng nếu chưa chạy; build thành công không thay thế kiểm thử nghiệp vụ.
-- Khi bàn giao, tóm tắt đã đổi gì, lý do, cách kiểm tra và rủi ro còn lại bằng lời dễ hiểu để thành viên phụ trách review và giải thích khi bảo vệ.
+- Use npm with the committed frontend lockfile; use `npm ci` when installing dependencies.
+- Report the exact commands run, results, skipped tests and environment limitations. Do not claim verification without running it; a successful build does not replace business tests.
+- At handoff, summarize what changed, why, how it was checked and remaining risks in plain language so the responsible member can review and explain it during the defense.
