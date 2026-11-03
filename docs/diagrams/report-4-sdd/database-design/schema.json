@@ -1,0 +1,1727 @@
+{
+  "title": "SME-FraudGuard Database Design",
+  "project": "FA26SE215",
+  "tables": [
+    {
+      "domain": "identity",
+      "name": "enterprises",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "contact_email",
+          "type": "text",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "identity",
+      "name": "workspaces",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "enterprise_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "UQ"
+          ],
+          "references": "enterprises"
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "tags": [
+            "UQ"
+          ]
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "activated_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "identity",
+      "name": "accounts",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "login_name",
+          "type": "text",
+          "tags": [
+            "UQ"
+          ]
+        },
+        {
+          "name": "password_hash",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "must_change_password",
+          "type": "boolean",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "identity",
+      "name": "staff_assignments",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "staff_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "assigned_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "assigned_at",
+          "type": "timestamptz",
+          "tags": []
+        },
+        {
+          "name": "ended_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "identity",
+      "name": "onboarding_documents",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "uploaded_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "storage_ref",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "file_name",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "identity",
+      "name": "onboarding_events",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "comment",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "config_versions",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "version_no",
+          "type": "integer",
+          "tags": []
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "tags": []
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "field_definitions",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "field_name",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "data_type",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "tags": []
+        },
+        {
+          "name": "sensitive",
+          "type": "boolean",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "channel_mappings",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "field_mappings",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "channel_mapping_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "channel_mappings"
+        },
+        {
+          "name": "field_definition_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "field_definitions"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "conversion_spec",
+          "type": "jsonb",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "rules",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "tags": []
+        },
+        {
+          "name": "combination",
+          "type": "text",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "rule_conditions",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "rule_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "rules"
+        },
+        {
+          "name": "field_definition_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "field_definitions"
+        },
+        {
+          "name": "operator",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "operand",
+          "type": "jsonb",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "configuration",
+      "name": "test_runs",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "run_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "result_counts",
+          "type": "jsonb",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "ingestion",
+      "name": "api_credentials",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "key_prefix",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "key_verifier",
+          "type": "bytea",
+          "tags": []
+        },
+        {
+          "name": "issued_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "issued_at",
+          "type": "timestamptz",
+          "tags": []
+        },
+        {
+          "name": "disabled_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "disabled_by",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "accounts"
+        }
+      ]
+    },
+    {
+      "domain": "ingestion",
+      "name": "webhook_connections",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "secret_ciphertext",
+          "type": "bytea",
+          "tags": []
+        },
+        {
+          "name": "key_reference",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "ingestion",
+      "name": "import_batches",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "uploaded_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "result_counts",
+          "type": "jsonb",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "ingestion",
+      "name": "import_rows",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "import_batch_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "import_batches"
+        },
+        {
+          "name": "row_number",
+          "type": "integer",
+          "tags": []
+        },
+        {
+          "name": "transaction_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "transactions"
+        },
+        {
+          "name": "outcome",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "safe_error_code",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "ingestion",
+      "name": "transactions",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "external_id",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "event_time",
+          "type": "timestamptz",
+          "tags": []
+        },
+        {
+          "name": "public_values",
+          "type": "jsonb",
+          "tags": []
+        },
+        {
+          "name": "sensitive_values",
+          "type": "bytea",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "key_reference",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "dedup_fingerprint",
+          "type": "bytea",
+          "tags": []
+        },
+        {
+          "name": "accepted_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "ingestion",
+      "name": "ingestion_receipts",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "transaction_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "transactions"
+        },
+        {
+          "name": "api_credential_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "api_credentials"
+        },
+        {
+          "name": "webhook_connection_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "webhook_connections"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "source_event_ref",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "outcome",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "received_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "detection",
+      "name": "detection_attempts",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "transaction_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "transactions"
+        },
+        {
+          "name": "config_version_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "config_versions"
+        },
+        {
+          "name": "subscription_period_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "subscription_periods"
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "classification",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "model_version",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "detection",
+      "name": "rule_matches",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "detection_attempt_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "detection_attempts"
+        },
+        {
+          "name": "rule_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "rules"
+        },
+        {
+          "name": "matched_conditions",
+          "type": "jsonb",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "detection",
+      "name": "alerts",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "transaction_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "transactions"
+        },
+        {
+          "name": "origin_attempt_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "detection_attempts"
+        },
+        {
+          "name": "kind",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "investigation",
+      "name": "cases",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "opened_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        },
+        {
+          "name": "closed_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "investigation",
+      "name": "case_alerts",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "cases"
+        },
+        {
+          "name": "alert_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "UQ"
+          ],
+          "references": "alerts"
+        },
+        {
+          "name": "alert_kind",
+          "type": "text",
+          "tags": [
+            "CHECK AI"
+          ]
+        },
+        {
+          "name": "linked_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "investigation",
+      "name": "case_assignments",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "cases"
+        },
+        {
+          "name": "assignee_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "assigned_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "assigned_at",
+          "type": "timestamptz",
+          "tags": []
+        },
+        {
+          "name": "ended_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "investigation",
+      "name": "investigation_reports",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "cases"
+        },
+        {
+          "name": "assignment_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "case_assignments"
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "findings",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "evidence_refs",
+          "type": "jsonb",
+          "tags": []
+        },
+        {
+          "name": "submitted_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "investigation",
+      "name": "case_conclusions",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "case_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "cases"
+        },
+        {
+          "name": "confirmed_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "conclusion",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "rationale",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "billing",
+      "name": "plans",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "plan_type",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "monthly_price",
+          "type": "numeric",
+          "tags": []
+        },
+        {
+          "name": "annual_price",
+          "type": "numeric",
+          "tags": []
+        },
+        {
+          "name": "currency",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "billing",
+      "name": "purchase_orders",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "plan_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "plans"
+        },
+        {
+          "name": "purchased_by",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "gateway_order_ref",
+          "type": "text",
+          "tags": [
+            "UQ"
+          ]
+        },
+        {
+          "name": "term_months",
+          "type": "integer",
+          "tags": []
+        },
+        {
+          "name": "quoted_amount",
+          "type": "numeric",
+          "tags": []
+        },
+        {
+          "name": "currency",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "billing",
+      "name": "payment_events",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "purchase_order_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "purchase_orders"
+        },
+        {
+          "name": "provider_reference",
+          "type": "text",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "idempotency_key",
+          "type": "text",
+          "tags": [
+            "UQ"
+          ]
+        },
+        {
+          "name": "verification_result",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "reported_amount",
+          "type": "numeric",
+          "tags": []
+        },
+        {
+          "name": "currency",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "received_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "billing",
+      "name": "subscription_periods",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "plan_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "plans"
+        },
+        {
+          "name": "purchase_order_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "UQ",
+            "NULL"
+          ],
+          "references": "purchase_orders"
+        },
+        {
+          "name": "grant_source",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "granted_by",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "starts_at",
+          "type": "timestamptz",
+          "tags": []
+        },
+        {
+          "name": "ends_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "support",
+      "name": "notifications",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "recipient_id",
+          "type": "uuid",
+          "tags": [
+            "FK"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "message_type",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "safe_context",
+          "type": "jsonb",
+          "tags": []
+        },
+        {
+          "name": "read_at",
+          "type": "timestamptz",
+          "tags": [
+            "NULL"
+          ]
+        },
+        {
+          "name": "delivery_status",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "domain": "support",
+      "name": "audit_events",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "tags": [
+            "PK"
+          ]
+        },
+        {
+          "name": "workspace_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "workspaces"
+        },
+        {
+          "name": "actor_id",
+          "type": "uuid",
+          "tags": [
+            "FK",
+            "NULL"
+          ],
+          "references": "accounts"
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "object_type",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "object_ref",
+          "type": "text",
+          "tags": []
+        },
+        {
+          "name": "safe_metadata",
+          "type": "jsonb",
+          "tags": []
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "tags": []
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "PK: primary key; FK: foreign key; UQ: unique; NULL: optional.",
+    "Scoped business FKs include workspace_id; referenced rows expose UQ(workspace_id,id).",
+    "Account workspace is NULL for platform roles; enterprise accounts have one workspace and one role.",
+    "Case contains multiple AI Alerts; each AI Alert belongs to at most one case (proposed design selected by agent at user request).",
+    "CaseAlert enforces AI kind through composite FK(workspace_id,alert_id,alert_kind) to Alert(workspace_id,id,kind).",
+    "UQ(workspace_id,external_id) for transactions; UQ(workspace_id,version_no) for config versions; at most one active config per workspace.",
+    "Field names/types/conversions are workspace-configured; transaction columns show system metadata, not a public input contract.",
+    "Test runs retain metadata only. No sample payload/file, AI confidence, severity or risk score is stored.",
+    "Staff assignments keep history; the maximum simultaneous active Staff count remains pending.",
+    "State values, recovery scheduling, alert reconciliation, retention and key management remain open; no enum or deletion cascade is selected."
+  ]
+}

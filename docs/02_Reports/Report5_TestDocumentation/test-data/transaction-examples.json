@@ -1,0 +1,90 @@
+{
+  "TX-BASE": {
+    "transaction_ref": "FG-BASE-001",
+    "amount": 150000.25,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  },
+  "TX-DECIMAL": {
+    "transaction_ref": "FG-DECIMAL-001",
+    "amount": 150000.25,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  },
+  "TX-CONFLICT": {
+    "transaction_ref": "FG-BASE-001",
+    "amount": 250000.25,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  },
+  "TX-MISSING-REQUIRED": {
+    "amount": 150000.25,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  },
+  "TX-INVALID-AMOUNT": {
+    "transaction_ref": "FG-INVALID-AMOUNT",
+    "amount": "not-a-number",
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  },
+  "TX-INVALID-TIME": {
+    "transaction_ref": "FG-INVALID-TIME",
+    "amount": 150000.25,
+    "occurred_at": "not-a-date",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  },
+  "TX-OPTIONAL-ABSENT": {
+    "transaction_ref": "FG-OPTIONAL-001",
+    "amount": 150000.25,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false
+  },
+  "TX-RULE-MATCH": {
+    "transaction_ref": "FG-RULE-MATCH",
+    "amount": 1000000,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": true,
+    "note": "Synthetic sample"
+  },
+  "TX-RULE-NOMATCH": {
+    "transaction_ref": "FG-RULE-NOMATCH",
+    "amount": 150000.25,
+    "occurred_at": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer_ref": "SYNTH-SENSITIVE-A-001",
+    "device_type": "web",
+    "is_remote": false,
+    "note": "Synthetic sample"
+  }
+}

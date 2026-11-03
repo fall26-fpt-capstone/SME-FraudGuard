@@ -1,0 +1,385 @@
+Project SME_FraudGuard {
+  database_type: "PostgreSQL"
+}
+Table enterprises {
+  id uuid [pk, not null]
+  name text [not null]
+  contact_email text [not null]
+}
+Table workspaces {
+  id uuid [pk, not null]
+  enterprise_id uuid [unique, not null]
+  slug text [unique, not null]
+  status text [not null]
+  activated_at timestamptz [not null]
+}
+Table accounts {
+  id uuid [pk, not null]
+  workspace_id uuid
+  login_name text [unique, not null]
+  password_hash text [not null]
+  role text [not null]
+  status text [not null]
+  must_change_password boolean [not null]
+}
+Table staff_assignments {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  staff_id uuid [not null]
+  assigned_by uuid [not null]
+  assigned_at timestamptz [not null]
+  ended_at timestamptz
+}
+Table onboarding_documents {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  uploaded_by uuid [not null]
+  storage_ref text [not null]
+  file_name text [not null]
+  created_at timestamptz [not null]
+}
+Table onboarding_events {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  actor_id uuid [not null]
+  action text [not null]
+  comment text
+  created_at timestamptz [not null]
+}
+Table config_versions {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  version_no integer [not null]
+  is_active boolean [not null]
+  created_by uuid [not null]
+  created_at timestamptz [not null]
+  indexes {
+    (workspace_id, version_no) [unique]
+  }
+}
+Table field_definitions {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  config_version_id uuid [not null]
+  field_name text [not null]
+  data_type text [not null]
+  required boolean [not null]
+  sensitive boolean [not null]
+}
+Table channel_mappings {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  config_version_id uuid [not null]
+  channel text [not null]
+}
+Table field_mappings {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  channel_mapping_id uuid [not null]
+  field_definition_id uuid [not null]
+  source_path text [not null]
+  conversion_spec jsonb [not null]
+}
+Table rules {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  config_version_id uuid [not null]
+  name text [not null]
+  description text [not null]
+  enabled boolean [not null]
+  combination text [not null]
+}
+Table rule_conditions {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  rule_id uuid [not null]
+  field_definition_id uuid [not null]
+  operator text [not null]
+  operand jsonb
+  position integer [not null]
+}
+Table test_runs {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  config_version_id uuid [not null]
+  run_by uuid [not null]
+  result_counts jsonb [not null]
+  created_at timestamptz [not null]
+}
+Table api_credentials {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  key_prefix text [not null]
+  key_verifier bytea [not null]
+  issued_by uuid [not null]
+  issued_at timestamptz [not null]
+  disabled_at timestamptz
+  disabled_by uuid
+}
+Table webhook_connections {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  secret_ciphertext bytea [not null]
+  key_reference text [not null]
+  status text [not null]
+}
+Table import_batches {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  config_version_id uuid [not null]
+  uploaded_by uuid [not null]
+  status text [not null]
+  result_counts jsonb [not null]
+  created_at timestamptz [not null]
+}
+Table import_rows {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  import_batch_id uuid [not null]
+  row_number integer [not null]
+  transaction_id uuid
+  outcome text [not null]
+  safe_error_code text
+}
+Table transactions {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  external_id text [not null]
+  config_version_id uuid [not null]
+  event_time timestamptz [not null]
+  public_values jsonb [not null]
+  sensitive_values bytea
+  key_reference text
+  dedup_fingerprint bytea [not null]
+  accepted_at timestamptz [not null]
+  indexes {
+    (workspace_id, external_id) [unique]
+  }
+}
+Table ingestion_receipts {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  transaction_id uuid
+  api_credential_id uuid
+  webhook_connection_id uuid
+  channel text [not null]
+  source_event_ref text
+  outcome text [not null]
+  received_at timestamptz [not null]
+}
+Table detection_attempts {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  transaction_id uuid [not null]
+  config_version_id uuid [not null]
+  subscription_period_id uuid
+  source text [not null]
+  classification text
+  model_version text
+  status text [not null]
+  created_at timestamptz [not null]
+}
+Table rule_matches {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  detection_attempt_id uuid [not null]
+  rule_id uuid [not null]
+  matched_conditions jsonb [not null]
+}
+Table alerts {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  transaction_id uuid [not null]
+  origin_attempt_id uuid [not null]
+  kind text [not null]
+  status text [not null]
+  created_at timestamptz [not null]
+}
+Table cases {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  opened_by uuid [not null]
+  status text [not null]
+  created_at timestamptz [not null]
+  closed_at timestamptz
+}
+Table case_alerts {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  case_id uuid [not null]
+  alert_id uuid [unique, not null]
+  alert_kind text [not null]
+  linked_at timestamptz [not null]
+}
+Table case_assignments {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  case_id uuid [not null]
+  assignee_id uuid [not null]
+  assigned_by uuid [not null]
+  assigned_at timestamptz [not null]
+  ended_at timestamptz
+}
+Table investigation_reports {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  case_id uuid [not null]
+  assignment_id uuid [not null]
+  author_id uuid [not null]
+  findings text [not null]
+  evidence_refs jsonb [not null]
+  submitted_at timestamptz
+}
+Table case_conclusions {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  case_id uuid [not null]
+  confirmed_by uuid [not null]
+  conclusion text [not null]
+  rationale text [not null]
+  created_at timestamptz [not null]
+}
+Table plans {
+  id uuid [pk, not null]
+  name text [not null]
+  plan_type text [not null]
+  monthly_price numeric [not null]
+  annual_price numeric [not null]
+  currency text [not null]
+  status text [not null]
+}
+Table purchase_orders {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  plan_id uuid [not null]
+  purchased_by uuid [not null]
+  gateway_order_ref text [unique, not null]
+  term_months integer [not null]
+  quoted_amount numeric [not null]
+  currency text [not null]
+  status text [not null]
+  created_at timestamptz [not null]
+}
+Table payment_events {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  purchase_order_id uuid [not null]
+  provider_reference text
+  idempotency_key text [unique, not null]
+  verification_result text [not null]
+  reported_amount numeric [not null]
+  currency text [not null]
+  received_at timestamptz [not null]
+}
+Table subscription_periods {
+  id uuid [pk, not null]
+  workspace_id uuid [not null]
+  plan_id uuid [not null]
+  purchase_order_id uuid [unique]
+  grant_source text [not null]
+  granted_by uuid
+  starts_at timestamptz [not null]
+  ends_at timestamptz
+}
+Table notifications {
+  id uuid [pk, not null]
+  workspace_id uuid
+  recipient_id uuid [not null]
+  channel text [not null]
+  message_type text [not null]
+  safe_context jsonb [not null]
+  read_at timestamptz
+  delivery_status text [not null]
+  created_at timestamptz [not null]
+}
+Table audit_events {
+  id uuid [pk, not null]
+  workspace_id uuid
+  actor_id uuid
+  action text [not null]
+  object_type text [not null]
+  object_ref text [not null]
+  safe_metadata jsonb [not null]
+  created_at timestamptz [not null]
+}
+Ref: staff_assignments.staff_id > accounts.id
+Ref: workspaces.enterprise_id - enterprises.id
+Ref: staff_assignments.assigned_by > accounts.id
+Ref: config_versions.workspace_id > workspaces.id
+Ref: import_batches.config_version_id > config_versions.id
+Ref: import_rows.transaction_id > transactions.id
+Ref: investigation_reports.case_id > cases.id
+Ref: accounts.workspace_id > workspaces.id
+Ref: config_versions.created_by > accounts.id
+Ref: field_mappings.channel_mapping_id > channel_mappings.id
+Ref: field_definitions.config_version_id > config_versions.id
+Ref: case_alerts.case_id > cases.id
+Ref: staff_assignments.workspace_id > workspaces.id
+Ref: rule_conditions.rule_id > rules.id
+Ref: import_rows.import_batch_id > import_batches.id
+Ref: case_conclusions.case_id > cases.id
+Ref: purchase_orders.plan_id > plans.id
+Ref: case_alerts.alert_id - alerts.id
+Ref: onboarding_documents.uploaded_by > accounts.id
+Ref: api_credentials.issued_by > accounts.id
+Ref: field_definitions.workspace_id > workspaces.id
+Ref: ingestion_receipts.transaction_id > transactions.id
+Ref: rule_matches.detection_attempt_id > detection_attempts.id
+Ref: payment_events.purchase_order_id > purchase_orders.id
+Ref: api_credentials.disabled_by > accounts.id
+Ref: detection_attempts.subscription_period_id > subscription_periods.id
+Ref: api_credentials.workspace_id > workspaces.id
+Ref: field_mappings.field_definition_id > field_definitions.id
+Ref: case_assignments.case_id > cases.id
+Ref: onboarding_documents.workspace_id > workspaces.id
+Ref: channel_mappings.config_version_id > config_versions.id
+Ref: import_batches.workspace_id > workspaces.id
+Ref: onboarding_events.actor_id > accounts.id
+Ref: alerts.origin_attempt_id > detection_attempts.id
+Ref: channel_mappings.workspace_id > workspaces.id
+Ref: investigation_reports.assignment_id > case_assignments.id
+Ref: transactions.config_version_id > config_versions.id
+Ref: detection_attempts.transaction_id > transactions.id
+Ref: rule_matches.rule_id > rules.id
+Ref: subscription_periods.purchase_order_id - purchase_orders.id
+Ref: import_batches.uploaded_by > accounts.id
+Ref: ingestion_receipts.webhook_connection_id > webhook_connections.id
+Ref: onboarding_events.workspace_id > workspaces.id
+Ref: webhook_connections.workspace_id > workspaces.id
+Ref: field_mappings.workspace_id > workspaces.id
+Ref: import_rows.workspace_id > workspaces.id
+Ref: notifications.recipient_id > accounts.id
+Ref: subscription_periods.plan_id > plans.id
+Ref: ingestion_receipts.api_credential_id > api_credentials.id
+Ref: rules.config_version_id > config_versions.id
+Ref: notifications.workspace_id > workspaces.id
+Ref: rule_conditions.field_definition_id > field_definitions.id
+Ref: rules.workspace_id > workspaces.id
+Ref: transactions.workspace_id > workspaces.id
+Ref: purchase_orders.purchased_by > accounts.id
+Ref: audit_events.actor_id > accounts.id
+Ref: alerts.transaction_id > transactions.id
+Ref: purchase_orders.workspace_id > workspaces.id
+Ref: detection_attempts.config_version_id > config_versions.id
+Ref: rule_conditions.workspace_id > workspaces.id
+Ref: audit_events.workspace_id > workspaces.id
+Ref: ingestion_receipts.workspace_id > workspaces.id
+Ref: test_runs.run_by > accounts.id
+Ref: test_runs.config_version_id > config_versions.id
+Ref: test_runs.workspace_id > workspaces.id
+Ref: payment_events.workspace_id > workspaces.id
+Ref: detection_attempts.workspace_id > workspaces.id
+Ref: subscription_periods.granted_by > accounts.id
+Ref: subscription_periods.workspace_id > workspaces.id
+Ref: cases.opened_by > accounts.id
+Ref: rule_matches.workspace_id > workspaces.id
+Ref: cases.workspace_id > workspaces.id
+Ref: alerts.workspace_id > workspaces.id
+Ref: investigation_reports.author_id > accounts.id
+Ref: case_alerts.workspace_id > workspaces.id
+Ref: case_assignments.assignee_id > accounts.id
+Ref: investigation_reports.workspace_id > workspaces.id
+Ref: case_assignments.assigned_by > accounts.id
+Ref: case_conclusions.confirmed_by > accounts.id
+Ref: case_assignments.workspace_id > workspaces.id
+Ref: case_conclusions.workspace_id > workspaces.id

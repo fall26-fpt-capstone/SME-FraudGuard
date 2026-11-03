@@ -1,0 +1,12 @@
+{
+  "data": {
+    "txn_id": "FG-BASE-001",
+    "amount": 150000.25,
+    "event_time": "2026-11-02T19:00:00.000Z",
+    "currency": "VND",
+    "customer": "SYNTH-SENSITIVE-A-001",
+    "device": "web",
+    "remote": false,
+    "note": "Synthetic sample"
+  }
+}

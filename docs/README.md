@@ -2,6 +2,17 @@
 
 This directory is the repository snapshot of the project's working documentation.
 
+## Software v1 working specification
+
+Read [Software v1 business specification](02_Reports/SOFTWARE_V1_BUSINESS_SPEC.md) for the team's consolidated business rules, role boundaries, workflows, acceptance criteria, and open decisions. It is a working input to the SRS, SDD, and ERD, not a statement of implemented behavior or an approved replacement for the [current registration proposal](01_Registration/SEP490_FA26SE215_R2_Registration.pdf). Use registration v2 and the latest confirmed SRS decisions when an older working-spec statement differs; registration v1 is obsolete.
+
+## Report sources and supporting assets
+
+- [Report 4 design documentation](02_Reports/Report4_SDD/README.md): native Google Doc, review PDF and organized PlantUML diagram sources.
+- [Report 5 test documentation](02_Reports/Report5_TestDocumentation/README.md): native Google Doc, review PDF, system-test workbook, synthetic fixtures and asset validation.
+
+The SDD and test catalogue use the agreed SRS sections 1, 2, 4 and 5. Detailed functional-requirement mapping follows the finalized SRS section 3. Designed test cases and expected outcomes are not test-execution evidence.
+
 ## Workflow
 
 1. The team edits source documents in the internal workspace.

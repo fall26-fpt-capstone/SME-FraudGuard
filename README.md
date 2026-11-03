@@ -2,6 +2,8 @@
 
 SME-FraudGuard is a multi-tenant SaaS platform for transaction anomaly detection in SMEs.
 
+Shared coding-agent guidelines are in [`AGENTS.md`](AGENTS.md). Read them together with the instructions for the area you are changing.
+
 ## Project structure
 
 ```text

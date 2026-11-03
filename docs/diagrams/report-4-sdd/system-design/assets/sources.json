@@ -1,0 +1,42 @@
+[
+  {
+    "name": "aws",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/aws.svg",
+    "bytes": 8235
+  },
+  {
+    "name": "cloudflare",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/cloudflare.svg",
+    "bytes": 6916
+  },
+  {
+    "name": "nextjs",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/nextjs.svg",
+    "bytes": 5262
+  },
+  {
+    "name": "react",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/react.svg",
+    "bytes": 7909
+  },
+  {
+    "name": "spring",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/spring-icon.svg",
+    "bytes": 3612
+  },
+  {
+    "name": "postgresql",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/postgresql.svg",
+    "bytes": 13221
+  },
+  {
+    "name": "neon",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/neon-icon.svg",
+    "bytes": 4164
+  },
+  {
+    "name": "vnpay",
+    "source": "https://1889324617.cloud.edgevnpay.vn/assets/images/logo-icon/logo-primary.svg",
+    "bytes": 27007
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "payment_id": "FG-BASE-001",
+  "total": 150000.25,
+  "paid_at": "2026-11-02T19:00:00.000Z",
+  "currency": "VND",
+  "customer_ref": "SYNTH-SENSITIVE-A-001",
+  "device_type": "web",
+  "is_remote": false,
+  "note": "Synthetic sample"
+}

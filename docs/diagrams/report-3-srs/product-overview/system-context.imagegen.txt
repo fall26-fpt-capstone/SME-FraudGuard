@@ -1,0 +1,21 @@
+Use case: infographic-diagram. Edit the attached system context diagram, preserving ALL of its exact semantic content, but redesign its layout into a polished draw.io-style context-level DFD for an academic SRS report. The current image is content reference, not a layout requirement.
+White background. Flat clean vector-like appearance, no shadows, no gradients, no 3D, no icons, no extra titles or legend, no In/Out prefixes. Wide landscape canvas about 3:2. Crisp black Arial/sans-serif text, thin dark gray lines and clear filled arrowheads. Pale blue central process, very light gray external entities.
+Exactly ONE LARGE TRUE CIRCLE at the center (not ellipse) with centered text inside: "0" on one line, then "SME-FraudGuard" on one line. Circle diameter roughly 24% of canvas width; font large but comfortable padding. Exactly six same-sized RECTANGLE external entities in two symmetrical vertical columns: LEFT top Platform Admin, LEFT middle Implementation Staff, LEFT bottom Customer Transaction Systems; RIGHT top SME Admin, RIGHT middle Operator, RIGHT bottom Investigator. Even row spacing, consistent margins, balanced layout. The central circle is the visual anchor and is not tiny.
+Exactly TWELVE SINGLE-DIRECTION data-flow arrows, one in each direction for each entity/system pair. Use smooth restrained curves in distinct routing lanes; no arrows crossing, no labels over lines, no labels touching boxes/circle, no overlapping text. Label each arrow clearly near its own route. Arrowheads must touch the destination boundary, never float. Keep all text readable at report-page scale. Use line breaks in labels where needed.
+Exact flows and labels:
+1 Platform Admin -> circle: "Customer / workspace data, staff assignments"
+2 circle -> Platform Admin: "Workspace / onboarding status, platform health / errors"
+3 Implementation Staff -> circle: "Specifications, configuration, sample data"
+4 circle -> Implementation Staff: "Validation / test results, onboarding progress"
+5 Customer Transaction Systems -> circle: "Transaction data / events"
+6 circle -> Customer Transaction Systems: "Submission results / errors"
+7 SME Admin -> circle: "Member / permission data, onboarding information"
+8 circle -> SME Admin: "Workspace information, authorized reports"
+9 Operator -> circle: "Case assignments, investigation conclusions"
+10 circle -> Operator: "Alerts, transaction history, investigation information"
+11 Investigator -> circle: "Findings / investigation reports"
+12 circle -> Investigator: "Assigned cases / related data"
+Keep all twelve labels verbatim and every arrow direction exactly correct. Do not include a database, AI subsystem, Rule Engine, internal architecture, or connections between external entities. Only the six entities and central circle. Prioritize exact text and accurate data-flow endpoints over decoration.
+
+Final targeted edit requested by the team:
+Remove the single numeral "0" above "SME-FraudGuard" completely. Center the remaining exact text "SME-FraudGuard" vertically and horizontally inside the same circle, keeping its font, size, weight and spelling. Preserve the layout, all twelve labels and arrow directions, colors, canvas size and all external entities. Do not add numbering.

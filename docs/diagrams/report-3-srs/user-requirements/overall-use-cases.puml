@@ -1,0 +1,124 @@
+@startuml
+left to right direction
+skinparam linetype polyline
+skinparam shadowing false
+skinparam defaultFontName Arial
+actor "Portal User" as PU
+actor "Platform Admin" as PA
+actor "Implementation Staff" as ST
+actor "Customer Transaction System" as CS
+actor "SME Admin" as SA
+actor "Payment Gateway" as PG
+actor "Operator" as OP
+actor "Investigator" as IN
+rectangle "SME-FraudGuard" {
+usecase "UC-01\nLog In" as U1
+usecase "UC-02\nChange Password" as U2
+usecase "UC-03\nLog Out" as U3
+usecase "UC-04\nManage Customers and Workspaces" as U4
+usecase "UC-05\nAssign Implementation Staff" as U5
+usecase "UC-06\nManage Plan Catalogue" as U6
+usecase "UC-07\nGrant Initial Workspace Plan" as U7
+usecase "UC-08\nView Plans and Subscription" as U8
+usecase "UC-09\nManage Enterprise Members" as U9
+usecase "UC-10\nSubmit Onboarding Specifications" as U10
+usecase "UC-11\nTrack Onboarding Progress" as U11
+usecase "UC-12\nConfigure Fields and Channel Mappings" as U12
+usecase "UC-13\nConfigure Detection Rules" as U13
+usecase "UC-14\nTest Detection Configuration" as U14
+usecase "UC-15\nConfirm Implementation Readiness" as U15
+usecase "UC-16\nApprove Workspace Handover" as U16
+usecase "UC-17\nActivate Workspace" as U17
+usecase "UC-18\nIssue or Replace API Key" as U18
+usecase "UC-19\nDisable API Key" as U19
+usecase "UC-20\nSubmit Transactions through REST API" as U20
+usecase "UC-21\nSubmit Transactions through Webhook" as U21
+usecase "UC-22\nImport Production Transactions" as U22
+usecase "UC-23\nReview Import Results" as U23
+usecase "UC-24\nReview Production Transactions" as U24
+usecase "UC-25\nReview Rule Alerts" as U25
+usecase "UC-26\nReview AI Alerts" as U26
+usecase "UC-27\nOpen Investigation Case" as U27
+usecase "UC-28\nAssign Investigation Case" as U28
+usecase "UC-29\nInvestigate Case" as U29
+usecase "UC-30\nSubmit Investigation Report" as U30
+usecase "UC-31\nConfirm Investigation Conclusion" as U31
+usecase "UC-32\nView Investigation Reports" as U32
+usecase "UC-33\nView Enterprise Dashboard" as U33
+usecase "UC-34\nGenerate and Export Reports" as U34
+usecase "UC-35\nReceive Relevant Notifications" as U35
+usecase "UC-36\nMonitor Platform Operations" as U36
+usecase "UC-37\nView Authorized Sensitive Fields" as U37
+usecase "UC-38\nReview Detection History" as U38
+usecase "UC-39\nPurchase or Renew Subscription" as U39
+usecase "UC-40\nProcess Payment Confirmation" as U40
+usecase "UC-41\nValidate and Normalize Submitted Data" as U41
+usecase "UC-42\nDetect Transaction Anomalies" as U42
+}
+PU -- U1
+PU -- U2
+PU -- U3
+PA -- U4
+PA -- U5
+PA -- U6
+PA -- U7
+U8 -- SA
+U9 -- SA
+PA -- U10
+ST -- U10
+U10 -- SA
+PA -- U11
+ST -- U11
+U11 -- SA
+ST -- U12
+ST -- U13
+ST -- U14
+ST -- U15
+PA -- U16
+U17 -- SA
+PA -- U18
+ST -- U18
+PA -- U19
+ST -- U19
+U19 -- SA
+CS -- U20
+CS -- U21
+U22 -- SA
+U22 -- OP
+U23 -- SA
+U23 -- OP
+U24 -- OP
+U25 -- OP
+U26 -- OP
+U27 -- OP
+U28 -- OP
+U29 -- OP
+U29 -- IN
+U30 -- OP
+U30 -- IN
+U31 -- OP
+U32 -- SA
+U32 -- OP
+U32 -- IN
+U33 -- SA
+U33 -- OP
+U34 -- SA
+U34 -- OP
+U35 -- SA
+U35 -- OP
+U35 -- IN
+PA -- U36
+U37 -- OP
+U37 -- IN
+U38 -- OP
+U39 -- SA
+U39 -- PG
+U40 -- PG
+U20 .> U41 : <<include>>
+U20 .> U42 : <<include>>
+U21 .> U41 : <<include>>
+U21 .> U42 : <<include>>
+U22 .> U41 : <<include>>
+U22 .> U42 : <<include>>
+note "Portal User represents the five human roles." as N
+@enduml

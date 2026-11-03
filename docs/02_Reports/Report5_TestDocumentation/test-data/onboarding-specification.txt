@@ -1,0 +1,2 @@
+SYNTHETIC ONBOARDING SPECIFICATION
+Use TEST-MAP-A and RULE-SET-A for an isolated workspace test. Retained onboarding documentation is separate from temporary transaction samples.

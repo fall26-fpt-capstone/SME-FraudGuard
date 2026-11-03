@@ -1,0 +1,44 @@
+@startuml system-context
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 18
+skinparam ArrowFontSize 18
+skinparam ArrowColor #475569
+skinparam rectangleRoundCorner 0
+skinparam nodesep 60
+skinparam ranksep 45
+skinparam usecase {
+  BackgroundColor #DBEAFE
+  BorderColor #475569
+  FontSize 24
+}
+skinparam padding 16
+skinparam rectangle {
+  BackgroundColor #F8FAFC
+  BorderColor #64748B
+  FontColor #0F172A
+}
+
+rectangle "Platform Admin" as admin
+rectangle "Implementation\nStaff" as staff
+rectangle "Customer Transaction\nSystems" as customer
+usecase "\n\n\n\nSME-FraudGuard\n\n\n\n" as system
+rectangle "SME Admin" as sme
+rectangle "Operator" as operator
+rectangle "Investigator" as investigator
+
+admin --> system : Customer / workspace data,\nstaff assignments
+admin <-- system : Workspace / onboarding status,\nplatform health / errors
+staff --> system : Specifications, configuration,\nsample data
+staff <-- system : Validation / test results,\nonboarding progress
+customer --> system : Transaction data / events
+customer <-- system : Submission results / errors
+system <-- sme : Member / permission data,\nonboarding information
+system --> sme : Workspace information,\nauthorized reports
+system <-- operator : Case assignments,\ninvestigation conclusions
+system --> operator : Alerts, transaction history,\ninvestigation information
+system <-- investigator : Findings / investigation reports
+system --> investigator : Assigned cases / related data
+@enduml

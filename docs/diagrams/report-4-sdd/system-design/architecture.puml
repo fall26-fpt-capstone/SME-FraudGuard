@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 17
+skinparam ArrowColor #415A70
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #EDF4FA
+skinparam componentBorderColor #59758C
+skinparam databaseBackgroundColor #F4F7FA
+skinparam packageBackgroundColor white
+skinparam packageBorderColor #59758C
+skinparam padding 4
+skinparam nodesep 35
+skinparam ranksep 65
+skinparam dpi 160
+actor "Browser" as browser
+cloud "Cloudflare DNS" as dns
+component "Customer transaction systems\nREST API / incoming Webhook" as customer
+frame "AWS hosting" {
+  component "Next.js / React\nPlatform and SME portals" as web
+  component "Spring Boot / Java\nModular-monolith backend" as backend #DAEBF7
+}
+database "Neon / PostgreSQL" as db
+component "AI service\nNormal / Anomaly + version" as ai
+component "VNPay\nPayment gateway" as pay
+component "Domain email service" as email
+browser <..> dns : DNS lookup
+browser <--> web : HTTPS
+web <--> backend : REST API / HTTPS
+customer <--> backend : REST API / Webhook / HTTPS
+backend <--> db : TLS / SQL
+backend <--> ai : Inference
+backend <--> pay : Payment / verified confirmation
+backend --> email : Notifications
+note bottom of ai
+  Generic service symbol; framework and hosting placement are not selected here.
+end note
+@enduml

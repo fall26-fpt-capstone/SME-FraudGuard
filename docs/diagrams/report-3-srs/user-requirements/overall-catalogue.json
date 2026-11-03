@@ -1,0 +1,323 @@
+[
+  {
+    "id": "UC-01",
+    "name": "Log In",
+    "actors": [
+      "PA",
+      "ST",
+      "SA",
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-02",
+    "name": "Change Password",
+    "actors": [
+      "PA",
+      "ST",
+      "SA",
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-03",
+    "name": "Log Out",
+    "actors": [
+      "PA",
+      "ST",
+      "SA",
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-04",
+    "name": "Manage Customers and Workspaces",
+    "actors": [
+      "PA"
+    ]
+  },
+  {
+    "id": "UC-05",
+    "name": "Assign Implementation Staff",
+    "actors": [
+      "PA"
+    ]
+  },
+  {
+    "id": "UC-06",
+    "name": "Manage Plan Catalogue",
+    "actors": [
+      "PA"
+    ]
+  },
+  {
+    "id": "UC-07",
+    "name": "Grant Initial Workspace Plan",
+    "actors": [
+      "PA"
+    ]
+  },
+  {
+    "id": "UC-08",
+    "name": "View Plans and Subscription",
+    "actors": [
+      "SA"
+    ]
+  },
+  {
+    "id": "UC-09",
+    "name": "Manage Enterprise Members",
+    "actors": [
+      "SA"
+    ]
+  },
+  {
+    "id": "UC-10",
+    "name": "Submit Onboarding Specifications",
+    "actors": [
+      "PA",
+      "ST",
+      "SA"
+    ]
+  },
+  {
+    "id": "UC-11",
+    "name": "Track Onboarding Progress",
+    "actors": [
+      "PA",
+      "ST",
+      "SA"
+    ]
+  },
+  {
+    "id": "UC-12",
+    "name": "Configure Fields and Channel Mappings",
+    "actors": [
+      "ST"
+    ]
+  },
+  {
+    "id": "UC-13",
+    "name": "Configure Detection Rules",
+    "actors": [
+      "ST"
+    ]
+  },
+  {
+    "id": "UC-14",
+    "name": "Test Detection Configuration",
+    "actors": [
+      "ST"
+    ]
+  },
+  {
+    "id": "UC-15",
+    "name": "Confirm Implementation Readiness",
+    "actors": [
+      "ST"
+    ]
+  },
+  {
+    "id": "UC-16",
+    "name": "Approve Workspace Handover",
+    "actors": [
+      "PA"
+    ]
+  },
+  {
+    "id": "UC-17",
+    "name": "Activate Workspace",
+    "actors": [
+      "SA"
+    ]
+  },
+  {
+    "id": "UC-18",
+    "name": "Issue or Replace API Key",
+    "actors": [
+      "PA",
+      "ST"
+    ]
+  },
+  {
+    "id": "UC-19",
+    "name": "Disable API Key",
+    "actors": [
+      "PA",
+      "ST",
+      "SA"
+    ]
+  },
+  {
+    "id": "UC-20",
+    "name": "Submit Transactions through REST API",
+    "actors": [
+      "CS"
+    ]
+  },
+  {
+    "id": "UC-21",
+    "name": "Submit Transactions through Webhook",
+    "actors": [
+      "CS"
+    ]
+  },
+  {
+    "id": "UC-22",
+    "name": "Import Production Transactions",
+    "actors": [
+      "SA",
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-23",
+    "name": "Review Import Results",
+    "actors": [
+      "SA",
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-24",
+    "name": "Review Production Transactions",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-25",
+    "name": "Review Rule Alerts",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-26",
+    "name": "Review AI Alerts",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-27",
+    "name": "Open Investigation Case",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-28",
+    "name": "Assign Investigation Case",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-29",
+    "name": "Investigate Case",
+    "actors": [
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-30",
+    "name": "Submit Investigation Report",
+    "actors": [
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-31",
+    "name": "Confirm Investigation Conclusion",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-32",
+    "name": "View Investigation Reports",
+    "actors": [
+      "SA",
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-33",
+    "name": "View Enterprise Dashboard",
+    "actors": [
+      "SA",
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-34",
+    "name": "Generate and Export Reports",
+    "actors": [
+      "SA",
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-35",
+    "name": "Receive Relevant Notifications",
+    "actors": [
+      "SA",
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-36",
+    "name": "Monitor Platform Operations",
+    "actors": [
+      "PA"
+    ]
+  },
+  {
+    "id": "UC-37",
+    "name": "View Authorized Sensitive Fields",
+    "actors": [
+      "OP",
+      "IN"
+    ]
+  },
+  {
+    "id": "UC-38",
+    "name": "Review Detection History",
+    "actors": [
+      "OP"
+    ]
+  },
+  {
+    "id": "UC-39",
+    "name": "Purchase or Renew Subscription",
+    "actors": [
+      "SA",
+      "PG"
+    ]
+  },
+  {
+    "id": "UC-40",
+    "name": "Process Payment Confirmation",
+    "actors": [
+      "PG"
+    ]
+  },
+  {
+    "id": "UC-41",
+    "name": "Validate and Normalize Submitted Data",
+    "actors": []
+  },
+  {
+    "id": "UC-42",
+    "name": "Detect Transaction Anomalies",
+    "actors": []
+  }
+]
