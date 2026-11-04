@@ -1,0 +1,60 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam packageStyle folder
+skinparam packageBackgroundColor white
+skinparam packageBorderColor #333333
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam linetype ortho
+skinparam nodesep 28
+skinparam ranksep 32
+skinparam padding 8
+package "com.fraudguard" as root {
+  package "auth" as auth {}
+  package "workspace" as workspace {}
+  package "member" as member {}
+  package "subscription" as subscription {}
+  package "configuration" as configuration {}
+  package "ingestion" as ingestion {}
+  package "detection" as detection {}
+  package "investigation" as investigation {}
+  package "reporting" as reporting {}
+  package "notification" as notification {}
+  package "audit" as audit {}
+  package "common" as common {
+    package "config" as c_config {}
+    package "exception" as c_exception {}
+    package "security" as c_security {}
+    package "persistence" as c_persistence {}
+    c_config -[hidden]right-> c_exception
+    c_config -[hidden]down-> c_security
+    c_security -[hidden]right-> c_persistence
+  }
+  package "integration" as integration {
+    package "ai" as i_ai {}
+    package "payment" as i_payment {}
+    package "email" as i_email {}
+    package "storage" as i_storage {}
+    i_ai -[hidden]right-> i_payment
+    i_ai -[hidden]down-> i_email
+    i_email -[hidden]right-> i_storage
+  }
+  auth -[hidden]right-> workspace
+  workspace -[hidden]right-> member
+  member -[hidden]right-> subscription
+  configuration -[hidden]right-> ingestion
+  ingestion -[hidden]right-> detection
+  detection -[hidden]right-> investigation
+  reporting -[hidden]right-> notification
+  notification -[hidden]right-> audit
+  auth -[hidden]down-> configuration
+  configuration -[hidden]down-> reporting
+  reporting -[hidden]down-> common
+  audit -[hidden]down-> integration
+  common -[hidden]right-> integration
+}
+@enduml

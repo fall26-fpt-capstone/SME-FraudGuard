@@ -4,14 +4,6 @@ spring:
     username: ${DB_USER:fraudguard}
     password: ${DB_PASSWORD:fraudguard}
 
-fraudguard:
-  ingestion:
-    # Local-dev only demo credentials. TODO: replace with hashed keys stored per tenant in the DB.
-    api-keys:
-      demo-key-tenant-a: tenant-a
-      demo-key-tenant-b: tenant-b
-    webhook-secret: local-webhook-secret
-
 logging:
   level:
     com.fraudguard: DEBUG
