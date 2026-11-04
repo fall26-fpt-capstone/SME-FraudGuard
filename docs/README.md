@@ -8,6 +8,7 @@ Read [Software v1 business specification](02_Reports/SOFTWARE_V1_BUSINESS_SPEC.m
 
 ## Report sources and supporting assets
 
+- [Report 3 functional requirements](02_Reports/Report3_SRS/README.md): native Google Doc, editable section 3 source, role screen flows and conceptual ERD diagrams.
 - [Report 4 design documentation](02_Reports/Report4_SDD/README.md): native Google Doc, review PDF and organized PlantUML diagram sources.
 - [Report 5 test documentation](02_Reports/Report5_TestDocumentation/README.md): native Google Doc, review PDF, system-test workbook, synthetic fixtures and asset validation.
 
