@@ -3,13 +3,14 @@
     "projectCode": "FA26SE215",
     "groupCode": "GFA26SE97",
     "title": "SME-FraudGuard System Test Cases",
-    "version": "1.1",
-    "date": "2026-11-03",
+    "version": "2.0",
+    "date": "2026-11-04",
     "sourceDocument": "https://docs.google.com/document/d/1HiJnq5W_VxXMD3-4cvueYZQ__frEhbConCEk0zPV54E/edit",
     "referenceTemplate": "https://docs.google.com/spreadsheets/d/1gAtssltznrOojVC2_ZcbK7A-Q0sML7GW/edit",
     "executionNote": "Designed cases. No case has been executed by this document-authoring task. Actual results, evidence, tester and run date are recorded only after execution.",
-    "traceNote": "Traceability uses the confirmed UC, BR and CR catalogue plus SRS 4.2 quality attributes. Detailed FR references are added after Report 3 section 3 is finalized.",
-    "dataNote": "Transaction fields, types and date/time conversion remain generic and workspace-configured in product documentation. TEST-MAP-A is explicitly synthetic test configuration, not a global contract."
+    "traceNote": "UC/BR/CR baseline retained; current SRS section 3 references identify design scope. This is a designed catalogue, not executed coverage.",
+    "dataNote": "Transaction fields, types and date/time conversion remain generic and workspace-configured in product documentation. TEST-MAP-A is explicitly synthetic test configuration, not a global contract.",
+    "workbookUrl": "https://docs.google.com/spreadsheets/d/1U6WTEXuebUlA3Aa3D6rsIzEW-RCIE-hVM6-khTU9deI/edit"
   },
   "priorities": {
     "P1": "Authorization, tenant isolation, accepted-data integrity, payment/case-entitlement gates or sensitive-data protection.",
@@ -51,7 +52,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-002",
@@ -87,7 +89,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-003",
@@ -123,7 +126,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-004",
@@ -159,7 +163,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-005",
@@ -195,7 +200,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-006",
@@ -231,7 +237,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-007",
@@ -267,7 +274,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-008",
@@ -302,7 +310,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-009",
@@ -338,7 +347,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-010",
@@ -374,7 +384,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-011",
@@ -408,7 +419,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-012",
@@ -444,7 +456,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-013",
@@ -480,7 +493,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-AUTH-014",
@@ -518,7 +532,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.2"
     },
     {
       "id": "SYS-ACCESS-001",
@@ -559,7 +574,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-002",
@@ -600,7 +616,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-003",
@@ -642,7 +659,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-004",
@@ -684,7 +702,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-005",
@@ -725,7 +744,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-006",
@@ -764,7 +784,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-007",
@@ -802,7 +823,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-008",
@@ -843,7 +865,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-009",
@@ -885,7 +908,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-010",
@@ -923,7 +947,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-011",
@@ -964,7 +989,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ACCESS-012",
@@ -1000,7 +1026,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.1.3, 3.6.4, 3.11.6, 3.12.2"
     },
     {
       "id": "SYS-ADMIN-001",
@@ -1042,7 +1069,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-002",
@@ -1077,7 +1105,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-003",
@@ -1114,7 +1143,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-004",
@@ -1152,7 +1182,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-005",
@@ -1189,7 +1220,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-006",
@@ -1226,7 +1258,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-007",
@@ -1261,7 +1294,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-008",
@@ -1297,7 +1331,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ADMIN-009",
@@ -1337,7 +1372,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.3, 3.6"
     },
     {
       "id": "SYS-ONBOARD-001",
@@ -1357,7 +1393,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P1",
-      "preconditions": "SA-A has completed initial password setup and A is in onboarding.",
+      "preconditions": "SA-A has completed initial password setup and A is in onboarding. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING",
         "ONBOARD-DOCUMENT"
@@ -1377,7 +1413,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-002",
@@ -1396,7 +1433,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P2",
-      "preconditions": "An enterprise specification was received through an approved outside channel; PA or the assigned Staff is authenticated.",
+      "preconditions": "An enterprise specification was received through an approved outside channel; PA or the assigned Staff is authenticated. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING",
         "ONBOARD-DOCUMENT"
@@ -1414,7 +1451,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-003",
@@ -1433,7 +1471,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P2",
-      "preconditions": "A has recorded implementation steps/comments and SA-A is authenticated.",
+      "preconditions": "A has recorded implementation steps/comments and SA-A is authenticated. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1451,7 +1489,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-004",
@@ -1469,7 +1508,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "STAFF-A is assigned to A; TEST-MAP-A and test rules are configured.",
+      "preconditions": "STAFF-A is assigned to A; TEST-MAP-A and test rules are configured. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING",
         "TEST-MAP-A",
@@ -1491,7 +1530,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-005",
@@ -1511,7 +1551,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P2",
-      "preconditions": "STAFF-A is assigned and the synthetic test mapping is configured.",
+      "preconditions": "STAFF-A is assigned and the synthetic test mapping is configured. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "FILE-MIXED"
@@ -1530,7 +1570,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-006",
@@ -1552,7 +1593,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P1",
-      "preconditions": "A has a successful sample-test result but readiness/approval/activation have not all occurred.",
+      "preconditions": "A has a successful sample-test result but readiness/approval/activation have not all occurred. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1569,7 +1610,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-007",
@@ -1589,7 +1631,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P2",
-      "preconditions": "Assigned Staff has reviewed the confirmed configuration and sample-test results.",
+      "preconditions": "Assigned Staff has reviewed the confirmed configuration and sample-test results. Configuration edits are candidate drafts; production uses only an explicitly applied version. Initial configuration has been explicitly applied before readiness confirmation.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1606,7 +1648,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-008",
@@ -1625,7 +1668,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P2",
-      "preconditions": "Staff readiness is recorded for A; PA is authenticated.",
+      "preconditions": "Staff readiness is recorded for A; PA is authenticated. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1643,7 +1686,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-009",
@@ -1662,7 +1706,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P1",
-      "preconditions": "A has been submitted for handover review.",
+      "preconditions": "A has been submitted for handover review. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1680,7 +1724,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-010",
@@ -1700,7 +1745,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P1",
-      "preconditions": "A has no Staff readiness confirmation.",
+      "preconditions": "A has no Staff readiness confirmation. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1717,7 +1762,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-011",
@@ -1736,7 +1782,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P1",
-      "preconditions": "Staff readiness exists but handover has not been approved.",
+      "preconditions": "Staff readiness exists but handover has not been approved. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING"
       ],
@@ -1752,7 +1798,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-012",
@@ -1772,7 +1819,7 @@
       ],
       "quality": "4.2.3",
       "priority": "P1",
-      "preconditions": "Staff readiness and Platform Admin approval exist; A has an initial Subscription granted during onboarding.",
+      "preconditions": "Staff readiness and Platform Admin approval exist; A has an initial Subscription granted during onboarding. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "WS-ONBOARDING",
         "PLAN-INITIAL-SUB"
@@ -1792,7 +1839,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-013",
@@ -1812,7 +1860,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "A has already been activated and its initial term is recorded.",
+      "preconditions": "A has already been activated and its initial term is recorded. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "PLAN-INITIAL-SUB"
       ],
@@ -1829,7 +1877,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-ONBOARD-014",
@@ -1849,7 +1898,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "An onboarding document is retained; a sample test can be completed and another can be interrupted.",
+      "preconditions": "An onboarding document is retained; a sample test can be completed and another can be interrupted. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "ONBOARD-DOCUMENT",
         "FILE-VALID"
@@ -1869,7 +1918,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.5, 3.7.6-3.7.8"
     },
     {
       "id": "SYS-KEYS-001",
@@ -1907,7 +1957,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-002",
@@ -1945,7 +1996,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-003",
@@ -1981,7 +2033,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-004",
@@ -2017,7 +2070,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-005",
@@ -2054,7 +2108,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-006",
@@ -2095,7 +2150,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-007",
@@ -2136,7 +2192,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-008",
@@ -2177,12 +2234,13 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-009",
       "group": "KEYS",
-      "title": "Rotate a key with controlled overlap",
+      "title": "Replace a key using the approved rotation policy",
       "uc": [
         "UC-18",
         "UC-19",
@@ -2198,18 +2256,18 @@
       ],
       "quality": "4.2.1",
       "priority": "P1",
-      "preconditions": "A is active with an old valid key; an authorized issuer can replace it.",
+      "preconditions": "A is active with an old valid key; an authorized issuer can replace it. The approved connection/key design specifies replacement and any overlap; no overlap duration is assumed.",
       "data": [
         "KEY-A-ACTIVE"
       ],
       "steps": [
-        "Issue a replacement key.",
-        "Verify distinct new transaction submissions during the allowed old/new overlap.",
-        "Disable the old key and submit again with each key."
+        "Replace the key through an authorized issuer.",
+        "Test new/old keys using the approved replacement policy; test overlap only if that policy permits it.",
+        "Disable the old key and submit independent transactions with each key."
       ],
       "expected": [
-        "Both keys work only during the controlled overlap and only for A.",
-        "After revocation, the old key fails and the valid replacement continues to work.",
+        "Replacement is A-scoped and follows the approved key invalidation policy.",
+        "After revocation the old key fails; the valid replacement works.",
         "No stored old secret is retrievable."
       ],
       "status": "Not Run",
@@ -2217,7 +2275,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-KEYS-010",
@@ -2255,7 +2314,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.6"
     },
     {
       "id": "SYS-CONFIG-001",
@@ -2274,7 +2334,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "STAFF-A is assigned; TEST-MAP-A is the explicitly declared synthetic workspace configuration.",
+      "preconditions": "STAFF-A is assigned; TEST-MAP-A is the explicitly declared synthetic workspace configuration. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A"
       ],
@@ -2293,7 +2353,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7"
     },
     {
       "id": "SYS-CONFIG-002",
@@ -2313,7 +2374,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "STAFF-A is assigned and declared fields include numeric, text and Boolean types.",
+      "preconditions": "STAFF-A is assigned and declared fields include numeric, text and Boolean types. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A"
       ],
@@ -2331,7 +2392,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7"
     },
     {
       "id": "SYS-CONFIG-003",
@@ -2353,7 +2415,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "TEST-MAP-A defines each input format; use fresh isolated transaction identities or separate runs to avoid duplicate interference.",
+      "preconditions": "TEST-MAP-A defines each input format; use fresh isolated transaction identities or separate runs to avoid duplicate interference. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "TX-BASE",
@@ -2374,7 +2436,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7"
     },
     {
       "id": "SYS-RULES-001",
@@ -2393,7 +2456,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A.",
+      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "RULE-NUMERIC"
@@ -2412,7 +2475,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-002",
@@ -2431,7 +2495,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A.",
+      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "RULE-NUMERIC"
@@ -2450,7 +2514,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-003",
@@ -2469,7 +2534,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A.",
+      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "RULE-NUMERIC"
@@ -2488,7 +2553,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-004",
@@ -2507,7 +2573,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A.",
+      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "RULE-NUMERIC"
@@ -2526,7 +2592,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-005",
@@ -2545,7 +2612,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A.",
+      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "RULE-NUMERIC"
@@ -2564,7 +2631,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-006",
@@ -2583,7 +2651,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A.",
+      "preconditions": "Assigned Staff has configured a single active numeric comparison against 1000000 in TEST-MAP-A. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "RULE-NUMERIC"
@@ -2602,7 +2670,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-007",
@@ -2620,7 +2689,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "TEST-MAP-A declares device_type as text and is_remote as Boolean.",
+      "preconditions": "TEST-MAP-A declares device_type as text and is_remote as Boolean. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "RULE-SET-A"
       ],
@@ -2638,7 +2707,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-008",
@@ -2656,7 +2726,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "Two independently controllable conditions are configured without nesting.",
+      "preconditions": "Two independently controllable conditions are configured without nesting. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "RULE-SET-A"
       ],
@@ -2674,7 +2744,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-009",
@@ -2692,7 +2763,7 @@
       ],
       "quality": "4.2.1",
       "priority": "P1",
-      "preconditions": "STAFF-A is authenticated and can edit A's rule configuration.",
+      "preconditions": "STAFF-A is authenticated and can edit A's rule configuration. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A"
       ],
@@ -2709,7 +2780,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-010",
@@ -2727,7 +2799,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "The optional test note field is absent; ordinary not-equal and not-in-list conditions are configured.",
+      "preconditions": "The optional test note field is absent; ordinary not-equal and not-in-list conditions are configured. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "TX-OPTIONAL-ABSENT"
@@ -2745,7 +2817,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-011",
@@ -2763,7 +2836,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "The test mapping declares note optional and the sample omits it.",
+      "preconditions": "The test mapping declares note optional and the sample omits it. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "TEST-MAP-A",
         "TX-OPTIONAL-ABSENT"
@@ -2781,7 +2854,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-012",
@@ -2802,7 +2876,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "A has two active matching rules and one disabled rule that would otherwise match.",
+      "preconditions": "A has two active matching rules and one disabled rule that would otherwise match. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "RULE-SET-A"
       ],
@@ -2819,7 +2893,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-013",
@@ -2837,7 +2912,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "A uses rule-based detection and a known nonmatching transaction is available.",
+      "preconditions": "A uses rule-based detection and a known nonmatching transaction is available. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "RULE-SET-A",
         "TX-RULE-NOMATCH"
@@ -2855,7 +2930,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-RULES-014",
@@ -2876,7 +2952,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P1",
-      "preconditions": "A has a completed detection under the earlier valid rule configuration; Staff has permission to edit.",
+      "preconditions": "A has a completed detection under the earlier valid rule configuration; Staff has permission to edit. Configuration edits are candidate drafts; production uses only an explicitly applied version.",
       "data": [
         "RULE-SET-A",
         "TX-BASE"
@@ -2888,14 +2964,16 @@
       ],
       "expected": [
         "The edit is attributable and does not rewrite the earlier outcome/reasons/source.",
-        "The new result retains its own applicable configuration reference."
+        "The new result retains its own applicable configuration reference.",
+        "Draft changes affect production only after exact-revision testing, explicit Staff assessment and application; accepted transactions keep their selected context."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.7.4-3.7.5, 3.9"
     },
     {
       "id": "SYS-INGEST-001",
@@ -2940,7 +3018,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-002",
@@ -2976,7 +3055,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-003",
@@ -3015,7 +3095,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-004",
@@ -3055,7 +3136,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-005",
@@ -3091,7 +3173,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-006",
@@ -3126,7 +3209,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-007",
@@ -3163,7 +3247,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-008",
@@ -3202,7 +3287,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-009",
@@ -3239,7 +3325,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-010",
@@ -3277,7 +3364,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-011",
@@ -3313,7 +3401,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-012",
@@ -3349,7 +3438,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-013",
@@ -3389,7 +3479,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-014",
@@ -3428,7 +3519,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-015",
@@ -3469,7 +3561,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-INGEST-016",
@@ -3509,7 +3602,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-IMPORT-001",
@@ -3553,7 +3647,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-002",
@@ -3597,7 +3692,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-003",
@@ -3633,7 +3729,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-004",
@@ -3673,7 +3770,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-005",
@@ -3713,7 +3811,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-006",
@@ -3757,7 +3856,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-007",
@@ -3801,7 +3901,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-008",
@@ -3838,7 +3939,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-009",
@@ -3879,7 +3981,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-IMPORT-010",
@@ -3919,7 +4022,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.3, 3.11.2"
     },
     {
       "id": "SYS-INGEST-017",
@@ -3962,7 +4066,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.8.1-3.8.5"
     },
     {
       "id": "SYS-DETECT-001",
@@ -4004,7 +4109,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-002",
@@ -4046,7 +4152,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-003",
@@ -4088,7 +4195,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-004",
@@ -4127,7 +4235,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-005",
@@ -4166,7 +4275,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-006",
@@ -4203,7 +4313,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-007",
@@ -4240,7 +4351,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-008",
@@ -4281,7 +4393,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-009",
@@ -4318,7 +4431,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-010",
@@ -4357,7 +4471,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-011",
@@ -4394,14 +4509,16 @@
         "Both inside-period fallback transactions are eligible for AI reanalysis, including the variant recovered after the current Subscription has expired; eligibility follows the transaction's event time.",
         "The outside-period control does not gain Subscription recovery eligibility merely because it belongs to the same workspace.",
         "Reanalysis is a separate attempt on the existing transaction, with its AI result/version/source; prior fallback results are preserved and no new ingestion occurs.",
-        "The expired workspace's new-case restriction remains unchanged. AI/Rule Alert reconciliation and automatic scheduling assertions remain pending."
+        "The expired workspace's new-case restriction remains unchanged. AI/Rule Alert reconciliation and automatic scheduling assertions remain pending.",
+        "Preserve the fallback Rule Alert. Recovery Anomaly creates or reuses the single AI Alert for the transaction; later Normal adds history without deleting an existing alert/case."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-DETECT-012",
@@ -4439,7 +4556,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.10"
     },
     {
       "id": "SYS-CASE-001",
@@ -4472,14 +4590,16 @@
       ],
       "expected": [
         "A case is created in A from the selected eligible AI Alert information.",
-        "The action is attributable and does not execute an external customer-system business action."
+        "The action is attributable and does not execute an external customer-system business action.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-002",
@@ -4507,14 +4627,16 @@
       ],
       "expected": [
         "The origin is rejected even when the workspace has Subscription.",
-        "No investigation case is created from that Rule Alert."
+        "No investigation case is created from that Rule Alert.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-003",
@@ -4544,14 +4666,16 @@
       ],
       "expected": [
         "The server rejects new case creation based on current entitlement.",
-        "Retaining an older AI Alert does not bypass the active-Subscription requirement."
+        "Retaining an older AI Alert does not bypass the active-Subscription requirement.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-004",
@@ -4581,14 +4705,16 @@
       ],
       "expected": [
         "Other-workspace and ineligible origins are rejected.",
-        "No unauthorized case or misleading eligible-alert association is created."
+        "No unauthorized case or misleading eligible-alert association is created.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-005",
@@ -4619,14 +4745,16 @@
       ],
       "expected": [
         "The assignment is saved with responsible identity/time.",
-        "INV-A1 can access the assigned case within the agreed object/field scope."
+        "INV-A1 can access the assigned case within the agreed object/field scope.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-006",
@@ -4655,14 +4783,16 @@
       ],
       "expected": [
         "The cross-workspace assignment is rejected.",
-        "The current A assignment is preserved and no B account gains A case access."
+        "The current A assignment is preserved and no B account gains A case access.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-007",
@@ -4696,14 +4826,16 @@
       ],
       "expected": [
         "The agreed workflow can complete without requiring a different second person.",
-        "Findings, report submission and final confirmation are separately recorded and attributable."
+        "Findings, report submission and final confirmation are separately recorded and attributable.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-008",
@@ -4737,14 +4869,16 @@
       "expected": [
         "The report is retained for Operator review.",
         "Submission alone does not create the final enterprise conclusion.",
-        "Investigator final confirmation is denied."
+        "Investigator final confirmation is denied.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-009",
@@ -4775,14 +4909,16 @@
       ],
       "expected": [
         "The request/comments are retained and the assignee can continue permitted investigation.",
-        "The earlier report is preserved rather than erased or silently replaced."
+        "The earlier report is preserved rather than erased or silently replaced.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-010",
@@ -4814,14 +4950,16 @@
       ],
       "expected": [
         "The selected permitted conclusion and confirmation identity/time are retained.",
-        "FraudGuard does not automatically block accounts, cancel orders or reject customer-system transactions."
+        "FraudGuard does not automatically block accounts, cancel orders or reject customer-system transactions.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-011",
@@ -4856,14 +4994,16 @@
       "expected": [
         "The existing case can be investigated and completed within role/object permission.",
         "Retained reports remain accessible according to role.",
-        "A new case remains prohibited."
+        "A new case remains prohibited.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-012",
@@ -4896,14 +5036,16 @@
       ],
       "expected": [
         "Expiry does not broaden access for the unassigned Investigator.",
-        "The assignee retains only the existing case/field permissions."
+        "The assignee retains only the existing case/field permissions.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-CASE-013",
@@ -4934,14 +5076,16 @@
       ],
       "expected": [
         "The business conclusion remains distinct from the AI classification.",
-        "No automatic model-error label, retraining job or model deployment is implied merely by confirmation."
+        "No automatic model-error label, retraining job or model deployment is implied merely by confirmation.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.12"
     },
     {
       "id": "SYS-REPORTS-001",
@@ -4980,7 +5124,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-REPORTS-002",
@@ -5018,7 +5163,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-REPORTS-003",
@@ -5057,7 +5203,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-REPORTS-004",
@@ -5095,7 +5242,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-REPORTS-005",
@@ -5132,7 +5280,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-REPORTS-006",
@@ -5169,7 +5318,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-REPORTS-007",
@@ -5207,7 +5357,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.13"
     },
     {
       "id": "SYS-PRIVACY-001",
@@ -5246,7 +5397,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-PRIVACY-002",
@@ -5282,7 +5434,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-PRIVACY-003",
@@ -5321,7 +5474,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-PRIVACY-004",
@@ -5357,7 +5511,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-PRIVACY-005",
@@ -5393,7 +5548,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-PRIVACY-006",
@@ -5429,7 +5585,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-PRIVACY-007",
@@ -5473,7 +5630,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.6.4, 3.11.6"
     },
     {
       "id": "SYS-NOTIFY-001",
@@ -5511,7 +5669,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.14"
     },
     {
       "id": "SYS-NOTIFY-002",
@@ -5552,7 +5711,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.14"
     },
     {
       "id": "SYS-MONITOR-001",
@@ -5589,7 +5749,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.15.1"
     },
     {
       "id": "SYS-COMMON-001",
@@ -5632,7 +5793,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.15.2"
     },
     {
       "id": "SYS-COMMON-002",
@@ -5668,7 +5830,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.15.2"
     },
     {
       "id": "SYS-COMMON-003",
@@ -5709,7 +5872,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.15.2"
     },
     {
       "id": "SYS-COMMON-004",
@@ -5750,7 +5914,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.15.2"
     },
     {
       "id": "SYS-COMMON-005",
@@ -5790,7 +5955,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.15.2"
     },
     {
       "id": "SYS-BILLING-001",
@@ -5826,7 +5992,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-002",
@@ -5868,7 +6035,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-003",
@@ -5908,7 +6076,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-004",
@@ -5945,7 +6114,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-005",
@@ -5983,7 +6153,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-006",
@@ -6020,7 +6191,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-007",
@@ -6059,7 +6231,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-008",
@@ -6096,7 +6269,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-009",
@@ -6135,7 +6309,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-010",
@@ -6171,7 +6346,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-011",
@@ -6207,7 +6383,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-012",
@@ -6243,7 +6420,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-013",
@@ -6282,7 +6460,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-014",
@@ -6318,7 +6497,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-015",
@@ -6358,7 +6538,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-016",
@@ -6398,7 +6579,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-017",
@@ -6438,7 +6620,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-018",
@@ -6456,7 +6639,7 @@
       ],
       "quality": "4.2.2",
       "priority": "P2",
-      "preconditions": "The billing timezone is documented; the controlled calendar expiry is 31 January 2027 in that timezone and a one-month renewal is verified.",
+      "preconditions": "Use Asia/Ho_Chi_Minh calendar time; controlled expiry is 31 January 2027 and a one-month renewal is verified.",
       "data": [
         "BILLING-CALENDAR"
       ],
@@ -6468,14 +6651,15 @@
       "expected": [
         "The 2027 case ends on 28 February in that same calendar/timezone.",
         "The 2028 case ends on 29 February.",
-        "This case does not invent an unconfirmed UTC offset or billing timezone."
+        "Calculate in Asia/Ho_Chi_Minh, preserve local time, store UTC instants; validity is start-inclusive and expiry-exclusive."
       ],
       "status": "Not Run",
       "actualResult": "",
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-019",
@@ -6517,7 +6701,8 @@
       "evidence": "",
       "tester": "",
       "runDate": "",
-      "defectReference": ""
+      "defectReference": "",
+      "ref": "3.4"
     },
     {
       "id": "SYS-BILLING-020",
@@ -6552,6 +6737,652 @@
       "expected": [
         "The limit is identified as technical protection rather than a purchased-plan quota.",
         "The event does not silently change the plan or claim an automatic upgrade is required."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": "",
+      "ref": "3.4"
+    },
+    {
+      "id": "SYS-AUTH-015",
+      "group": "AUTH",
+      "title": "Change current password with verified identity",
+      "ref": "3.2.3",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "OP-A exists and has completed initial setup. Approved password/session rules are configured.",
+      "data": [
+        "OP-A"
+      ],
+      "steps": [
+        "Submit valid current verification and a compliant matching new password.",
+        "Attempt later login with old and new credentials under the approved session policy."
+      ],
+      "expected": [
+        "Password changes successfully; old credential is rejected and new credential authenticates.",
+        "Credentials stay out of logs/responses."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-AUTH-016",
+      "group": "AUTH",
+      "title": "Reject incorrect password verification or mismatched confirmation",
+      "ref": "3.2.2-3.2.3",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Prepare ordinary OP-A and separate first-login account.",
+      "data": [
+        "OP-A",
+        "ACC-FIRSTLOGIN"
+      ],
+      "steps": [
+        "For each account, submit incorrect identity/current verification, mismatched confirmation and empty new password as separate attempts.",
+        "Check account setup/access state after each rejection."
+      ],
+      "expected": [
+        "No credential changes; setup-only account stays restricted.",
+        "Show safe correctable feedback without exposing credentials."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-ADMIN-010",
+      "group": "ADMIN",
+      "title": "Recheck enterprise role changes on later requests",
+      "ref": "3.6.3",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "SME Admin A can manage a permitted member whose responsibility constraints are resolved.",
+      "data": [
+        "SA-A",
+        "OP-A"
+      ],
+      "steps": [
+        "Change the member role/access using permitted controls.",
+        "Use the old session and previously open links to repeat former actions."
+      ],
+      "expected": [
+        "Later requests enforce current rights; old UI state grants no authority.",
+        "Retain prior case/report authorship and administrative history."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-ADMIN-011",
+      "group": "ADMIN",
+      "title": "Grant then revoke explicit field-view permission",
+      "ref": "3.6.4",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "A has an Operator, assigned Investigator, protected field and administrative permission controls.",
+      "data": [
+        "SA-A",
+        "OP-A",
+        "INV-A1",
+        "SENSITIVE-DATA"
+      ],
+      "steps": [
+        "As SME Admin grant the configured field to an eligible Operator/Investigator.",
+        "Confirm permitted explicit reveal, then revoke the grant.",
+        "Retry reveal from an already open view."
+      ],
+      "expected": [
+        "Only eligible own-workspace member/field grants are accepted.",
+        "Revoked disclosure is denied; SME Admin never gains plaintext access by granting permission."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CONFIG-004",
+      "group": "CONFIG",
+      "title": "Save and test a draft without production activation",
+      "ref": "3.7.2-3.7.7",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "A is operational with active version V1; assigned Staff may create candidate V2.",
+      "data": [
+        "STAFF-A",
+        "TEST-MAP-A"
+      ],
+      "steps": [
+        "Change a field/mapping/rule in candidate V2.",
+        "Run temporary samples for the exact V2 revision.",
+        "Submit independent production inputs before applying V2."
+      ],
+      "expected": [
+        "Edit/test retains active V1 and does not activate V2.",
+        "Production continues using V1; samples create no production transactions, alerts, cases or statistics."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CONFIG-005",
+      "group": "CONFIG",
+      "title": "Apply the exact tested and assessed revision",
+      "ref": "3.7.8",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Complete candidate R has a relevant completed test; assigned Staff supplies explicit assessment.",
+      "data": [
+        "STAFF-A",
+        "TEST-MAP-A"
+      ],
+      "steps": [
+        "Review R, test reference and assessment.",
+        "Apply with current expected active version.",
+        "Accept a new transaction and review selected configuration."
+      ],
+      "expected": [
+        "R becomes the single active version atomically.",
+        "Newly accepted work selects R; retain prior versions/history; do not restart activation or Subscription."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CONFIG-006",
+      "group": "CONFIG",
+      "title": "Reject stale test and stale configuration application",
+      "ref": "3.7.8",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Two currently assigned Staff can edit A candidate; active/draft versions are visible.",
+      "data": [
+        "STAFF-A",
+        "TEST-MAP-A"
+      ],
+      "steps": [
+        "Test revision R, then edit to R+1 and attempt to apply using R test.",
+        "Separately attempt apply with an outdated expected active version."
+      ],
+      "expected": [
+        "Reject stale tested revision and stale active-version update.",
+        "Do not overwrite newer candidate or current active configuration."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CONFIG-007",
+      "group": "CONFIG",
+      "title": "Require assessment and resolve configuration errors before apply",
+      "ref": "3.7.8",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Assigned Staff has draft/test controls and a valid baseline test profile.",
+      "data": [
+        "STAFF-A",
+        "TEST-MAP-A"
+      ],
+      "steps": [
+        "Try apply without a relevant completed test, without explicit assessment, and with unresolved configuration errors as separate attempts.",
+        "Run a valid configuration against deliberately invalid samples and inspect its validation outcomes."
+      ],
+      "expected": [
+        "Missing prerequisites and unresolved configuration errors block apply.",
+        "Expected rejection of negative samples alone does not prove a configuration defect."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CONFIG-008",
+      "group": "CONFIG",
+      "title": "Retain accepted plan/configuration context across an apply or expiry",
+      "ref": "3.4.7, 3.7.8",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Controlled harness pauses a transaction after durable acceptance under Subscription/V1.",
+      "data": [
+        "PLAN-ACTIVE",
+        "FAILURE-AFTER-ACCEPT"
+      ],
+      "steps": [
+        "Accept T and capture plan/configuration selection.",
+        "Apply V2 and advance authoritative time past expiry while T is paused.",
+        "Resume T; accept a new independent transaction after expiry."
+      ],
+      "expected": [
+        "T completes using its selected Subscription/V1 context.",
+        "New acceptance uses current plan/configuration; current-expiry restrictions still apply to new cases."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-DETECT-013",
+      "group": "DETECT",
+      "title": "Preserve one AI Alert and prior fallback during repeated recovery",
+      "ref": "3.10.3",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Fallback transaction falls within historical Subscription; recovery AI is controlled.",
+      "data": [
+        "TX-FALLBACK-HISTORY",
+        "AI-ANOMALY"
+      ],
+      "steps": [
+        "Run Anomaly recovery; repeat the same operation and another eligible recovery.",
+        "Review transaction attempts, AI Alert and fallback Rule Alert."
+      ],
+      "expected": [
+        "Keep one AI Alert for the transaction and preserve fallback Rule Alert/history.",
+        "Repeated recovery operation has no duplicate effect; no automatic case."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-DETECT-014",
+      "group": "DETECT",
+      "title": "Later Normal recovery preserves prior alert and case",
+      "ref": "3.10.3",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Historically eligible fallback transaction already has AI Alert and an authorized existing case.",
+      "data": [
+        "TX-FALLBACK-HISTORY",
+        "CASE-A",
+        "AI-NORMAL"
+      ],
+      "steps": [
+        "Run later recovery with valid Normal/version response.",
+        "Review all prior alerts, case and detection history."
+      ],
+      "expected": [
+        "Add Normal/version as new history; delete neither existing AI/Rule Alert nor case.",
+        "Keep attempts distinguishable; create no replacement business transaction."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CASE-014",
+      "group": "CASE",
+      "title": "Link multiple eligible AI Alerts to one Open case",
+      "ref": "3.12.1",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Operator A has active Subscription and two unlinked A AI Alerts.",
+      "data": [
+        "OP-A",
+        "PLAN-ACTIVE",
+        "AI-ANOMALY"
+      ],
+      "steps": [
+        "Select both eligible alerts and create a case.",
+        "Review case state, linked transactions and history."
+      ],
+      "expected": [
+        "One Open case links both AI Alerts; conclusion and assignment remain separate.",
+        "No cross-workspace or Rule Alert links.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CASE-015",
+      "group": "CASE",
+      "title": "Prevent duplicate AI Alert case linkage under concurrent creation",
+      "ref": "3.12.1",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Two Operator sessions select the same unlinked A AI Alert.",
+      "data": [
+        "OP-A",
+        "PLAN-ACTIVE"
+      ],
+      "steps": [
+        "Submit case creation concurrently for that alert.",
+        "Inspect both results and retained case links."
+      ],
+      "expected": [
+        "Alert belongs to at most one case; conflicting request is rejected safely.",
+        "No partial duplicate case link or overwritten case.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CASE-016",
+      "group": "CASE",
+      "title": "Follow the agreed investigation lifecycle",
+      "ref": "3.12.3-3.12.7",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Open A case and eligible Investigator; permitted report fields are available.",
+      "data": [
+        "OP-A",
+        "INV-A1",
+        "CASE-A"
+      ],
+      "steps": [
+        "Assign/start investigation: Open to Investigating.",
+        "Record findings and submit report: Investigating to Pending Review.",
+        "Request more work with comments: Pending Review to Investigating.",
+        "Submit revised report and confirm final conclusion: Pending Review to Closed."
+      ],
+      "expected": [
+        "Enforce each transition and preserve report/review versions and authorship.",
+        "Assignment is separate from lifecycle; reassignment retains current investigation/review state.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CASE-017",
+      "group": "CASE",
+      "title": "Validate all four final conclusions without automated enforcement",
+      "ref": "3.12.7",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Four independent Pending Review cases and current Operator review authority.",
+      "data": [
+        "OP-A",
+        "CASE-A"
+      ],
+      "steps": [
+        "Confirm one case for each: Confirmed Fraud; Anomalous but Legitimate; False Alert; Insufficient Evidence.",
+        "Inspect closed case, transaction findings, audit and controlled external sinks."
+      ],
+      "expected": [
+        "Each case is Closed with a separate selected conclusion and retained decision history.",
+        "Do not automatically train/deploy a model, infer one model label or block/cancel customer operations.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-CASE-018",
+      "group": "CASE",
+      "title": "Reject missing review content, stale submissions and closed-case updates",
+      "ref": "3.12.4-3.12.7",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Prepare Investigating, Pending Review and Closed cases with isolated versions.",
+      "data": [
+        "OP-A",
+        "INV-A1",
+        "CASE-A"
+      ],
+      "steps": [
+        "Submit without required findings/conclusion; request more work without comments.",
+        "Submit from removed assignment or stale state/version.",
+        "Attempt findings update or assignment on Closed case."
+      ],
+      "expected": [
+        "Reject invalid/stale/forbidden changes; preserve previous report/state.",
+        "No reopening is implied by retained case access.",
+        "Where applicable, lifecycle is Open / Investigating / Pending Review / Closed; final conclusion and assignment are separate."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-REVIEW-001",
+      "group": "REVIEW",
+      "title": "Review and flag a Rule Alert with retained evidence",
+      "ref": "3.11.3",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Operator A has an aggregated Rule Alert with multiple reasons.",
+      "data": [
+        "OP-A",
+        "TX-RULE-MATCH"
+      ],
+      "steps": [
+        "Open Rule Alert and inspect all matched reasons and source.",
+        "Change follow-up flag; attempt stale flag update from a second session."
+      ],
+      "expected": [
+        "Keep protected matched evidence and attributable flag history.",
+        "Reject stale overwrite; flag never makes Rule Alert an eligible case origin."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-NOTIFY-003",
+      "group": "NOTIFY",
+      "title": "Email uses contact address and retry does not repeat business effects",
+      "ref": "3.14.2",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Controlled email sink; account login differs from contact address.",
+      "data": [
+        "NOTIFICATION-SINK",
+        "OP-A"
+      ],
+      "steps": [
+        "Commit a notifiable case/payment event while email sink fails.",
+        "Restore sink and retry delivery.",
+        "Inspect recipient and business effect count."
+      ],
+      "expected": [
+        "Use stored contact email; no plaintext/secret in message.",
+        "Business outcome remains committed once; delivery retry does not repeat it."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-NOTIFY-004",
+      "group": "NOTIFY",
+      "title": "Notification link rechecks current assignment and access",
+      "ref": "3.14.1",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Investigator received a relevant case notification, then assignment was removed.",
+      "data": [
+        "INV-A1",
+        "CASE-A"
+      ],
+      "steps": [
+        "Open the old notification target after reassignment.",
+        "Retry direct target request from the old session."
+      ],
+      "expected": [
+        "Current authorization denies case/related data; receipt of notification grants no access."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-MONITOR-002",
+      "group": "MONITOR",
+      "title": "Missing telemetry is shown as unknown or unavailable",
+      "ref": "3.15.1",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Platform Admin; controlled service health source.",
+      "data": [
+        "PA"
+      ],
+      "steps": [
+        "Stop a controlled health source or make telemetry unavailable.",
+        "Refresh monitoring view and inspect diagnostics."
+      ],
+      "expected": [
+        "Missing telemetry is not reported healthy.",
+        "Only safe operational metadata is visible."
+      ],
+      "status": "Not Run",
+      "actualResult": "",
+      "evidence": "",
+      "tester": "",
+      "runDate": "",
+      "defectReference": ""
+    },
+    {
+      "id": "SYS-COMMON-006",
+      "group": "COMMON",
+      "title": "Required audit failure prevents a partial business change",
+      "ref": "3.15.2",
+      "uc": [],
+      "br": [],
+      "cr": [],
+      "quality": "",
+      "priority": "P1",
+      "preconditions": "Controlled harness can fail a required local audit write for an otherwise valid mutation.",
+      "data": [
+        "ENV-BASE"
+      ],
+      "steps": [
+        "Fail required audit persistence during a permitted configuration/case change.",
+        "Reload business state and audit history."
+      ],
+      "expected": [
+        "Business change and required local history do not partially commit.",
+        "Return safe retryable failure without secrets or sample contents."
       ],
       "status": "Not Run",
       "actualResult": "",
@@ -6811,13 +7642,13 @@
     {
       "id": "TX-FALLBACK-HISTORY",
       "kind": "History setup",
-      "definition": "Stored transaction and original fallback attempt with an event time clearly inside a recorded Subscription period. Recover before/after current expiry; include an outside-period rule-processed control. Preserve history. Alert reconciliation remains pending.",
+      "definition": "Stored transaction and original fallback attempt with an event time clearly inside a recorded Subscription period. Recover before/after current expiry; include an outside-period rule-processed control. Preserve history. Preserve fallback Rule Alert; recovery reuses one transaction AI Alert; later Normal never deletes existing alert/case.",
       "asset": ""
     },
     {
       "id": "CASE-A",
       "kind": "Case setup",
-      "definition": "Eligible A AI Alert and a case opened during active Subscription. INV-A1 assigned; INV-A2 and B's Investigator unassigned. No exact state enum/cardinality is invented.",
+      "definition": "Eligible A AI Alert and a case opened during active Subscription. INV-A1 assigned; INV-A2 and B's Investigator unassigned. Lifecycle: Open, Investigating, Pending Review, Closed. Multiple AI Alerts per case; each AI Alert links to at most one case in the current proposed model.",
       "asset": ""
     },
     {
@@ -6913,7 +7744,7 @@
     {
       "id": "BILLING-CALENDAR",
       "kind": "Calendar setup",
-      "definition": "Use the confirmed billing timezone. Calendar examples Jan 31 2027 to Feb 28 and Jan 31 2028 to Feb 29 after one month; no offset/default is chosen.",
+      "definition": "Use Asia/Ho_Chi_Minh calendar periods and UTC instants, [start,expiry). Calendar examples Jan 31 2027 to Feb 28 and Jan 31 2028 to Feb 29 after one month; Use an injected authoritative clock.",
       "asset": ""
     },
     {
@@ -6989,18 +7820,18 @@
     {
       "id": "DEC-02",
       "topic": "Case lifecycle and links",
-      "question": "Confirm state names/transitions, reopen/merge/split, alert-case cardinality and allowed/per-transaction conclusion values.",
+      "question": "Core lifecycle and four conclusion meanings are confirmed in SRS 3.12. Reopen/merge/split and detailed implementation contracts remain outside this baseline.",
       "affects": "Detailed state/class/database design and exact transition/link tests.",
-      "treatment": "Keep agreed permission/report/conclusion invariants; do not invent enums or cardinality.",
-      "status": "Awaiting clarification"
+      "treatment": "Test Open -> Investigating -> Pending Review -> Closed, additional work back to Investigating, separate assignment/conclusion and current AI-Alert linkage rules.",
+      "status": "Core confirmed; extensions pending"
     },
     {
       "id": "DEC-03",
       "topic": "AI recovery and alert reconciliation",
-      "question": "How should later AI Alerts be reconciled with prior fallback Rule Alerts, and what recovery scheduling mechanism applies?",
+      "question": "SRS 3.10.3 confirms historical eligibility and alert preservation. Select recovery scheduling/operation contracts during implementation.",
       "affects": "Exact alert reconciliation/counts and recovery scheduling; historical Subscription eligibility is confirmed.",
-      "treatment": "Confirmed: fallback events inside a historical Subscription validity period may be reanalysed after AI recovery even when the current plan has expired. Preserve separate attempt history and the new-case gate; defer alert reconciliation and scheduling.",
-      "status": "Partially confirmed"
+      "treatment": "Keep fallback Rule Alert and prior attempts; Anomaly reuses single transaction AI Alert; later Normal retains alert/case. No scheduler interval assumed.",
+      "status": "Reconciliation confirmed; scheduling pending"
     },
     {
       "id": "DEC-04",
@@ -7013,10 +7844,10 @@
     {
       "id": "DEC-05",
       "topic": "Configuration release",
-      "question": "Confirm mapping/rule publication/versioning, rollout/rollback and retained historical references.",
+      "question": "SRS 3.7.8 confirms candidate revisions and explicit exact-tested-revision application. Rollback/migration mechanics remain unimplemented.",
       "affects": "Mid-rollout processing, detailed schema and migration tests.",
-      "treatment": "Verify history preservation without choosing a release mechanism.",
-      "status": "Awaiting clarification"
+      "treatment": "Test exact revision, completed test, explicit Staff assessment, atomic active version and retained accepted context.",
+      "status": "Core confirmed; rollout details pending"
     },
     {
       "id": "DEC-06",
@@ -7029,10 +7860,10 @@
     {
       "id": "DEC-07",
       "topic": "Subscription time and concurrent changes",
-      "question": "Confirm billing/display timezone, exact expiry/in-flight rule, distinct concurrent paid renewals and pending purchases for retired offers.",
+      "question": "Asia/Ho_Chi_Minh, UTC instants, [start,expiry), captured acceptance context and calendar clamping are confirmed. Distinct concurrent renewals and retired-offer pending-purchase exceptions need implementation agreement.",
       "affects": "Expiry races and timezone-specific instants/retired-offer exceptions.",
-      "treatment": "Use BR-30 in the configured timezone; leave exception/race outcomes unset.",
-      "status": "Awaiting clarification"
+      "treatment": "Use confirmed time/acceptance rules; do not invent outcomes for unresolved provider-specific purchase races.",
+      "status": "Core time rules confirmed; provider races pending"
     },
     {
       "id": "DEC-08",

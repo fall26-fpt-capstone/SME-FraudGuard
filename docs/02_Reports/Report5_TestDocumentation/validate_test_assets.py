@@ -3,6 +3,7 @@ import argparse
 import csv
 import json
 from pathlib import Path
+import posixpath
 import re
 import zipfile
 import xml.etree.ElementTree as ET
@@ -17,11 +18,19 @@ def read_json(name):
 
 def xlsx_rows(filename, sheet_number=1):
     with zipfile.ZipFile(filename) as archive:
+        sheet_path = f"xl/worksheets/sheet{sheet_number}.xml"
+        if isinstance(sheet_number, str):
+            sheets = ET.fromstring(archive.read("xl/workbook.xml")).find("s:sheets", NS)
+            target = next(sheet for sheet in sheets if sheet.attrib["name"] == sheet_number)
+            relationship_id = target.attrib["{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"]
+            relationships = ET.fromstring(archive.read("xl/_rels/workbook.xml.rels"))
+            target_path = next(rel.attrib["Target"] for rel in relationships if rel.attrib["Id"] == relationship_id)
+            sheet_path = target_path.lstrip("/") if target_path.startswith("/") else posixpath.normpath("xl/" + target_path)
         strings = []
         if "xl/sharedStrings.xml" in archive.namelist():
             shared = ET.fromstring(archive.read("xl/sharedStrings.xml"))
             strings = ["".join(el.itertext()) for el in shared]
-        sheet = ET.fromstring(archive.read(f"xl/worksheets/sheet{sheet_number}.xml"))
+        sheet = ET.fromstring(archive.read(sheet_path))
         rows = []
         for row in sheet.findall("s:sheetData/s:row", NS):
             cells = {}
@@ -46,7 +55,7 @@ def main():
     args = parser.parse_args()
     catalogue = read_json("test-cases/system-test-cases.json")
     cases = catalogue["cases"]
-    assert len(cases) == 170
+    assert len(cases) == 191
     assert len({c["id"] for c in cases}) == len(cases)
     definitions = {d["id"]: d for d in catalogue["testData"]}
     for case in cases:
@@ -62,7 +71,11 @@ def main():
     for definition in definitions.values():
         if definition["asset"]:
             assert (ROOT / "test-cases" / definition["asset"]).is_file(), definition["id"]
-    assert all(d["status"] in {"Awaiting clarification", "Deferred by team", "Partially confirmed"} for d in catalogue["deferredDecisions"])
+    assert all(d["status"] in {
+        "Awaiting clarification", "Deferred by team", "Partially confirmed",
+        "Core confirmed; extensions pending", "Reconciliation confirmed; scheduling pending",
+        "Core confirmed; rollout details pending", "Core time rules confirmed; provider races pending",
+    } for d in catalogue["deferredDecisions"])
 
     manifest = read_json("test-data/fixture-manifest.json")
     tables = manifest["fixtureTables"]
@@ -92,29 +105,64 @@ def main():
     assert sum(manifest["files"]["mixed"][k] for k in ("accepted", "duplicate", "conflict", "invalid")) == 7
 
     workbook = ROOT / "test-cases/SEP490_FA26SE215_Report5_System_Test_Cases.xlsx"
-    case_rows = dict(xlsx_rows(workbook, 2))
-    for row, case in enumerate(cases, 9):
-        cells = case_rows[row]
-        assert cells["A"] == case["id"] and cells["C"] == case["title"]
-        assert cells["D"] == ", ".join(case["uc"]) and cells["E"] == ", ".join(case["br"])
-        assert cells["F"] == ", ".join(case["cr"]) and cells["G"] == case["quality"]
-        assert cells["I"] == case["preconditions"] and cells["J"] == ", ".join(case["data"])
-        assert cells["K"] == "\n".join(f"{i+1}. {s}" for i, s in enumerate(case["steps"]))
-        assert cells["L"] == "\n".join(f"{i+1}. {s}" for i, s in enumerate(case["expected"]))
+    functions = dict(xlsx_rows(workbook, "Functions"))
+    groups = list(dict.fromkeys(c["group"] for c in cases))
+    statuses = {"Not Run", "Pass", "Fail", "Blocked", "Not Applicable"}
+    for index, group in enumerate(groups, 6):
+        group_cases = [c for c in cases if c["group"] == group]
+        sheet_name = functions[index]["B"]
+        assert float(functions[index]["E"]) == len(group_cases), group
+        case_rows = dict(xlsx_rows(workbook, sheet_name))
+        assert {cells.get("A") for _, cells in case_rows.items() if cells.get("A", "").startswith("SYS-")} == {c["id"] for c in group_cases}
+        for row, case in enumerate(group_cases, 6):
+            cells = case_rows[row]
+            assert cells["A"] == case["id"] and cells["B"] == case["title"], case["id"]
+            assert cells["C"] == "\n".join(f"{i+1}. {s}" for i, s in enumerate(case["steps"]))
+            assert cells["D"] == "\n".join(f"{i+1}. {s}" for i, s in enumerate(case["expected"]))
+            assert cells["E"] == case["preconditions"] and cells["F"] == "\n".join(case["data"])
+            assert cells["G"] == "\n".join([f"SRS {case['ref']}", *case["uc"], *case["br"], *case["cr"]])
+            assert cells["H"] == case["priority"] and cells["I"] in statuses
+            if not args.allow_executed:
+                assert cells["I"] == "Not Run" and all(not cells.get(c) for c in "JKLMNO")
+
+    unit_catalogue = read_json("test-cases/unit-test-cases.json")
+    unit_functions = unit_catalogue["functions"]
+    unit_cases = [case for function in unit_functions for case in function["scenarios"]]
+    assert len(unit_functions) == 33 and len(unit_cases) == 164
+    assert len({case["id"] for case in unit_cases}) == len(unit_cases)
+    unit_workbook = ROOT / "test-cases/SEP490_FA26SE215_Report5_Unit_Test_Cases.xlsx"
+    function_rows = dict(xlsx_rows(unit_workbook, "Functions"))
+    for index, function in enumerate(unit_functions, 6):
+        rows = dict(xlsx_rows(unit_workbook, function["tab"]))
+        assert function_rows[index]["B"] == function["cls"]
+        assert function_rows[index]["C"] == function["method"]
+        assert function_rows[index]["D"] == function["ref"]
+        assert float(function_rows[index]["F"]) == len(function["scenarios"])
+        assert rows[5]["C"].startswith("Planned"), function["tab"]
+        for offset, case in enumerate(function["scenarios"]):
+            column = chr(67 + offset)
+            assert case["input"] and case["expected"] and case["type"] in {"N", "A", "B"}
+            assert case["status"] == "Not Run"
+            assert rows[8][column] == case["id"]
+            selected = [cells["B"] for _, cells in rows.items() if cells.get(column) == "O"]
+            assert selected == [case["input"], case["expected"]], case["id"]
+            status_row = function["statusRow"]
+            assert rows[status_row - 1][column] == case["type"]
+            assert rows[status_row][column] in statuses
+            if not args.allow_executed:
+                assert rows[status_row][column] == "Not Run"
+                assert all(not rows[row].get(column) for row in range(status_row + 1, function["lastRow"] + 1))
+
+    for filename, expected in ((workbook, len(cases)), (unit_workbook, len(unit_cases))):
+        with zipfile.ZipFile(filename) as archive:
+            sheets = ET.fromstring(archive.read("xl/workbook.xml")).find("s:sheets", NS)
+            for sheet in sheets:
+                xlsx_rows(filename, sheet.attrib["name"])
+        totals = next(cells for _, cells in xlsx_rows(filename, "Statistics") if cells.get("A") == "Total")
+        assert totals["B"] == str(expected)
         if not args.allow_executed:
-            assert cells["M"] == "Not Run" and all(not cells.get(c) for c in "NOPQR")
-    for number in range(1, 6):
-        xlsx_rows(workbook, number)
-    overview = dict(xlsx_rows(workbook, 1))
-    if not args.allow_executed:
-        assert overview[8]["B"] == "170" and overview[9]["B"] == "0"
-        assert overview[15]["B"] == "0" and overview[16]["B"] == "Not run"
-    coverage = dict(xlsx_rows(workbook, 3))
-    for row in range(7, 108):
-        requirement = coverage[row]["B"]
-        ids = [c["id"] for c in cases if requirement in c["uc"] + c["br"] + c["cr"]]
-        assert coverage[row]["D"] == str(len(ids)) and coverage[row]["E"] == ", ".join(ids)
-    print(f"PASS: {len(cases)} designed cases; 101 requirement IDs; {len(definitions)} profiles; CSV/XLSX equivalence; no fabricated execution results in authored baseline.")
+            assert totals["C"] == str(expected) and all(totals[c] == "0" for c in "DEFG")
+    print(f"PASS: {len(cases)} system cases; {len(unit_cases)} planned unit cases; 101 requirement IDs; {len(definitions)} profiles; CSV/XLSX equivalence; no fabricated execution results in authored baseline.")
     print("This validates documentation assets only. No application scenario was executed.")
 
 

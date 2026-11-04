@@ -1,0 +1,1558 @@
+{
+  "metadata": {
+    "projectCode": "FA26SE215",
+    "groupCode": "GFA26SE97",
+    "title": "SME-FraudGuard Unit Test Cases",
+    "date": "2026-11-04",
+    "version": "1.0",
+    "implementationStatus": "Planned business-unit design; proposed SDD responsibilities are not implemented business functions.",
+    "executionNote": "All cases are Not Run. Each parameterized case must run every variant before Pass; no test execution is claimed.",
+    "workbookUrl": "https://docs.google.com/spreadsheets/d/1J-UaFZ4qaWs87ATlcaOaKJxDDd5w6PbEY4NbYb9x-qo/edit"
+  },
+  "functions": [
+    {
+      "tab": "login",
+      "cls": "AuthenticationService",
+      "method": "login",
+      "ref": "3.2.1",
+      "setup": "Mock account lookup, password verification and session store; no network or database.",
+      "scenarios": [
+        {
+          "id": "UT-01-01",
+          "type": "N",
+          "input": "Valid OP-A credentials; active account; verified workspace A.",
+          "expected": "Return Operator destination and an A-scoped session; store no raw password.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-01-02",
+          "type": "N",
+          "input": "Valid first-login account; mustChangePassword=true.",
+          "expected": "Return setup-only session and mandatory password-change destination.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-01-03",
+          "type": "N",
+          "input": "Valid SME Admin; workspace not activated.",
+          "expected": "Return onboarding destination; grant no production authority.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-01-04",
+          "type": "A",
+          "input": "Unknown login OR wrong password (separate invocations).",
+          "expected": "Return the same safe authentication denial; create no session.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-01-05",
+          "type": "A",
+          "input": "Valid password but unavailable account OR wrong portal/workspace (separate invocations).",
+          "expected": "Deny login; do not derive membership from caller-supplied workspace.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "passwordChange",
+      "cls": "AuthenticationService",
+      "method": "completeInitialPassword / changePassword",
+      "ref": "3.2.2-3.2.3",
+      "setup": "Mock verified identity, account and credential store. Supply approved password policy at execution.",
+      "scenarios": [
+        {
+          "id": "UT-02-01",
+          "type": "N",
+          "input": "Valid setup-only session; verified identity; policy-compliant matching new password.",
+          "expected": "Persist credential change and clear setup restriction only after successful save.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-02-02",
+          "type": "A",
+          "input": "Empty new password OR confirmation mismatch OR approved-policy violation (separate invocations).",
+          "expected": "Reject; do not clear first-login restriction or change the credential.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-02-03",
+          "type": "A",
+          "input": "Incorrect current-password/identity verification.",
+          "expected": "Reject credential change; preserve current credential.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-02-04",
+          "type": "A",
+          "input": "Credential persistence reports failure.",
+          "expected": "Return controlled failure; do not report credential changed or unlock setup.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-02-05",
+          "type": "N",
+          "input": "Ordinary account change with valid current verification and policy-compliant new password.",
+          "expected": "Update credential once; omit credentials from response and audit payload.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "logout",
+      "cls": "AuthenticationService",
+      "method": "logout",
+      "ref": "3.2.4",
+      "setup": "Mock server-side session lookup and termination.",
+      "scenarios": [
+        {
+          "id": "UT-03-01",
+          "type": "N",
+          "input": "Current authenticated session S1.",
+          "expected": "End S1; later authorization using S1 is denied.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-03-02",
+          "type": "A",
+          "input": "Caller supplies another account's session reference.",
+          "expected": "Deny unauthorized termination; do not mutate the other session.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-03-03",
+          "type": "N",
+          "input": "Repeat termination of already ended current session.",
+          "expected": "Leave it ended; do not recreate authentication or delete business history.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 16,
+      "lastRow": 22,
+      "lastCol": "E"
+    },
+    {
+      "tab": "provisionWorkspace",
+      "cls": "WorkspaceService",
+      "method": "provisionWorkspace",
+      "ref": "3.3.2",
+      "setup": "Mock workspace/account repositories, uniqueness result and transaction boundary.",
+      "scenarios": [
+        {
+          "id": "UT-04-01",
+          "type": "N",
+          "input": "Platform Admin; new enterprise; valid administrative metadata.",
+          "expected": "Create exactly one workspace and initial SME Admin requiring password setup; no activation.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-04-02",
+          "type": "A",
+          "input": "Existing workspace for the same enterprise.",
+          "expected": "Reject second workspace; preserve existing account/workspace.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-04-03",
+          "type": "A",
+          "input": "Staff or enterprise actor requests provisioning.",
+          "expected": "Deny; perform no provisioning writes.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-04-04",
+          "type": "A",
+          "input": "Initial SME Admin creation fails.",
+          "expected": "Report failure; do not expose partially provisioned workspace as usable.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 18,
+      "lastRow": 24,
+      "lastCol": "F"
+    },
+    {
+      "tab": "staffAssignments",
+      "cls": "WorkspaceService",
+      "method": "updateStaffAssignments",
+      "ref": "3.3.4",
+      "setup": "Mock current assignments, workspace versions and administrative history.",
+      "scenarios": [
+        {
+          "id": "UT-05-01",
+          "type": "N",
+          "input": "Platform Admin adds STAFF-A and STAFF-B to workspace A.",
+          "expected": "Retain concurrent assignments; expose setup metadata only.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-05-02",
+          "type": "N",
+          "input": "Platform Admin removes STAFF-A while STAFF-B remains.",
+          "expected": "Remove A access for STAFF-A on subsequent requests; retain STAFF-B and assignment history.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-05-03",
+          "type": "A",
+          "input": "Implementation Staff attempts to change its own assignments.",
+          "expected": "Deny; keep assignment state unchanged.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-05-04",
+          "type": "A",
+          "input": "Expected workspace version is stale.",
+          "expected": "Reject stale change; do not overwrite newer assignments.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 18,
+      "lastRow": 24,
+      "lastCol": "F"
+    },
+    {
+      "tab": "initialPlan",
+      "cls": "SubscriptionService",
+      "method": "grantInitialPlan",
+      "ref": "3.4.3",
+      "setup": "Mock Platform Admin context and unactivated workspace entitlement store.",
+      "scenarios": [
+        {
+          "id": "UT-06-01",
+          "type": "N",
+          "input": "Grant initial Subscription to unactivated workspace A.",
+          "expected": "Record allocation awaiting activation; no running validity term or production access.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-06-02",
+          "type": "N",
+          "input": "Grant initial Free plan according to permitted onboarding state.",
+          "expected": "Record Free allocation without readiness, approval or activation effects.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-06-03",
+          "type": "A",
+          "input": "SME Admin or Staff attempts initial grant.",
+          "expected": "Deny; no initial-plan mutation.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-06-04",
+          "type": "A",
+          "input": "Stale/invalid onboarding allocation request.",
+          "expected": "Reject conflicting update; preserve existing entitlement/history.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 18,
+      "lastRow": 24,
+      "lastCol": "F"
+    },
+    {
+      "tab": "purchaseQuote",
+      "cls": "SubscriptionService",
+      "method": "purchaseSubscription",
+      "ref": "3.4.2, 3.4.5",
+      "setup": "Mock own-workspace SME Admin, offer catalogue, purchase store and gateway port.",
+      "scenarios": [
+        {
+          "id": "UT-07-01",
+          "type": "N",
+          "input": "Activated A; available monthly offer; synthetic quote 250000 VND.",
+          "expected": "Persist pending purchase with quoted amount/currency/period; initiate checkout; grant no rights yet.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-07-02",
+          "type": "A",
+          "input": "Operator or unactivated workspace requests purchase.",
+          "expected": "Deny before initiating checkout.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-07-03",
+          "type": "A",
+          "input": "Selected offer is retired.",
+          "expected": "Reject a new sale/renewal; preserve historical purchases.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-07-04",
+          "type": "N",
+          "input": "Catalogue price changes after pending purchase was quoted.",
+          "expected": "Retain that purchase's recorded quote; do not silently reprice history.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 18,
+      "lastRow": 24,
+      "lastCol": "F"
+    },
+    {
+      "tab": "verifyPayment",
+      "cls": "SubscriptionService",
+      "method": "verifyAndApplyPayment",
+      "ref": "3.4.6",
+      "setup": "Mock server verifier and atomic purchase/entitlement repositories; no live gateway or money.",
+      "scenarios": [
+        {
+          "id": "UT-08-01",
+          "type": "N",
+          "input": "Verifier authenticates success matching A purchase, provider reference, amount and currency.",
+          "expected": "Apply exactly one paid entitlement effect and retain verification history.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-08-02",
+          "type": "A",
+          "input": "Browser-only success flag; server verifier returns unverified.",
+          "expected": "Grant no entitlement.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-08-03",
+          "type": "A",
+          "input": "Verified event mismatches amount OR currency OR purchase/workspace OR provider identity (separate invocations).",
+          "expected": "Reject application; preserve current rights.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-08-04",
+          "type": "N",
+          "input": "Same verified successful provider payment is replayed.",
+          "expected": "Return prior applied outcome without extending validity again.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-08-05",
+          "type": "N",
+          "input": "Verified Pending, Failed and Cancelled events (separate invocations).",
+          "expected": "Record appropriate non-success state; grant no paid rights.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-08-06",
+          "type": "A",
+          "input": "Local entitlement write fails after verified success.",
+          "expected": "Expose recoverable failure; no false completion or second charge.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "entitlementTime",
+      "cls": "SubscriptionService",
+      "method": "resolveEntitlement",
+      "ref": "3.4.6-3.4.7",
+      "setup": "Inject authoritative clock; use UTC instants and Asia/Ho_Chi_Minh calendar calculations.",
+      "scenarios": [
+        {
+          "id": "UT-09-01",
+          "type": "B",
+          "input": "Period [S,E); now=S.",
+          "expected": "Subscription is active at its inclusive start.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-09-02",
+          "type": "B",
+          "input": "Period [S,E); now is immediately before E.",
+          "expected": "Subscription remains active.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-09-03",
+          "type": "B",
+          "input": "Period [S,E); now=E.",
+          "expected": "Subscription is expired; new detection uses Free rules and new cases are denied.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-09-04",
+          "type": "B",
+          "input": "One-month term from 31 Jan 2027, 10:00 Asia/Ho_Chi_Minh.",
+          "expected": "End on 28 Feb 2027, 10:00 local; persist the corresponding UTC instant.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-09-05",
+          "type": "B",
+          "input": "One-month term from 31 Jan 2028 OR one-year term from 29 Feb 2028 (separate invocations).",
+          "expected": "Clamp respectively to 29 Feb 2028 OR 28 Feb 2029, same local time.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-09-06",
+          "type": "N",
+          "input": "Paid renewal while active vs already expired (separate invocations).",
+          "expected": "Extend from current expiry when active; otherwise start from successful paid-entitlement activation.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "onboardingGates",
+      "cls": "OnboardingService",
+      "method": "confirmReadiness / reviewHandover",
+      "ref": "3.5.3-3.5.4",
+      "setup": "Mock current Staff assignment, applied configuration, assessment and handover history.",
+      "scenarios": [
+        {
+          "id": "UT-10-01",
+          "type": "N",
+          "input": "Assigned Staff assesses complete current applied setup.",
+          "expected": "Record readiness for Platform Admin review; do not activate workspace.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-10-02",
+          "type": "A",
+          "input": "Configuration changed since assessment or required setup is missing.",
+          "expected": "Reject readiness for outdated/incomplete configuration.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-10-03",
+          "type": "N",
+          "input": "Platform Admin approves a current readiness submission.",
+          "expected": "Record handover approval; initial Subscription still has not started.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-10-04",
+          "type": "A",
+          "input": "Approve without current readiness OR return without comments (separate invocations).",
+          "expected": "Reject; no activation eligibility from invalid review.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-10-05",
+          "type": "N",
+          "input": "Platform Admin returns submitted work with comments.",
+          "expected": "Retain comments/history and require renewed readiness/review.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "activateWorkspace",
+      "cls": "OnboardingService",
+      "method": "activateWorkspace",
+      "ref": "3.5.5",
+      "setup": "Mock own-workspace SME Admin, readiness, approval, clock and atomic activation/entitlement writes.",
+      "scenarios": [
+        {
+          "id": "UT-11-01",
+          "type": "N",
+          "input": "Current readiness and approval; initial Subscription allocated.",
+          "expected": "Activate once and start initial calendar term at committed activation time.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-11-02",
+          "type": "A",
+          "input": "Readiness absent OR approval absent/returned (separate invocations).",
+          "expected": "Keep production unavailable; do not start entitlement.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-11-03",
+          "type": "A",
+          "input": "Another workspace's SME Admin or browser activation flag.",
+          "expected": "Deny; trust server state and verified scope only.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-11-04",
+          "type": "N",
+          "input": "Already committed activation requested again.",
+          "expected": "Return existing activation; never restart or extend the initial term.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-11-05",
+          "type": "A",
+          "input": "Activation/entitlement persistence fails.",
+          "expected": "No partial operational workspace or unrecorded term start.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "manageMember",
+      "cls": "MemberService",
+      "method": "manageMember",
+      "ref": "3.6.2-3.6.3",
+      "setup": "Mock SME Admin A, member store, current version and credential provisioning port.",
+      "scenarios": [
+        {
+          "id": "UT-12-01",
+          "type": "N",
+          "input": "Create Operator or Investigator in A (separate invocations).",
+          "expected": "Provision one permitted-role account in A requiring initial password change.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-12-02",
+          "type": "A",
+          "input": "Attempt Platform Admin/Staff role or workspace B injection.",
+          "expected": "Reject before provisioning/mutating another workspace.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-12-03",
+          "type": "A",
+          "input": "Duplicate internal login identifier.",
+          "expected": "Reject duplicate; do not expose credential values.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-12-04",
+          "type": "N",
+          "input": "Permitted role/access change for A member.",
+          "expected": "Apply on subsequent requests; preserve historical authorship.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-12-05",
+          "type": "A",
+          "input": "Stale member version or unresolved responsibility blocks removal.",
+          "expected": "Reject affected change; retain current access/history until resolved.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "fieldPermission",
+      "cls": "MemberService",
+      "method": "setFieldPermission",
+      "ref": "3.6.4",
+      "setup": "Mock SME Admin A and member/field eligibility.",
+      "scenarios": [
+        {
+          "id": "UT-13-01",
+          "type": "N",
+          "input": "Grant permitted field F to Operator A.",
+          "expected": "Save explicit grant and safe audit; grant SME Admin no plaintext access.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-13-02",
+          "type": "N",
+          "input": "Revoke field F from Investigator A.",
+          "expected": "Subsequent disclosure is denied even if a browser holds old permission.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-13-03",
+          "type": "A",
+          "input": "Target member in B or ineligible role.",
+          "expected": "Deny without changing any grant.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-13-04",
+          "type": "A",
+          "input": "Unknown/disallowed field or stale permission state.",
+          "expected": "Reject affected request; preserve current grants.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 18,
+      "lastRow": 24,
+      "lastCol": "F"
+    },
+    {
+      "tab": "editCandidate",
+      "cls": "ConfigurationService",
+      "method": "editCandidate",
+      "ref": "3.7.2-3.7.5",
+      "setup": "Mock currently assigned Staff, declared fields, current draft and active version.",
+      "scenarios": [
+        {
+          "id": "UT-14-01",
+          "type": "N",
+          "input": "Valid field, mapping and flat typed rule change at current draft revision.",
+          "expected": "Save new draft revision/history; active configuration remains unchanged.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-14-02",
+          "type": "A",
+          "input": "Duplicate field OR undeclared mapping target OR incompatible operator/value (separate invocations).",
+          "expected": "Reject invalid draft input; identify safe field/configuration reference.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-14-03",
+          "type": "A",
+          "input": "Nested conditions, executable code or historical-window rule (separate invocations).",
+          "expected": "Reject unsupported rule; execute no supplied content.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-14-04",
+          "type": "N",
+          "input": "Toggle enabled flag of a rule in the draft.",
+          "expected": "Record new candidate revision; do not change production until apply.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-14-05",
+          "type": "A",
+          "input": "Stale revision or removed Staff assignment.",
+          "expected": "Reject; no overwrite of current candidate.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "testConfiguration",
+      "cls": "ConfigurationService",
+      "method": "testConfiguration",
+      "ref": "3.7.6-3.7.7",
+      "setup": "Mock exact configuration revision, shared validation/evaluation ports and temporary sample store.",
+      "scenarios": [
+        {
+          "id": "UT-15-01",
+          "type": "N",
+          "input": "Valid temporary TEST-MAP-A samples and exact candidate revision R.",
+          "expected": "Return validation/rule counts for R; persist only safe run metadata.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-15-02",
+          "type": "N",
+          "input": "Expected invalid synthetic sample under a valid configuration.",
+          "expected": "Return row-level validation failure; do not label the configuration defective merely because negative data is rejected.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-15-03",
+          "type": "A",
+          "input": "Structural sample failure or inaccessible configuration.",
+          "expected": "Return controlled safe failure; no production writes.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-15-04",
+          "type": "N",
+          "input": "Evaluation completes or fails (separate invocations).",
+          "expected": "Clean temporary payloads/results under configured policy; retain safe metadata, not sample contents.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-15-05",
+          "type": "N",
+          "input": "Successful sample test.",
+          "expected": "Do not activate configuration, submit readiness, create transactions/alerts/cases or change statistics.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "applyConfiguration",
+      "cls": "ConfigurationService",
+      "method": "applyConfiguration",
+      "ref": "3.7.8",
+      "setup": "Mock current assigned Staff, locked draft/active versions, exact completed test and explicit assessment.",
+      "scenarios": [
+        {
+          "id": "UT-16-01",
+          "type": "N",
+          "input": "Complete revision R; completed relevant test for R; explicit Staff assessment; expected active version matches.",
+          "expected": "Atomically activate R; retain old history; do not reactivate workspace or restart Subscription.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-16-02",
+          "type": "A",
+          "input": "Test refers to R-1 while current candidate is R.",
+          "expected": "Reject stale tested revision.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-16-03",
+          "type": "A",
+          "input": "No completed relevant test OR missing explicit assessment OR unresolved configuration error (separate invocations).",
+          "expected": "Reject apply; keep previous active version.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-16-04",
+          "type": "A",
+          "input": "Expected active version changed before apply.",
+          "expected": "Reject stale application; never overwrite newer active version.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-16-05",
+          "type": "N",
+          "input": "Previously accepted transaction T uses old version; another transaction accepted after apply.",
+          "expected": "T retains selected old context; new acceptance selects R.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "normalizeValidate",
+      "cls": "NormalizationService",
+      "method": "normalizeAndValidate",
+      "ref": "3.8.4",
+      "setup": "Use synthetic TEST-MAP-A; mock field/mapping definitions. No global field schema is assumed.",
+      "scenarios": [
+        {
+          "id": "UT-17-01",
+          "type": "N",
+          "input": "REST, Webhook and file equivalents with decimal 150000.25 and offset timestamp (separate invocations).",
+          "expected": "Return equivalent normalized business values with declared precision and timestamp meaning.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-17-02",
+          "type": "A",
+          "input": "Required configured value omitted.",
+          "expected": "Return validation failure; no accepted production record.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-17-03",
+          "type": "A",
+          "input": "Numeric text not parseable OR date violates declared format OR incompatible Boolean (separate invocations).",
+          "expected": "Reject invalid conversion without guessing or exposing sensitive raw values.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-17-04",
+          "type": "N",
+          "input": "Optional note omitted.",
+          "expected": "Accept absence as absent; do not invent a value.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-17-05",
+          "type": "A",
+          "input": "Mapping missing for selected channel or target field undeclared.",
+          "expected": "Reject incomplete configuration; do not infer fields from sample data.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "acceptNormalized",
+      "cls": "TransactionIngestionService",
+      "method": "acceptNormalized",
+      "ref": "3.8.5",
+      "setup": "Mock atomic identity store, verified workspace, plan/configuration snapshots and acceptance result.",
+      "scenarios": [
+        {
+          "id": "UT-18-01",
+          "type": "N",
+          "input": "Fresh normalized identity X in A.",
+          "expected": "Accept exactly one durable transaction with selected plan/configuration context.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-18-02",
+          "type": "N",
+          "input": "Identity X in A with equivalent normalized content.",
+          "expected": "Return duplicate linked to original; no second transaction or detection trigger.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-18-03",
+          "type": "A",
+          "input": "Identity X in A with conflicting content.",
+          "expected": "Return conflict; preserve original values/history.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-18-04",
+          "type": "N",
+          "input": "Same business reference X in workspace B.",
+          "expected": "Treat as independent identity in B, never as A's duplicate.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-18-05",
+          "type": "B",
+          "input": "Store reports a concurrent equivalent acceptance won the identity race.",
+          "expected": "Resolve to existing accepted transaction/duplicate; no second effect.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-18-06",
+          "type": "A",
+          "input": "Acceptance persistence fails.",
+          "expected": "Do not acknowledge successful durable acceptance.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "receiveWebhook",
+      "cls": "TransactionIngestionService",
+      "method": "receiveWebhook",
+      "ref": "3.8.2",
+      "setup": "Mock approved sender verification/replay policy, activation and shared normalization/acceptance ports.",
+      "scenarios": [
+        {
+          "id": "UT-19-01",
+          "type": "N",
+          "input": "Verified delivery D1, active A and valid mapped body.",
+          "expected": "Call common acceptance with verified A scope; distinguish acceptance from completed detection.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-19-02",
+          "type": "A",
+          "input": "Invalid sender/signature OR failed approved replay check (separate invocations).",
+          "expected": "Reject before business acceptance; safe diagnostic only.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-19-03",
+          "type": "N",
+          "input": "Repeated verified D1 with equivalent content.",
+          "expected": "Return safe prior outcome; no duplicate transaction effect.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-19-04",
+          "type": "N",
+          "input": "Different delivery D2 for the same normalized business transaction.",
+          "expected": "Delegate business identity deduplication; new delivery ID does not create a new transaction.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-19-05",
+          "type": "A",
+          "input": "Verified connection but workspace not activated.",
+          "expected": "Reject production acceptance.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "credentialScope",
+      "cls": "CredentialService",
+      "method": "manageCredential",
+      "ref": "3.8.6",
+      "setup": "Mock verified actor, current Staff assignment, workspace credential store and secret generator.",
+      "scenarios": [
+        {
+          "id": "UT-20-01",
+          "type": "N",
+          "input": "Platform Admin or currently assigned Staff issues/replaces A key (separate invocations).",
+          "expected": "Bind key to submission-only A scope; return full secret only through approved issuance handling.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-20-02",
+          "type": "A",
+          "input": "SME Admin attempts issue/replace.",
+          "expected": "Deny issuance/replacement.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-20-03",
+          "type": "N",
+          "input": "Platform Admin, assigned Staff or SME Admin disables A key (separate invocations).",
+          "expected": "Disable permitted key; subsequent submissions using it are rejected.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-20-04",
+          "type": "A",
+          "input": "Other-workspace key or removed Staff assignment.",
+          "expected": "Reject mutation; omit full secret from logs/audit.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 18,
+      "lastRow": 24,
+      "lastCol": "F"
+    },
+    {
+      "tab": "numericRules",
+      "cls": "RuleEvaluationService",
+      "method": "evaluateTransaction",
+      "ref": "3.7.4, 3.9.1",
+      "setup": "One enabled numeric rule, synthetic threshold T=1000000; fixed configuration and normalized values.",
+      "scenarios": [
+        {
+          "id": "UT-21-01",
+          "type": "B",
+          "input": "Operator =; evaluate T-1, T, T+1 in separate invocations.",
+          "expected": "Match results: false, true, false.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-21-02",
+          "type": "B",
+          "input": "Operator !=; evaluate T-1, T, T+1 separately.",
+          "expected": "Match results: true, false, true.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-21-03",
+          "type": "B",
+          "input": "Operator > and >=; evaluate T-1, T, T+1 separately for each.",
+          "expected": "> gives false,false,true; >= gives false,true,true.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-21-04",
+          "type": "B",
+          "input": "Operator < and <=; evaluate T-1, T, T+1 separately for each.",
+          "expected": "< gives true,false,false; <= gives true,true,false.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-21-05",
+          "type": "A",
+          "input": "Optional numeric field absent; ordinary comparison including !=.",
+          "expected": "No ordinary comparison matches absence; do not coerce it to zero.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "typedFlatRules",
+      "cls": "RuleEvaluationService",
+      "method": "evaluateTransaction",
+      "ref": "3.7.4, 3.9.1",
+      "setup": "Mock declared types and active flat rules. Rule conditions are data, never executable code.",
+      "scenarios": [
+        {
+          "id": "UT-22-01",
+          "type": "N",
+          "input": "Text =, !=, in and not-in against present typed value (separate invocations).",
+          "expected": "Return matching result for each specified operator/list without type guessing.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-22-02",
+          "type": "N",
+          "input": "Boolean true/false conditions with present matching/nonmatching Boolean inputs.",
+          "expected": "Evaluate declared Boolean meaning; no string truthiness.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-22-03",
+          "type": "N",
+          "input": "AND with all conditions true vs one false; OR with one true vs all false (separate invocations).",
+          "expected": "AND: true,false; OR: true,false.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-22-04",
+          "type": "N",
+          "input": "Optional field absent; ordinary !=/not-in vs explicit has-no-value (separate invocations).",
+          "expected": "Ordinary comparisons false; explicit has-no-value true.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-22-05",
+          "type": "B",
+          "input": "Date/time comparison at equal UTC instant expressed using two different offsets.",
+          "expected": "Evaluate equality/order by normalized date/time meaning, not display-string order.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-22-06",
+          "type": "N",
+          "input": "A matching disabled rule plus two matching enabled rules.",
+          "expected": "Exclude disabled rule; collect both enabled reasons.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "ruleAlert",
+      "cls": "RuleEvaluationService",
+      "method": "evaluateTransaction",
+      "ref": "3.9.1-3.9.2",
+      "setup": "Mock evaluation/alert repositories and attempt reference; test service effect with no database.",
+      "scenarios": [
+        {
+          "id": "UT-23-01",
+          "type": "N",
+          "input": "Three enabled rules match transaction T in attempt A1.",
+          "expected": "Persist one Rule Alert for A1 containing all three reasons; no case.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-23-02",
+          "type": "N",
+          "input": "Completed evaluation with zero matches.",
+          "expected": "Persist successful no-match; create no Rule Alert.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-23-03",
+          "type": "N",
+          "input": "Completion for A1 is replayed and alert already exists.",
+          "expected": "Reuse A1 alert; do not create another alert.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-23-04",
+          "type": "A",
+          "input": "Evaluator fails or configuration invalid.",
+          "expected": "Record controlled failure; do not report completed no-match.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-23-05",
+          "type": "A",
+          "input": "Matched condition includes protected field value.",
+          "expected": "Keep sensitive value out of default explanations and diagnostic payloads.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "aiRouting",
+      "cls": "ScoringService",
+      "method": "classifyAcceptedTransaction",
+      "ref": "3.10.1-3.10.2",
+      "setup": "Mock AI port, rule evaluator, captured acceptance context and attempt/alert stores.",
+      "scenarios": [
+        {
+          "id": "UT-24-01",
+          "type": "N",
+          "input": "Accepted Free context.",
+          "expected": "Invoke rules only; no AI invocation.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-24-02",
+          "type": "N",
+          "input": "Accepted Subscription; AI returns Normal plus model-test-v1.",
+          "expected": "Record AI Normal/version; no Rule evaluation or new AI Alert.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-24-03",
+          "type": "N",
+          "input": "Accepted Subscription; AI returns Anomaly plus version.",
+          "expected": "Create/reuse transaction AI Alert; no parallel rules or automatic case.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-24-04",
+          "type": "A",
+          "input": "AI unavailable, timeout, invalid classification or missing version (separate invocations).",
+          "expected": "Record unusable AI outcome and invoke rules as fallback; do not fabricate Normal or cancel Subscription.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-24-05",
+          "type": "A",
+          "input": "Both AI and fallback fail.",
+          "expected": "Preserve unresolved processing/attempt references; never call failure a successful no-match.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-24-06",
+          "type": "B",
+          "input": "Clock passes expiry after transaction was accepted under Subscription.",
+          "expected": "Use captured acceptance entitlement/configuration for this attempt; do not silently switch to Free.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "recoverFallback",
+      "cls": "ScoringService",
+      "method": "recoverFallbackTransaction",
+      "ref": "3.10.3",
+      "setup": "Mock historical Subscription intervals, stored transaction/fallback, AI and alert store.",
+      "scenarios": [
+        {
+          "id": "UT-25-01",
+          "type": "N",
+          "input": "Transaction time inside historical Subscription; current plan expired; AI Anomaly.",
+          "expected": "Add separate recovery attempt; create/reuse single transaction AI Alert; preserve Rule Alert; no automatic case.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-25-02",
+          "type": "B",
+          "input": "Transaction event time equals historical start vs equals expiry (separate invocations).",
+          "expected": "Start eligible; expiry ineligible under [start,expiry).",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-25-03",
+          "type": "N",
+          "input": "Existing AI Alert/case; later recovery returns Normal.",
+          "expected": "Append Normal history; delete neither prior alert nor case.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-25-04",
+          "type": "N",
+          "input": "Replay same recovery operation or repeat Anomaly recovery.",
+          "expected": "Do not duplicate same operation effect or transaction AI Alert.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-25-05",
+          "type": "A",
+          "input": "AI fails during recovery.",
+          "expected": "Retain original fallback and append controlled recovery failure; no overwritten history.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "openCase",
+      "cls": "CaseService",
+      "method": "openCase",
+      "ref": "3.12.1",
+      "setup": "Mock Operator A, current entitlement, AI Alert membership/link store and atomic case persistence.",
+      "scenarios": [
+        {
+          "id": "UT-26-01",
+          "type": "N",
+          "input": "Active Subscription; two eligible unlinked AI Alerts in A.",
+          "expected": "Create one Open case with both links and history; no final conclusion.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-26-02",
+          "type": "A",
+          "input": "Free or expired Subscription (separate invocations).",
+          "expected": "Reject new case; leave existing cases/history untouched.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-26-03",
+          "type": "A",
+          "input": "Rule Alert origin or mixed-workspace AI Alert selection.",
+          "expected": "Reject without partial unauthorized links.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-26-04",
+          "type": "A",
+          "input": "AI Alert already linked, including a concurrently won link.",
+          "expected": "Reject second case linkage; preserve existing case.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-26-05",
+          "type": "A",
+          "input": "Case/history write fails.",
+          "expected": "No partial successfully opened case or orphaned links.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "assignCase",
+      "cls": "CaseService",
+      "method": "readOrAssignCase",
+      "ref": "3.12.2-3.12.3",
+      "setup": "Mock current role, case scope/state, Investigator eligibility and optimistic version.",
+      "scenarios": [
+        {
+          "id": "UT-27-01",
+          "type": "N",
+          "input": "Operator assigns Open A case to eligible Investigator A.",
+          "expected": "Record assignment/history and move Open to Investigating.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-27-02",
+          "type": "N",
+          "input": "Operator starts self-investigation of Open case.",
+          "expected": "Record Operator responsibility; move to Investigating.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-27-03",
+          "type": "N",
+          "input": "Reassign Investigating or Pending Review case to another eligible Investigator.",
+          "expected": "Preserve lifecycle and previous authorship; old Investigator loses subsequent access.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-27-04",
+          "type": "A",
+          "input": "Investigator attempts assignment OR target belongs to B OR case Closed (separate invocations).",
+          "expected": "Deny affected assignment; preserve case.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-27-05",
+          "type": "A",
+          "input": "Expected case version stale.",
+          "expected": "Reject stale assignment without overwriting current responsibility.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "findingsSubmit",
+      "cls": "CaseService",
+      "method": "saveFindingsAndSubmit",
+      "ref": "3.12.4-3.12.5",
+      "setup": "Mock own-workspace Operator/assigned Investigator, Investigating case and atomic report/history store.",
+      "scenarios": [
+        {
+          "id": "UT-28-01",
+          "type": "N",
+          "input": "Assigned Investigator saves per-transaction findings/evidence.",
+          "expected": "Retain attributable protected findings; do not force one training label onto all transactions.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-28-02",
+          "type": "N",
+          "input": "Complete findings/proposed conclusion submitted from Investigating.",
+          "expected": "Retain report version; move to Pending Review; do not confirm final conclusion.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-28-03",
+          "type": "A",
+          "input": "Required findings/conclusion absent OR evidence unauthorized (separate invocations).",
+          "expected": "Reject; no invalid report or unauthorized reference.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-28-04",
+          "type": "A",
+          "input": "Assignment revoked or case state/version changed.",
+          "expected": "Reject stale write/submission even if browser still shows action.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-28-05",
+          "type": "N",
+          "input": "Existing authorized case; current Subscription expired.",
+          "expected": "Allow permitted investigation/submission; no new-case entitlement inferred.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-28-06",
+          "type": "A",
+          "input": "Report persistence fails.",
+          "expected": "Do not leave Pending Review without retained submitted report/history.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "reviewConclusion",
+      "cls": "CaseService",
+      "method": "reviewInvestigation",
+      "ref": "3.12.6-3.12.7",
+      "setup": "Mock Operator A and current Pending Review report/case version.",
+      "scenarios": [
+        {
+          "id": "UT-29-01",
+          "type": "N",
+          "input": "Operator requests more work with comments.",
+          "expected": "Retain submitted report and review history; return Pending Review to Investigating.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-29-02",
+          "type": "N",
+          "input": "Operator confirms each supported conclusion in separate invocations.",
+          "expected": "Close with separate Confirmed Fraud / Anomalous but Legitimate / False Alert / Insufficient Evidence value; retain decision history.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-29-03",
+          "type": "N",
+          "input": "Same Operator investigated, submitted and now confirms its report.",
+          "expected": "Permit valid confirmation; no second-person requirement.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-29-04",
+          "type": "A",
+          "input": "Investigator/SME Admin confirms OR missing comments/conclusion OR stale report (separate invocations).",
+          "expected": "Reject; leave previous report/state unchanged.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-29-05",
+          "type": "A",
+          "input": "Conclusion/history persistence fails.",
+          "expected": "Do not close without a retained decision.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-29-06",
+          "type": "N",
+          "input": "Valid final confirmation completes.",
+          "expected": "Do not retrain/deploy AI, block accounts or cancel customer transactions automatically.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 22,
+      "lastRow": 28,
+      "lastCol": "H"
+    },
+    {
+      "tab": "revealFields",
+      "cls": "DisclosureService",
+      "method": "revealFields",
+      "ref": "3.11.6",
+      "setup": "Mock current identity/workspace, field grants, case assignment, decryptor and value-free audit sink.",
+      "scenarios": [
+        {
+          "id": "UT-30-01",
+          "type": "N",
+          "input": "Operator A with explicit grant requests permitted A field F.",
+          "expected": "Return only F after current object/field authorization; audit references, never plaintext.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-30-02",
+          "type": "N",
+          "input": "Investigator A with F grant and current case assignment.",
+          "expected": "Allow only assigned-case related F; no workspace-wide disclosure.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-30-03",
+          "type": "A",
+          "input": "Platform Admin, Staff or SME Admin requests reveal (separate invocations).",
+          "expected": "Deny plaintext regardless of administrative privileges.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-30-04",
+          "type": "A",
+          "input": "Grant revoked OR assignment removed OR other-workspace object (separate invocations).",
+          "expected": "Deny on current request; trust no stale browser grant.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-30-05",
+          "type": "A",
+          "input": "Decryptor or required audit persistence fails.",
+          "expected": "Return controlled failure without returning/logging plaintext.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "reportExport",
+      "cls": "ReportingService",
+      "method": "viewDashboardOrReport / generateAndExport",
+      "ref": "3.13.1-3.13.4",
+      "setup": "Mock scoped query results, protected-field projection, export store and download authorization.",
+      "scenarios": [
+        {
+          "id": "UT-31-01",
+          "type": "N",
+          "input": "SME Admin overview/report query vs Operator operational query.",
+          "expected": "Return role-appropriate A summaries; no risk score/severity or unauthorized transaction content.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-31-02",
+          "type": "N",
+          "input": "Permitted selected report/filter export.",
+          "expected": "Export only selected authorized result; reveal grant does not imply plaintext export.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-31-03",
+          "type": "A",
+          "input": "Access removed after generation but before download.",
+          "expected": "Deny download using current authorization.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-31-04",
+          "type": "A",
+          "input": "Input cell begins with =, +, -, @; HTML/script text in a display field.",
+          "expected": "Treat content as data under approved output handling; no formula/script execution.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-31-05",
+          "type": "A",
+          "input": "Generation fails or B result reference supplied.",
+          "expected": "Expose controlled failure/denial; never return another workspace's file.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "notifications",
+      "cls": "NotificationService",
+      "method": "createAndReadNotifications / deliverEmail",
+      "ref": "3.14.1-3.14.2",
+      "setup": "Mock recipient policy, assignment, in-app store and email transport; no real messages.",
+      "scenarios": [
+        {
+          "id": "UT-32-01",
+          "type": "N",
+          "input": "Case event with Operator and currently assigned Investigator recipients.",
+          "expected": "Create only relevant scoped minimal notices; include no sensitive payload or secrets.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-32-02",
+          "type": "N",
+          "input": "Account login identifier differs from contact email.",
+          "expected": "Deliver via stored contact email, not assumed login mailbox.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-32-03",
+          "type": "A",
+          "input": "Email transport fails after committed case/payment effect.",
+          "expected": "Record delivery failure; keep business outcome committed.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-32-04",
+          "type": "N",
+          "input": "Retry failed email delivery.",
+          "expected": "Retry notification only; never repeat case/payment mutation.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-32-05",
+          "type": "A",
+          "input": "Recipient follows old link after assignment/access removed.",
+          "expected": "Target authorization denies access; notification receipt is not permission.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    },
+    {
+      "tab": "auditMonitoring",
+      "cls": "AuditService / MonitoringService",
+      "method": "recordAndReadHistory / monitorOperations",
+      "ref": "3.15.1-3.15.2",
+      "setup": "Mock current object access, safe telemetry, transactional audit store and history query.",
+      "scenarios": [
+        {
+          "id": "UT-33-01",
+          "type": "N",
+          "input": "Permitted business mutation emits audit payload.",
+          "expected": "Record actor/time/action/object/version without secret, plaintext or temporary sample contents.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-33-02",
+          "type": "A",
+          "input": "Required local audit write fails.",
+          "expected": "Fail corresponding atomic business mutation; do not report a complete unaudited change.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-33-03",
+          "type": "A",
+          "input": "Investigator requests history outside current assigned cases.",
+          "expected": "Deny underlying object/history access.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-33-04",
+          "type": "N",
+          "input": "Platform Admin requests operational health.",
+          "expected": "Return safe service/processing metadata only, no production/report/sample payload.",
+          "status": "Not Run"
+        },
+        {
+          "id": "UT-33-05",
+          "type": "A",
+          "input": "Component telemetry absent or unavailable.",
+          "expected": "Return unknown/unavailable state, not healthy.",
+          "status": "Not Run"
+        }
+      ],
+      "statusRow": 20,
+      "lastRow": 26,
+      "lastCol": "G"
+    }
+  ]
+}
