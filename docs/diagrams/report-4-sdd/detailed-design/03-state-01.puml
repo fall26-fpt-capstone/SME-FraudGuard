@@ -1,0 +1,57 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Trigger: initial allocation or entitlement check;
+if (Initial onboarding\nSubscription?) then (yes)
+  if (Approved workspace\nactivated?) then (yes)
+    :Start initial calendar term once;
+    :Persist UTC start and expiry;
+  else (no)
+    :Retain allocation awaiting activation;
+    stop
+  endif
+endif
+:Load authoritative committed periods;
+if (Period data available and\nconsistent?) then (yes)
+  if (Start <= now < expiry?) then (yes)
+    :Allow Subscription AI path for new acceptance;
+    :Permit new-case request only after role and AI Alert checks;
+  else (no)
+    :Use primary rules for new acceptance;
+    :Deny new case creation;
+  endif
+  :Preserve selected context of already accepted work;
+  :Retain authorized existing cases and history;
+else (no)
+  :Return controlled entitlement error;
+endif
+stop
+@enduml

@@ -1,0 +1,189 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class InvestigationCase <<entity>> {
+- id: UUID
+- workspaceId: UUID
+- status: Open | Investigating | PendingReview | Closed
+}
+class AIAlert <<entity>> {
+- id: UUID
+- workspaceId: UUID
+- transactionId: UUID
+}
+class CaseAssignment <<entity>> {
+- assigneeId: UUID
+- assignedBy: UUID
+- assignedAt: Instant
+- endedAt: Instant [0..1]
+}
+class InvestigationReport <<entity>> {
+- authorId: UUID
+- findings: ProtectedText
+- evidenceRefs: References
+- submittedAt: Instant [0..1]
+}
+class CaseConclusion <<entity>> {
+- conclusion: ConclusionType
+- rationale: ProtectedText
+- confirmedBy: UUID
+- createdAt: Instant
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class CaseController <<controller>> {
+- service: ICaseService
+--
++ openCase(request: OpenCaseRequest): CaseResponse
++ readOrAssignCase(request: CaseAssignmentRequest): CaseResponse
++ reviewInvestigation(request: CaseReviewRequest): CaseResponse
++ saveFindingsAndSubmit(request: InvestigationRequest): InvestigationResponse
+- resolveExecutionContext(): AccessContext
+}
+class CaseService <<service>> {
+
++ openCase(request: OpenCaseRequest, context: AccessContext): CaseResponse
++ readOrAssignCase(request: CaseAssignmentRequest, context: AccessContext): CaseResponse
++ reviewInvestigation(request: CaseReviewRequest, context: AccessContext): CaseResponse
++ saveFindingsAndSubmit(request: InvestigationRequest, context: AccessContext): InvestigationResponse
+- authorizeCaseScope(ctx: AccessContext): void
+- requireInvestigatingCaseAccess(req: InvestigationRequest, ctx: AccessContext): void
+- requireOpenOrActiveCurrentCase(req: CaseAssignmentRequest): void
+- requireOperatorAndEligibleAssignee(req: CaseAssignmentRequest, ctx: AccessContext): void
+- requireWorkspaceOperator(ctx: AccessContext): void
+- validateFindingsAndEvidence(req: InvestigationRequest): void
+- validateReviewVersionAndDecision(req: CaseReviewRequest): void
+}
+interface ICaseService <<service>> {
+
++ openCase(request: OpenCaseRequest, context: AccessContext): CaseResponse
++ readOrAssignCase(request: CaseAssignmentRequest, context: AccessContext): CaseResponse
++ reviewInvestigation(request: CaseReviewRequest, context: AccessContext): CaseResponse
++ saveFindingsAndSubmit(request: InvestigationRequest, context: AccessContext): InvestigationResponse
+}
+class OpenCaseRequest <<DTO>> {
+- aiAlertIds: Set<UUID>
+- caseInformation: CaseInput
+}
+class CaseResponse <<DTO>> {
+- caseRef: UUID
+- status: CaseStatus
+- assigneeRef: UUID
+- version: long
+}
+interface CaseRepository <<repository>> {
+
++ assignCaseIfCurrent(req: CaseAssignmentRequest, ctx: AccessContext): MutationResult
++ confirmConclusionIfCurrent(req: CaseReviewRequest, ctx: AccessContext): MutationResult
++ createCaseWithUniqueAiLinks(req: OpenCaseRequest, ctx: AccessContext): MutationResult
++ findAuthorizedCases(req: CaseAssignmentRequest, ctx: AccessContext): Page<InvestigationCase>
++ findCurrentSubmittedReport(req: CaseReviewRequest, ctx: AccessContext): InvestigationReport
++ returnToInvestigationIfCurrent(req: CaseReviewRequest, ctx: AccessContext): MutationResult
++ saveFindingsIfCurrent(req: InvestigationRequest, ctx: AccessContext): MutationResult
++ submitReportIfCurrent(req: InvestigationRequest, ctx: AccessContext): MutationResult
+}
+interface EntitlementQueryPort <<port>> {
+
++ requireCurrentSubscription(req: OpenCaseRequest, ctx: AccessContext): EntitlementDecision
+}
+interface AlertQueryPort <<port>> {
+
++ validateUnlinkedAiAlerts(req: OpenCaseRequest, ctx: AccessContext): List<AIAlert>
+}
+class CaseAssignmentRequest <<DTO>> {
+- caseRef: UUID
+- assigneeRef: UUID
+- investigatePersonally: boolean
+- expectedVersion: long
+}
+class InvestigationRequest <<DTO>> {
+- caseRef: UUID
+- findings: ProtectedText
+- evidenceRefs: Set<UUID>
+- proposedConclusion: ConclusionType
+- submit: boolean
+- expectedVersion: long
+}
+class InvestigationResponse <<DTO>> {
+- caseRef: UUID
+- reportRef: UUID
+- status: CaseStatus
+- version: long
+}
+class CaseReviewRequest <<DTO>> {
+- caseRef: UUID
+- reportRef: UUID
+- action: ReviewAction
+- conclusion: ConclusionType
+- rationale: ProtectedText
+- expectedVersion: long
+}
+enum CaseStatus {
+
+CLOSED
+INVESTIGATING
+OPEN
+PENDING_REVIEW
+}
+ICaseService -[hidden]down-> CaseService
+CaseRepository -[hidden]down-> EntitlementQueryPort
+EntitlementQueryPort -[hidden]down-> AlertQueryPort
+InvestigationCase -[hidden]down-> AIAlert
+AIAlert -[hidden]down-> CaseAssignment
+CaseAssignment -[hidden]down-> InvestigationReport
+InvestigationReport -[hidden]down-> CaseConclusion
+CaseConclusion -[hidden]down-> CaseStatus
+CaseController -[hidden]right-> ICaseService
+ICaseService -[hidden]right-> CaseRepository
+CaseRepository -[hidden]right-> InvestigationCase
+CaseController -[hidden]down-> OpenCaseRequest
+OpenCaseRequest -[hidden]right-> CaseResponse
+CaseResponse -[hidden]right-> CaseAssignmentRequest
+OpenCaseRequest -[hidden]down-> InvestigationRequest
+InvestigationRequest -[hidden]right-> InvestigationResponse
+InvestigationResponse -[hidden]right-> CaseReviewRequest
+InvestigationRequest -[hidden]down-> AccessContext
+CaseController -[norank]-> ICaseService
+CaseController -[dashed,norank]-> CaseAssignmentRequest
+CaseController -[dashed,norank]-> CaseResponse
+CaseController -[dashed,norank]-> CaseReviewRequest
+CaseController -[dashed,norank]-> InvestigationRequest
+CaseController -[dashed,norank]-> InvestigationResponse
+CaseController -[dashed,norank]-> OpenCaseRequest
+CaseRepository -[norank]-> InvestigationCase
+CaseService -[norank]-> AlertQueryPort
+CaseService -[norank]-> CaseRepository
+CaseService -[norank]-> EntitlementQueryPort
+CaseService -[norank]-> InvestigationCase
+CaseService -[dashed,norank]-> AccessContext
+CaseService -[dashed,norank]-|> ICaseService
+InvestigationCase "0..1" -[norank]- "1..*" AIAlert : via CaseAlert; AI only
+InvestigationCase "1" -[norank]- "0..*" CaseAssignment
+InvestigationCase "1" -[norank]- "0..*" InvestigationReport
+InvestigationCase "1" -[norank]- "0..1" CaseConclusion
+InvestigationCase -[norank]-> CaseStatus
+InvestigationReport -[norank]-> CaseAssignment : attribution
+@enduml

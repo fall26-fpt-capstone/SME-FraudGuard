@@ -1,0 +1,153 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+interface AIServicePort <<port>> {
+
++ classify(req: DetectionRequest): AIResult
++ classify(req: RecoveryRequest): AIResult
+}
+class AIResult <<entity>> {
+- classification: Normal | Anomaly
+- modelVersion: String
+--
++ validate(): boolean
+}
+class DetectionAttempt <<entity>> {
+- transactionId: UUID
+- source: DetectionSource
+- configRef: UUID
+- modelVersion: String [0..1]
+- status: String
+}
+interface RuleEnginePort <<port>> {
+
++ evaluateFallback(req: DetectionRequest): RuleEvaluationResult
+}
+class AIAlert <<entity>> {
+- transactionId: UUID
+- originAttemptId: UUID
+- kind: AI
+--
++ createOrReuse(transaction: String): boolean
+}
+interface EntitlementHistoryPort <<port>> {
+
++ findHistoricalEntitlement(req: RecoveryRequest): EntitlementDecision
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class DetectionCoordinator <<application>> {
+- service: IScoringService
+--
++ classifyAcceptedTransaction(request: DetectionRequest): DetectionResult
+- resolveExecutionContext(): AccessContext
+}
+class ScoringService <<service>> {
+
++ classifyAcceptedTransaction(request: DetectionRequest, context: AccessContext): DetectionResult
++ recoverFallbackTransaction(request: RecoveryRequest, context: AccessContext): DetectionResult
+}
+interface IScoringService <<service>> {
+
++ classifyAcceptedTransaction(request: DetectionRequest, context: AccessContext): DetectionResult
++ recoverFallbackTransaction(request: RecoveryRequest, context: AccessContext): DetectionResult
+}
+class DetectionRequest <<DTO>> {
+- transactionRef: UUID
+- permittedFeatures: TypedValues
+- selectedContext: AcceptanceContext
+}
+class DetectionResult <<DTO>> {
+- attemptRef: UUID
+- source: DetectionSource
+- classification: AIClassification [0..1]
+- status: AttemptStatus
+}
+interface DetectionAttemptRepository <<repository>> {
+
++ appendRecoveryAttempt(req: RecoveryRequest): MutationResult
++ findRecoveryOperation(req: RecoveryRequest): RecoveryOperation
++ linkFallbackAttempt(req: DetectionRequest): MutationResult
++ saveAiAttempt(req: DetectionRequest): MutationResult
++ saveFailedAiAttempt(req: DetectionRequest): MutationResult
+}
+interface AlertCommandPort <<port>> {
+
++ createOrReuseAiAlert(req: DetectionRequest): AIAlert
++ createOrReuseAiAlert(req: RecoveryRequest): AIAlert
+}
+class RecoveryCoordinator <<application>> {
+- service: IScoringService
+--
++ recoverFallbackTransaction(request: RecoveryRequest): DetectionResult
+- resolveExecutionContext(): AccessContext
+}
+class RecoveryRequest <<DTO>> {
+- transactionRef: UUID
+- eventTime: Instant
+- operationRef: UUID
+}
+enum AIClassification {
+
+ANOMALY
+NORMAL
+}
+DetectionCoordinator -[hidden]down-> RecoveryCoordinator
+IScoringService -[hidden]down-> ScoringService
+AIServicePort -[hidden]down-> RuleEnginePort
+RuleEnginePort -[hidden]down-> EntitlementHistoryPort
+EntitlementHistoryPort -[hidden]down-> DetectionAttemptRepository
+DetectionAttemptRepository -[hidden]down-> AlertCommandPort
+AIResult -[hidden]down-> DetectionAttempt
+DetectionAttempt -[hidden]down-> AIAlert
+AIAlert -[hidden]down-> AIClassification
+DetectionCoordinator -[hidden]right-> IScoringService
+IScoringService -[hidden]right-> AIServicePort
+AIServicePort -[hidden]right-> AIResult
+RecoveryCoordinator -[hidden]down-> DetectionRequest
+DetectionRequest -[hidden]right-> DetectionResult
+DetectionResult -[hidden]right-> RecoveryRequest
+DetectionRequest -[hidden]down-> AccessContext
+AIAlert -[norank]-> DetectionAttempt : original source
+AIResult -[norank]-> AIClassification
+AIServicePort -[norank]-> AIResult
+DetectionAttemptRepository -[norank]-> DetectionAttempt
+DetectionCoordinator -[norank]-> IScoringService
+DetectionCoordinator -[dashed,norank]-> DetectionRequest
+DetectionCoordinator -[dashed,norank]-> DetectionResult
+RecoveryCoordinator -[norank]-> IScoringService
+RecoveryCoordinator -[dashed,norank]-> DetectionResult
+RecoveryCoordinator -[dashed,norank]-> RecoveryRequest
+ScoringService -[norank]-> AIAlert
+ScoringService -[norank]-> AIServicePort
+ScoringService -[norank]-> AlertCommandPort
+ScoringService -[norank]-> DetectionAttempt
+ScoringService -[norank]-> DetectionAttemptRepository
+ScoringService -[norank]-> EntitlementHistoryPort
+ScoringService -[norank]-> RuleEnginePort
+ScoringService -[dashed,norank]-> AccessContext
+ScoringService -[dashed,norank]-|> IScoringService
+@enduml

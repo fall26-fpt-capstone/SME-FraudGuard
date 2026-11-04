@@ -1,0 +1,66 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Trigger: edit / sample test / Apply;
+:Recheck current Staff assignment and workspace;
+switch (Action type?)
+case (edit)
+  :Validate fields, mappings and typed flat rules;
+  if (Valid and revision current?) then (yes)
+    :Save new draft revision and attribution;
+    :Keep active version; require retest before Apply;
+  else (no)
+    :Reject invalid or stale edit;
+  endif
+case (sample test)
+  :Pin exact revision; validate file structure;
+  if (Usable input?) then (yes)
+    :Map rows; evaluate valid samples; show temporary results;
+  else (no)
+    :Return safe structural error;
+  endif
+  :Retain safe run/revision counts; clean temporary samples including failures;
+  :Do not apply or approve handover automatically;
+case (Apply)
+  :Require relevant exact-revision test and Staff assessment;
+  if (Draft and expected active\nversion current?) then (yes)
+    :Atomically replace single active version and save history;
+    if (Committed?) then (yes)
+      :Use new version for new acceptance; preserve already accepted context;
+    else (no)
+      :Retain previous active version;
+    endif
+  else (no)
+    :Require correction, review and retest;
+  endif
+endswitch
+stop
+@enduml

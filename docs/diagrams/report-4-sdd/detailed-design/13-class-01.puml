@@ -1,0 +1,118 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class Notification <<entity>> {
+- workspaceId: UUID
+- recipientId: UUID
+- channel: InApp | Email
+- safeContext: References
+- deliveryStatus: String
+}
+interface ContactDirectoryPort <<port>> {
+
++ resolveAuthorizedContact(req: EmailNotificationRequest): AuthorizedContact
+}
+interface EmailPort <<port>> {
+
++ retryDeliveryOnly(req: EmailNotificationRequest): EmailDeliveryResult
++ sendMinimalEmail(req: EmailNotificationRequest): EmailDeliveryResult
+}
+interface NotificationRepository <<repository>> {
+
++ findRelevantNotifications(req: NotificationRequest, ctx: AccessContext): Page<Notification>
++ saveDeliveryOutcome(req: EmailNotificationRequest): MutationResult
++ saveMinimalNotification(req: NotificationRequest): MutationResult
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class NotificationController <<controller>> {
+- service: INotificationService
+--
++ createAndReadNotifications(request: NotificationRequest): NotificationResponse
+- resolveExecutionContext(): AccessContext
+}
+class NotificationService <<service>> {
+
++ createAndReadNotifications(request: NotificationRequest, context: AccessContext): NotificationResponse
++ deliverEmail(request: EmailNotificationRequest, context: AccessContext): EmailDeliveryResult
+- authorizeCurrentRecipient(ctx: AccessContext): void
+}
+interface INotificationService <<service>> {
+
++ createAndReadNotifications(request: NotificationRequest, context: AccessContext): NotificationResponse
++ deliverEmail(request: EmailNotificationRequest, context: AccessContext): EmailDeliveryResult
+}
+class NotificationRequest <<DTO>> {
+- eventRef: UUID
+- notificationRef: UUID
+- criteria: NotificationFilter
+}
+class NotificationResponse <<DTO>> {
+- notifications: List<NotificationSummary>
+- nextPage: String
+}
+class NotificationListener <<listener>> {
+- service: INotificationService
+--
++ deliverEmail(request: EmailNotificationRequest): EmailDeliveryResult
+- resolveExecutionContext(): AccessContext
+}
+class EmailNotificationRequest <<DTO>> {
+- eventRef: UUID
+- recipientRef: UUID
+- templateRef: String
+- deliveryRef: UUID
+}
+class EmailDeliveryResult <<DTO>> {
+- deliveryRef: UUID
+- status: DeliveryStatus
+- retryReference: UUID
+}
+NotificationController -[hidden]down-> NotificationListener
+INotificationService -[hidden]down-> NotificationService
+ContactDirectoryPort -[hidden]down-> EmailPort
+EmailPort -[hidden]down-> NotificationRepository
+NotificationController -[hidden]right-> INotificationService
+INotificationService -[hidden]right-> ContactDirectoryPort
+ContactDirectoryPort -[hidden]right-> Notification
+NotificationListener -[hidden]down-> NotificationRequest
+NotificationRequest -[hidden]right-> NotificationResponse
+NotificationResponse -[hidden]right-> EmailNotificationRequest
+NotificationRequest -[hidden]down-> EmailDeliveryResult
+EmailDeliveryResult -[hidden]right-> AccessContext
+NotificationController -[norank]-> INotificationService
+NotificationController -[dashed,norank]-> NotificationRequest
+NotificationController -[dashed,norank]-> NotificationResponse
+NotificationListener -[norank]-> INotificationService
+NotificationListener -[dashed,norank]-> EmailDeliveryResult
+NotificationListener -[dashed,norank]-> EmailNotificationRequest
+NotificationRepository -[norank]-> Notification
+NotificationService -[norank]-> ContactDirectoryPort
+NotificationService -[norank]-> EmailPort
+NotificationService -[norank]-> NotificationRepository
+NotificationService -[dashed,norank]-> AccessContext
+NotificationService -[dashed,norank]-|> INotificationService
+@enduml

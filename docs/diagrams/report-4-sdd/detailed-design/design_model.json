@@ -1,0 +1,1009 @@
+[
+  {
+    "number": 1,
+    "title": "Authentication and Account Access",
+    "count": 4,
+    "purpose": "Sessions bind verified identity to platform or enterprise scope. Mandatory initial password change restricts access until saved; logout ends authorization without deleting business history.",
+    "classes": [
+      [
+        "AuthenticationService",
+        "",
+        "+ logIn(identifier, password, portal)\n+ changeInitialPassword(session, password)\n+ changePassword(session, verification, password)\n+ logOut(session)"
+      ],
+      [
+        "Account",
+        "- id: UUID\n- workspaceId: UUID [0..1]\n- loginName: String\n- passwordHash: String\n- role: Role\n- mustChangePassword: Boolean",
+        "+ verifyCredential(password)\n+ changeCredential(passwordHash)"
+      ],
+      [
+        "Session",
+        "- accountId: UUID\n- workspaceId: UUID [0..1]\n- setupOnly: Boolean\n- ended: Boolean",
+        "+ end()"
+      ],
+      [
+        "AccessPolicy",
+        "",
+        "+ requireScope(identity, object)\n+ requireCurrentRole(identity)\n+ requireSetupComplete(session)"
+      ],
+      [
+        "CredentialPolicy",
+        "",
+        "+ validate(password)\n+ protect(password)"
+      ],
+      [
+        "AccountRepository",
+        "",
+        "+ findLogin(identifier, scope)\n+ saveCredentialIfCurrent(account)"
+      ]
+    ],
+    "relations": [
+      "AuthenticationService --> AccountRepository",
+      "AuthenticationService --> CredentialPolicy",
+      "AuthenticationService --> AccessPolicy",
+      "AccountRepository --> Account",
+      "Account \"1\" -- \"0..*\" Session"
+    ],
+    "sequences": [
+      {
+        "title": "Log In and Select the Permitted Destination",
+        "functions": [
+          1
+        ]
+      },
+      {
+        "title": "Complete Mandatory Initial Password Change",
+        "functions": [
+          2
+        ]
+      },
+      {
+        "title": "Change Current Password",
+        "functions": [
+          3
+        ]
+      },
+      {
+        "title": "Log Out and Reject the Ended Session",
+        "functions": [
+          4
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Authenticated Session Lifecycle"
+      }
+    ]
+  },
+  {
+    "number": 2,
+    "title": "Customer and Workspace Management",
+    "count": 4,
+    "purpose": "Platform Admin provisions one workspace per enterprise and its initial SME Admin. Staff accesses assigned setup metadata only; assignment changes never grant production-data access.",
+    "classes": [
+      [
+        "WorkspaceService",
+        "",
+        "+ listAuthorized(criteria)\n+ provisionEnterprise(input)\n+ updateMetadata(id, version, input)\n+ updateStaffAssignments(id, changes)"
+      ],
+      [
+        "Enterprise",
+        "- id: UUID\n- name: String\n- contactEmail: String",
+        ""
+      ],
+      [
+        "Workspace",
+        "- id: UUID\n- enterpriseId: UUID\n- slug: String\n- activatedAt: Instant [0..1]",
+        "+ isActivated(): Boolean"
+      ],
+      [
+        "StaffAssignment",
+        "- staffId: UUID\n- assignedBy: UUID\n- assignedAt: Instant\n- endedAt: Instant [0..1]",
+        "+ end()"
+      ],
+      [
+        "Account",
+        "- id: UUID\n- role: Role\n- mustChangePassword: Boolean",
+        ""
+      ],
+      [
+        "WorkspaceRepository",
+        "",
+        "+ saveProvisioningWithHistory(input)\n+ updateIfCurrent(id, version)\n+ saveAssignmentsWithHistory(changes)"
+      ]
+    ],
+    "relations": [
+      "WorkspaceService --> WorkspaceRepository",
+      "WorkspaceRepository --> Workspace",
+      "Enterprise \"1\" -- \"1\" Workspace",
+      "Workspace \"1\" -- \"0..*\" StaffAssignment",
+      "StaffAssignment \"0..*\" --> \"1\" Account : implementation Staff",
+      "Workspace \"0..1\" -- \"0..*\" Account : enterprise membership"
+    ],
+    "sequences": [
+      {
+        "title": "List, Inspect and Update Administrative Workspace Information",
+        "functions": [
+          1,
+          3
+        ]
+      },
+      {
+        "title": "Provision Enterprise, Workspace and Initial SME Admin",
+        "functions": [
+          2
+        ]
+      },
+      {
+        "title": "Add or Remove Concurrent Implementation Staff Assignments",
+        "functions": [
+          4
+        ]
+      }
+    ],
+    "states": []
+  },
+  {
+    "number": 3,
+    "title": "Plan and Subscription Management",
+    "count": 7,
+    "purpose": "Free and Subscription have fixed entitlements. Purchases retain quotes and only verified server-side payment applies rights once. Calendar validity uses Asia/Ho_Chi_Minh, UTC storage and [start, expiry).",
+    "classes": [
+      [
+        "SubscriptionService",
+        "",
+        "+ initialGrant(workspace, offer, term)\n+ quotePurchase(workspace, offer, term)\n+ applyVerifiedPayment(event)\n+ effectiveAt(workspace, instant)"
+      ],
+      [
+        "PlanOffer",
+        "- id: UUID\n- planType: Free | Subscription\n- monthlyPrice: Decimal\n- annualPrice: Decimal\n- currency: String\n- status: String",
+        "+ retire()"
+      ],
+      [
+        "PurchaseOrder",
+        "- id: UUID\n- workspaceId: UUID\n- termMonths: Integer\n- quotedAmount: Decimal\n- currency: String\n- status: String",
+        "+ applyOnce()"
+      ],
+      [
+        "PaymentEvent",
+        "- providerReference: String\n- idempotencyKey: String\n- verificationResult: String",
+        "+ matches(purchase): Boolean"
+      ],
+      [
+        "SubscriptionPeriod",
+        "- workspaceId: UUID\n- startsAt: Instant\n- endsAt: Instant\n- grantSource: String",
+        "+ contains(instant): Boolean"
+      ],
+      [
+        "PaymentGatewayPort",
+        "",
+        "+ initiateCheckout(purchase)\n+ verifyConfirmation(message)"
+      ]
+    ],
+    "relations": [
+      "SubscriptionService --> PaymentGatewayPort",
+      "SubscriptionService --> PurchaseOrder",
+      "PlanOffer \"1\" -- \"0..*\" PurchaseOrder",
+      "PurchaseOrder \"1\" -- \"0..*\" PaymentEvent",
+      "PurchaseOrder \"0..1\" -- \"0..1\" SubscriptionPeriod",
+      "PlanOffer \"1\" -- \"0..*\" SubscriptionPeriod"
+    ],
+    "sequences": [
+      {
+        "title": "Review and Maintain Plan Offers",
+        "functions": [
+          1,
+          2
+        ]
+      },
+      {
+        "title": "Grant the Initial Workspace Plan",
+        "functions": [
+          3
+        ]
+      },
+      {
+        "title": "View Subscription and Initiate Purchase or Renewal",
+        "functions": [
+          4,
+          5
+        ]
+      },
+      {
+        "title": "Verify Payment and Apply One Calendar Entitlement Effect",
+        "functions": [
+          6
+        ]
+      },
+      {
+        "title": "Enforce Expiry at New Operations and Preserve Existing Work",
+        "functions": [
+          7
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Subscription Entitlement Lifecycle"
+      },
+      {
+        "title": "Purchase Verification and Local Entitlement Application"
+      }
+    ]
+  },
+  {
+    "number": 4,
+    "title": "Workspace Onboarding and Activation",
+    "count": 5,
+    "purpose": "Specifications are retained for human configuration work. Staff readiness, Platform Admin handover approval and SME Admin activation are distinct recorded gates; initial Subscription starts only at activation.",
+    "classes": [
+      [
+        "OnboardingService",
+        "",
+        "+ saveSpecification(input)\n+ progress(workspace)\n+ confirmReadiness(configRef)\n+ reviewHandover(decision, comments)\n+ activate(workspace)"
+      ],
+      [
+        "Workspace",
+        "- id: UUID\n- status: String\n- activatedAt: Instant [0..1]",
+        "+ isActivated(): Boolean"
+      ],
+      [
+        "OnboardingDocument",
+        "- workspaceId: UUID\n- uploadedBy: UUID\n- storageRef: String\n- fileName: String",
+        ""
+      ],
+      [
+        "OnboardingEvent",
+        "- workspaceId: UUID\n- actorId: UUID\n- action: String\n- comment: String\n- createdAt: Instant",
+        ""
+      ],
+      [
+        "ConfigurationPort",
+        "",
+        "+ currentAppliedVersion(workspace)\n+ readinessEvidence(configRef)"
+      ],
+      [
+        "SubscriptionPort",
+        "",
+        "+ startInitialTermOnce(workspace, activatedAt)"
+      ]
+    ],
+    "relations": [
+      "OnboardingService --> Workspace",
+      "OnboardingService --> ConfigurationPort",
+      "OnboardingService --> SubscriptionPort",
+      "Workspace \"1\" -- \"0..*\" OnboardingDocument",
+      "Workspace \"1\" -- \"0..*\" OnboardingEvent"
+    ],
+    "sequences": [
+      {
+        "title": "Maintain Specifications and Track Onboarding Progress",
+        "functions": [
+          1,
+          2
+        ]
+      },
+      {
+        "title": "Confirm Implementation Readiness",
+        "functions": [
+          3
+        ]
+      },
+      {
+        "title": "Approve or Return Workspace Handover",
+        "functions": [
+          4
+        ]
+      },
+      {
+        "title": "Activate Approved Workspace and Start the Initial Term Once",
+        "functions": [
+          5
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Workspace Readiness, Handover and Activation Lifecycle"
+      }
+    ]
+  },
+  {
+    "number": 5,
+    "title": "Enterprise Member and Permission Management",
+    "count": 4,
+    "purpose": "SME Admin manages only own-workspace enterprise accounts and explicit field-view grants. Permission administration does not grant SME Admin plaintext access; history survives role/access changes.",
+    "classes": [
+      [
+        "MemberService",
+        "",
+        "+ listMembers(scope, criteria)\n+ provisionMember(input)\n+ updateMember(id, version, changes)\n+ setFieldPermission(member, fields, action)"
+      ],
+      [
+        "Account",
+        "- id: UUID\n- workspaceId: UUID\n- loginName: String\n- role: EnterpriseRole\n- status: String\n- mustChangePassword: Boolean",
+        ""
+      ],
+      [
+        "FieldViewPermission",
+        "- workspaceId: UUID\n- memberId: UUID\n- fieldId: UUID\n- allowed: Boolean",
+        ""
+      ],
+      [
+        "AccessPolicy",
+        "",
+        "+ requireOwnWorkspaceAdmin(identity)\n+ requireEnterpriseRole(role)\n+ checkResponsibilityConstraints(member)"
+      ],
+      [
+        "MemberRepository",
+        "",
+        "+ saveMemberWithHistory(input)\n+ updateIfCurrent(id, version)\n+ savePermissionWithHistory(change)"
+      ]
+    ],
+    "relations": [
+      "MemberService --> AccessPolicy",
+      "MemberService --> MemberRepository",
+      "MemberRepository --> Account",
+      "Account \"1\" -- \"0..*\" FieldViewPermission"
+    ],
+    "sequences": [
+      {
+        "title": "List, Provision and Update Enterprise Members",
+        "functions": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "title": "Grant or Revoke Explicit Sensitive-Field Viewing Permission",
+        "functions": [
+          4
+        ]
+      }
+    ],
+    "states": []
+  },
+  {
+    "number": 6,
+    "title": "Detection Configuration Management",
+    "count": 8,
+    "purpose": "Assigned Staff edits a versioned candidate containing fields, channel mappings and rules. Testing uses the exact revision and temporary samples; explicit application atomically changes one active version for newly accepted work.",
+    "classes": [
+      [
+        "ConfigurationService",
+        "",
+        "+ editDraft(expectedRevision, change)\n+ testRevision(revision, samples)\n+ history(workspace)\n+ apply(revision, testRef, expectedActive)"
+      ],
+      [
+        "ConfigVersion",
+        "- id: UUID\n- workspaceId: UUID\n- revision: Version\n- isActive: Boolean",
+        "+ validateComplete()"
+      ],
+      [
+        "FieldDefinition",
+        "- fieldName: String\n- dataType: DataType\n- required: Boolean\n- sensitive: Boolean",
+        ""
+      ],
+      [
+        "ChannelMapping",
+        "- channel: REST | Webhook | File",
+        "+ map(source): NormalizedValues"
+      ],
+      [
+        "DetectionRule",
+        "- name: String\n- enabled: Boolean\n- combination: AND | OR",
+        "+ evaluate(values): RuleResult"
+      ],
+      [
+        "RuleCondition",
+        "- fieldId: UUID\n- operator: TypedOperator\n- operand: TypedValue",
+        "+ matches(value): Boolean"
+      ],
+      [
+        "TestRun",
+        "- configRef: UUID\n- testedRevision: Version\n- resultCounts: Counts\n- runBy: UUID",
+        "+ safeMetadata()"
+      ]
+    ],
+    "relations": [
+      "ConfigurationService --> ConfigVersion",
+      "ConfigurationService --> TestRun",
+      "ConfigVersion \"1\" *-- \"1..*\" FieldDefinition",
+      "ConfigVersion \"1\" *-- \"0..3\" ChannelMapping",
+      "ConfigVersion \"1\" *-- \"0..*\" DetectionRule",
+      "DetectionRule \"1\" *-- \"1..*\" RuleCondition",
+      "RuleCondition --> FieldDefinition",
+      "TestRun --> ConfigVersion : exact revision"
+    ],
+    "sequences": [
+      {
+        "title": "View and Edit Candidate Fields, Mappings and Rules",
+        "functions": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "title": "Test an Exact Revision and Review Safe Run History",
+        "functions": [
+          6,
+          7
+        ]
+      },
+      {
+        "title": "Apply the Tested Candidate Atomically",
+        "functions": [
+          8
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Candidate Configuration Testing and Application Lifecycle"
+      }
+    ]
+  },
+  {
+    "number": 7,
+    "title": "Integration and Transaction Ingestion",
+    "count": 7,
+    "purpose": "Credentials establish integration workspace scope before mapping. REST, Webhook and production file import share normalization and atomic cross-channel business identity. Acceptance is durable and distinct from detection completion.",
+    "classes": [
+      [
+        "IngestionService",
+        "",
+        "+ accept(channel, authenticatedScope, payload)\n+ importFile(identity, file)\n+ resolveIdentity(normalized, context)"
+      ],
+      [
+        "IntegrationCredential",
+        "- workspaceId: UUID\n- keyPrefix: String\n- keyVerifier: String\n- disabledAt: Instant [0..1]",
+        "+ verify(secret): Boolean\n+ disable()"
+      ],
+      [
+        "ChannelMapping",
+        "- configRef: UUID\n- channel: Channel",
+        "+ normalize(payload): TypedValues"
+      ],
+      [
+        "Transaction",
+        "- workspaceId: UUID\n- externalId: String\n- eventTime: Instant\n- configRef: UUID\n- fingerprint: String\n- acceptedAt: Instant",
+        ""
+      ],
+      [
+        "IngestionReceipt",
+        "- channel: Channel\n- sourceEventRef: String\n- outcome: String",
+        ""
+      ],
+      [
+        "ImportBatch",
+        "- workspaceId: UUID\n- status: String\n- resultCounts: Counts",
+        ""
+      ],
+      [
+        "ImportRow",
+        "- rowNumber: Integer\n- outcome: New | Duplicate | Conflict | Invalid\n- safeErrorCode: String",
+        ""
+      ]
+    ],
+    "relations": [
+      "IngestionService --> IntegrationCredential",
+      "IngestionService --> ChannelMapping",
+      "IngestionService --> Transaction",
+      "Transaction \"1\" -- \"1..*\" IngestionReceipt",
+      "ImportBatch \"1\" *-- \"0..*\" ImportRow",
+      "ImportRow \"0..*\" --> \"0..1\" Transaction"
+    ],
+    "sequences": [
+      {
+        "title": "Inspect, Issue, Replace and Disable Workspace API Keys",
+        "functions": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "title": "Submit Production Transactions through REST API",
+        "functions": [
+          4
+        ]
+      },
+      {
+        "title": "Authenticate Incoming Webhook and Handle Delivery Retries",
+        "functions": [
+          5
+        ]
+      },
+      {
+        "title": "Import Production CSV/Excel with Reconciled Row Outcomes",
+        "functions": [
+          6
+        ]
+      },
+      {
+        "title": "Normalize and Validate Declared Channel Values",
+        "functions": [
+          7
+        ]
+      },
+      {
+        "title": "Atomically Resolve Cross-Channel Business Identity and Accept Once",
+        "functions": [
+          7
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Workspace API Credential Lifecycle"
+      },
+      {
+        "title": "Production Import Processing Lifecycle"
+      }
+    ]
+  },
+  {
+    "number": 8,
+    "title": "Rule-Based Detection",
+    "count": 2,
+    "purpose": "Free primary detection and Subscription fallback evaluate the selected configuration with the same typed semantics. All matching rules form one Rule Alert for the completed attempt; no match is distinct from failure.",
+    "classes": [
+      [
+        "RuleEvaluationService",
+        "",
+        "+ evaluate(transaction, configRef, source)\n+ aggregateAlert(completedAttempt)"
+      ],
+      [
+        "DetectionRule",
+        "- id: UUID\n- enabled: Boolean\n- combination: AND | OR",
+        "+ evaluate(values): RuleResult"
+      ],
+      [
+        "RuleCondition",
+        "- fieldRef: UUID\n- operator: TypedOperator\n- operand: TypedValue",
+        "+ matches(value): Boolean"
+      ],
+      [
+        "DetectionAttempt",
+        "- transactionId: UUID\n- configRef: UUID\n- source: PrimaryRules | FallbackRules\n- status: String",
+        ""
+      ],
+      [
+        "RuleMatch",
+        "- ruleId: UUID\n- matchedConditions: ProtectedReasons",
+        ""
+      ],
+      [
+        "RuleAlert",
+        "- transactionId: UUID\n- originAttemptId: UUID\n- kind: Rule",
+        ""
+      ]
+    ],
+    "relations": [
+      "RuleEvaluationService --> DetectionRule",
+      "DetectionRule \"1\" *-- \"1..*\" RuleCondition",
+      "RuleEvaluationService --> DetectionAttempt",
+      "DetectionAttempt \"1\" -- \"0..*\" RuleMatch",
+      "RuleMatch --> DetectionRule",
+      "DetectionAttempt \"1\" -- \"0..1\" RuleAlert"
+    ],
+    "sequences": [
+      {
+        "title": "Evaluate All Enabled Rules and Create One Aggregated Alert",
+        "functions": [
+          1,
+          2
+        ]
+      }
+    ],
+    "states": []
+  },
+  {
+    "number": 9,
+    "title": "AI Detection and Rule-Based Fallback",
+    "count": 3,
+    "purpose": "Subscription primary processing calls AI only. Unusable AI responses trigger rules and retain both attempt sources. Recovery reuses the transaction, checks historical event-time entitlement and preserves earlier alerts and cases.",
+    "classes": [
+      [
+        "DetectionCoordinator",
+        "",
+        "+ classifyAccepted(transaction, selectedContext)\n+ applyFallback(transaction, failedAttempt)\n+ recover(transaction, operationRef)"
+      ],
+      [
+        "AIServicePort",
+        "",
+        "+ classify(permittedFeatures): AIResult"
+      ],
+      [
+        "AIResult",
+        "- classification: Normal | Anomaly\n- modelVersion: String",
+        "+ validate()"
+      ],
+      [
+        "DetectionAttempt",
+        "- transactionId: UUID\n- source: DetectionSource\n- configRef: UUID\n- modelVersion: String [0..1]\n- status: String",
+        ""
+      ],
+      [
+        "RuleEnginePort",
+        "",
+        "+ evaluate(transaction, configRef, fallbackSource)"
+      ],
+      [
+        "AIAlert",
+        "- transactionId: UUID\n- originAttemptId: UUID\n- kind: AI",
+        "+ createOrReuse(transaction)"
+      ],
+      [
+        "EntitlementHistoryPort",
+        "",
+        "+ containsEventTime(workspace, eventTime)"
+      ]
+    ],
+    "relations": [
+      "DetectionCoordinator --> AIServicePort",
+      "AIServicePort --> AIResult",
+      "DetectionCoordinator --> RuleEnginePort",
+      "DetectionCoordinator --> EntitlementHistoryPort",
+      "DetectionCoordinator --> DetectionAttempt",
+      "DetectionCoordinator --> AIAlert",
+      "AIAlert --> DetectionAttempt : original source"
+    ],
+    "sequences": [
+      {
+        "title": "Classify Subscription Transaction and Fall Back on Unusable AI",
+        "functions": [
+          1,
+          2
+        ]
+      },
+      {
+        "title": "Recover Historically Eligible Fallback Work and Reconcile AI Alerts",
+        "functions": [
+          3
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Transaction Detection and Rule-Based Fallback Processing"
+      },
+      {
+        "title": "Historically Entitled AI Recovery Processing"
+      }
+    ]
+  },
+  {
+    "number": 10,
+    "title": "Transaction and Alert Review",
+    "count": 6,
+    "purpose": "Operator reviews workspace production transactions, alerts and attempt history. Import results have separate SME Admin/Operator scope. Explicit reveal requires current field grants and, for Investigator, the relevant case assignment.",
+    "classes": [
+      [
+        "ReviewService",
+        "",
+        "+ transactions(criteria)\n+ importResults(batchRef)\n+ alerts(kind, criteria)\n+ flagRuleAlert(id, expectedVersion)\n+ detectionHistory(transactionRef)"
+      ],
+      [
+        "DisclosureService",
+        "",
+        "+ reveal(identity, context, fieldIds)"
+      ],
+      [
+        "Transaction",
+        "- id: UUID\n- workspaceId: UUID\n- publicValues: TypedValues\n- sensitiveValues: ProtectedValues\n- keyReference: String",
+        ""
+      ],
+      [
+        "Alert",
+        "- kind: Rule | AI\n- transactionId: UUID\n- originAttemptId: UUID",
+        ""
+      ],
+      [
+        "DetectionAttempt",
+        "- source: DetectionSource\n- outcome: String\n- configurationRef: UUID\n- modelVersion: String [0..1]",
+        ""
+      ],
+      [
+        "DisclosurePolicy",
+        "",
+        "+ checkWorkspaceRoleObject(identity, context)\n+ checkCurrentFieldGrants(identity, fields)\n+ checkCaseAssignment(identity, case)"
+      ]
+    ],
+    "relations": [
+      "ReviewService --> Transaction",
+      "ReviewService --> Alert",
+      "Transaction \"1\" -- \"0..*\" DetectionAttempt",
+      "Alert --> DetectionAttempt",
+      "DisclosureService --> DisclosurePolicy",
+      "DisclosureService --> Transaction"
+    ],
+    "sequences": [
+      {
+        "title": "Review Transactions and Role-Scoped Import Results",
+        "functions": [
+          1,
+          2
+        ]
+      },
+      {
+        "title": "Review Rule/AI Alerts, Follow-Up Flags and Attempt History",
+        "functions": [
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "title": "Explicitly Reveal Only Currently Authorized Sensitive Fields",
+        "functions": [
+          6
+        ]
+      }
+    ],
+    "states": []
+  },
+  {
+    "number": 11,
+    "title": "Case and Investigation Management",
+    "count": 7,
+    "purpose": "Only Operator opens cases from same-workspace AI Alerts under current Subscription. Assignment is separate from lifecycle. Existing case work continues after expiry; Operator may investigate, submit and confirm without a second person.",
+    "classes": [
+      [
+        "CaseService",
+        "",
+        "+ openFromAIAlerts(alertRefs)\n+ listAuthorized(criteria)\n+ assign(caseRef, member, version)\n+ recordFindings(caseRef, input)\n+ submitReport(caseRef, report)\n+ requestMoreWork(caseRef, comments)\n+ confirmConclusion(caseRef, decision)"
+      ],
+      [
+        "InvestigationCase",
+        "- id: UUID\n- workspaceId: UUID\n- status: Open | Investigating | PendingReview | Closed",
+        ""
+      ],
+      [
+        "AIAlert",
+        "- id: UUID\n- workspaceId: UUID\n- transactionId: UUID",
+        ""
+      ],
+      [
+        "CaseAssignment",
+        "- assigneeId: UUID\n- assignedBy: UUID\n- assignedAt: Instant\n- endedAt: Instant [0..1]",
+        ""
+      ],
+      [
+        "InvestigationReport",
+        "- authorId: UUID\n- findings: ProtectedText\n- evidenceRefs: References\n- submittedAt: Instant [0..1]",
+        ""
+      ],
+      [
+        "CaseConclusion",
+        "- conclusion: ConclusionType\n- rationale: ProtectedText\n- confirmedBy: UUID\n- createdAt: Instant",
+        ""
+      ]
+    ],
+    "relations": [
+      "CaseService --> InvestigationCase",
+      "InvestigationCase \"0..1\" -- \"1..*\" AIAlert : via CaseAlert; AI only",
+      "InvestigationCase \"1\" -- \"0..*\" CaseAssignment",
+      "InvestigationCase \"1\" -- \"0..*\" InvestigationReport",
+      "InvestigationCase \"1\" -- \"0..1\" CaseConclusion",
+      "InvestigationReport --> CaseAssignment : attribution"
+    ],
+    "sequences": [
+      {
+        "title": "Open One Case from Eligible AI Alert References",
+        "functions": [
+          1
+        ]
+      },
+      {
+        "title": "View Cases and Assign or Start Self-Investigation",
+        "functions": [
+          2,
+          3
+        ]
+      },
+      {
+        "title": "Record Findings and Submit an Investigation Report",
+        "functions": [
+          4,
+          5
+        ]
+      },
+      {
+        "title": "Request Additional Investigation or Confirm the Final Conclusion",
+        "functions": [
+          6,
+          7
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Investigation Case Lifecycle"
+      }
+    ]
+  },
+  {
+    "number": 12,
+    "title": "Dashboard and Reporting",
+    "count": 4,
+    "purpose": "Aggregates, reports and exports preserve workspace, role, assignment and field restrictions. Generation and download each recheck access; plaintext reveal does not authorize plaintext export.",
+    "classes": [
+      [
+        "ReportingService",
+        "",
+        "+ dashboard(identity, criteria)\n+ investigationReports(identity, criteria)\n+ generate(identity, criteria)\n+ export(identity, reportRef, format)"
+      ],
+      [
+        "ReportOperation",
+        "- workspaceId: UUID\n- requestedBy: UUID\n- criteria: ValidatedCriteria\n- status: String\n- resultRef: String [0..1]",
+        ""
+      ],
+      [
+        "ReportingQueryPort",
+        "",
+        "+ authorizedAggregates(scope, criteria)\n+ authorizedReportVersion(scope, reference)"
+      ],
+      [
+        "ExportPolicy",
+        "",
+        "+ checkCurrentAccess(identity, report)\n+ protectFields(values)\n+ neutralizeSpreadsheetFormulas(values)"
+      ],
+      [
+        "ExportArtifact",
+        "- reportRef: UUID\n- format: SupportedFormat\n- protectedLocation: String",
+        "+ serveAuthorized(identity)"
+      ]
+    ],
+    "relations": [
+      "ReportingService --> ReportingQueryPort",
+      "ReportingService --> ReportOperation",
+      "ReportingService --> ExportPolicy",
+      "ReportOperation \"1\" -- \"0..*\" ExportArtifact"
+    ],
+    "sequences": [
+      {
+        "title": "View Authorized Dashboard and Investigation Reports",
+        "functions": [
+          1,
+          2
+        ]
+      },
+      {
+        "title": "Generate and Export a Complete Authorized Enterprise Report",
+        "functions": [
+          3,
+          4
+        ]
+      }
+    ],
+    "states": [
+      {
+        "title": "Enterprise Report Generation Lifecycle"
+      }
+    ]
+  },
+  {
+    "number": 13,
+    "title": "Notifications",
+    "count": 2,
+    "purpose": "Relevant enterprise events produce minimal in-app/email content. Recipients and linked records remain scoped; external delivery is retried independently and never reverses or repeats the committed business effect.",
+    "classes": [
+      [
+        "NotificationService",
+        "",
+        "+ handleCommittedEvent(event)\n+ listRelevant(identity, criteria)\n+ deliverEmail(notificationRef)"
+      ],
+      [
+        "Notification",
+        "- workspaceId: UUID\n- recipientId: UUID\n- channel: InApp | Email\n- safeContext: References\n- deliveryStatus: String",
+        ""
+      ],
+      [
+        "RecipientPolicy",
+        "",
+        "+ relevantRecipients(event)\n+ checkCurrentResponsibility(identity, object)"
+      ],
+      [
+        "ContactDirectoryPort",
+        "",
+        "+ configuredContactEmail(recipient)"
+      ],
+      [
+        "EmailPort",
+        "",
+        "+ sendMinimal(template, contact, protectedLink)"
+      ],
+      [
+        "NotificationRepository",
+        "",
+        "+ saveMinimal(event, recipient)\n+ recordDeliveryOutcome(reference)"
+      ]
+    ],
+    "relations": [
+      "NotificationService --> RecipientPolicy",
+      "NotificationService --> ContactDirectoryPort",
+      "NotificationService --> EmailPort",
+      "NotificationService --> NotificationRepository",
+      "NotificationRepository --> Notification"
+    ],
+    "sequences": [
+      {
+        "title": "Create and View Relevant In-App Notifications",
+        "functions": [
+          1
+        ]
+      },
+      {
+        "title": "Send Minimal Email and Retry Delivery Independently",
+        "functions": [
+          2
+        ]
+      }
+    ],
+    "states": []
+  },
+  {
+    "number": 14,
+    "title": "Platform Monitoring and Audit",
+    "count": 2,
+    "purpose": "Platform Admin sees operational metadata only. Object history follows the underlying administrative, Staff-assignment or enterprise/case scope. Required local change history commits with the business action and excludes values/secrets.",
+    "classes": [
+      [
+        "MonitoringService",
+        "",
+        "+ platformOperations(identity, criteria)"
+      ],
+      [
+        "HealthSnapshot",
+        "- serviceRef: String\n- observedAt: Instant\n- availability: String\n- safeFailureCounts: Counts",
+        ""
+      ],
+      [
+        "AuditService",
+        "",
+        "+ recordWithLocalChange(action)\n+ authorizedHistory(identity, object, criteria)"
+      ],
+      [
+        "AuditEvent",
+        "- workspaceId: UUID [0..1]\n- actorId: UUID\n- action: String\n- objectRef: String\n- safeMetadata: References\n- createdAt: Instant",
+        ""
+      ],
+      [
+        "ObjectAccessPolicy",
+        "",
+        "+ authorizeHistory(identity, object)"
+      ],
+      [
+        "AuditRepository",
+        "",
+        "+ appendWithinTransaction(event)\n+ readScopedHistory(scope, criteria)"
+      ]
+    ],
+    "relations": [
+      "MonitoringService --> HealthSnapshot",
+      "AuditService --> ObjectAccessPolicy",
+      "AuditService --> AuditRepository",
+      "AuditRepository --> AuditEvent"
+    ],
+    "sequences": [
+      {
+        "title": "Monitor Platform Operations without Production Content",
+        "functions": [
+          1
+        ]
+      },
+      {
+        "title": "Commit Required Audit Attribution and Read Scoped Object History",
+        "functions": [
+          2
+        ]
+      }
+    ],
+    "states": []
+  }
+]

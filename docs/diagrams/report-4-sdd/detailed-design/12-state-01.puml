@@ -1,0 +1,61 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:SME Admin or Operator requests enterprise report;
+:Validate criteria, workspace, role and field restrictions;
+if (Authorized request?) then (yes)
+  :Create generation operation;
+  :Read authorized report data;
+  if (Generation completed?) then (yes)
+    :Retain complete or explicit empty report;
+    if (Export requested?) then (yes)
+      :Recheck report access and supported format;
+      :Protect sensitive fields and neutralize formulas;
+      :Generate complete export;
+      if (Complete artifact available?) then (yes)
+        :Recheck current permission at download;
+        if (Download still authorized?) then (yes)
+          :Serve complete scoped artifact;
+        else (no)
+          :Deny download;
+        endif
+      else (no)
+        :Report export failure; do not serve partial output;
+      endif
+    endif
+  else (no)
+    :Mark failed generation; no successful partial report;
+  endif
+else (no)
+  :Reject invalid criteria or forbidden scope;
+endif
+stop
+@enduml

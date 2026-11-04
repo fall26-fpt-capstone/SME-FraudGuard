@@ -1,0 +1,124 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class DetectionRule <<entity>> {
+- id: UUID
+- enabled: Boolean
+- combination: AND | OR
+--
++ evaluate(values: String): RuleResult
+}
+class RuleCondition <<entity>> {
+- fieldRef: UUID
+- operator: TypedOperator
+- operand: TypedValue
+--
++ matches(value: String): Boolean
+}
+class DetectionAttempt <<entity>> {
+- transactionId: UUID
+- configRef: UUID
+- source: PrimaryRules | FallbackRules
+- status: String
+}
+class RuleMatch <<entity>> {
+- ruleId: UUID
+- matchedConditions: ProtectedReasons
+}
+class RuleAlert <<entity>> {
+- transactionId: UUID
+- originAttemptId: UUID
+- kind: Rule
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class TransactionIngestedListener <<listener>> {
+- service: IRuleEvaluationService
+--
++ evaluateTransaction(request: RuleEvaluationRequest): RuleEvaluationResult
+- resolveExecutionContext(): AccessContext
+}
+class RuleEvaluationService <<service>> {
+
++ evaluateTransaction(request: RuleEvaluationRequest, context: AccessContext): RuleEvaluationResult
+}
+interface IRuleEvaluationService <<service>> {
+
++ evaluateTransaction(request: RuleEvaluationRequest, context: AccessContext): RuleEvaluationResult
+}
+class RuleEvaluationRequest <<DTO>> {
+- transactionRef: UUID
+- normalizedValues: TypedValues
+- configurationRef: UUID
+- source: RuleDetectionSource
+}
+class RuleEvaluationResult <<DTO>> {
+- attemptRef: UUID
+- matchedRules: List<RuleMatch>
+- status: AttemptStatus
+}
+interface DetectionAttemptRepository <<repository>> {
+
++ saveAttemptAndAllMatches(req: RuleEvaluationRequest): MutationResult
++ saveFailedAttempt(req: RuleEvaluationRequest): MutationResult
+}
+interface ConfigurationQueryPort <<port>> {
+
++ findEnabledRules(req: RuleEvaluationRequest): List<DetectionRule>
+}
+interface AlertCommandPort <<port>> {
+
++ createRuleAlertOnce(req: RuleEvaluationRequest): RuleAlert
+}
+IRuleEvaluationService -[hidden]down-> RuleEvaluationService
+DetectionAttemptRepository -[hidden]down-> ConfigurationQueryPort
+ConfigurationQueryPort -[hidden]down-> AlertCommandPort
+DetectionRule -[hidden]down-> RuleCondition
+RuleCondition -[hidden]down-> DetectionAttempt
+DetectionAttempt -[hidden]down-> RuleMatch
+RuleMatch -[hidden]down-> RuleAlert
+TransactionIngestedListener -[hidden]right-> IRuleEvaluationService
+IRuleEvaluationService -[hidden]right-> DetectionAttemptRepository
+DetectionAttemptRepository -[hidden]right-> DetectionRule
+TransactionIngestedListener -[hidden]down-> RuleEvaluationRequest
+RuleEvaluationRequest -[hidden]right-> RuleEvaluationResult
+RuleEvaluationResult -[hidden]right-> AccessContext
+DetectionAttempt "1" -[norank]- "0..*" RuleMatch
+DetectionAttempt "1" -[norank]- "0..1" RuleAlert
+DetectionAttemptRepository -[norank]-> DetectionAttempt
+DetectionRule "1" *-[norank]- "1..*" RuleCondition
+RuleEvaluationService -[norank]-> AlertCommandPort
+RuleEvaluationService -[norank]-> ConfigurationQueryPort
+RuleEvaluationService -[norank]-> DetectionAttempt
+RuleEvaluationService -[norank]-> DetectionAttemptRepository
+RuleEvaluationService -[norank]-> DetectionRule
+RuleEvaluationService -[dashed,norank]-> AccessContext
+RuleEvaluationService -[dashed,norank]-|> IRuleEvaluationService
+RuleMatch -[norank]-> DetectionRule
+TransactionIngestedListener -[norank]-> IRuleEvaluationService
+TransactionIngestedListener -[dashed,norank]-> RuleEvaluationRequest
+TransactionIngestedListener -[dashed,norank]-> RuleEvaluationResult
+@enduml

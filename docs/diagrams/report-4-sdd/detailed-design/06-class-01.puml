@@ -1,0 +1,182 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class ConfigVersion <<entity>> {
+- id: UUID
+- workspaceId: UUID
+- revision: Version
+- isActive: Boolean
+--
++ validateComplete(): boolean
+}
+class FieldDefinition <<entity>> {
+- fieldName: String
+- dataType: DataType
+- required: Boolean
+- sensitive: Boolean
+}
+class ChannelMapping <<entity>> {
+- channel: REST | Webhook | File
+--
++ map(source: String): NormalizedValues
+}
+class DetectionRule <<entity>> {
+- name: String
+- enabled: Boolean
+- combination: AND | OR
+--
++ evaluate(values: String): RuleResult
+}
+class RuleCondition <<entity>> {
+- fieldId: UUID
+- operator: TypedOperator
+- operand: TypedValue
+--
++ matches(value: String): Boolean
+}
+class TestRun <<entity>> {
+- configRef: UUID
+- testedRevision: Version
+- resultCounts: Counts
+- runBy: UUID
+--
++ safeMetadata(): boolean
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class ConfigurationController <<controller>> {
+- service: IConfigurationService
+--
++ applyConfiguration(request: ApplyConfigurationRequest): ConfigurationResponse
++ editCandidate(request: ConfigurationEditRequest): ConfigurationResponse
++ testConfiguration(request: ConfigurationTestRequest): TestRunResponse
+- resolveExecutionContext(): AccessContext
+}
+class ConfigurationService <<service>> {
+
++ applyConfiguration(request: ApplyConfigurationRequest, context: AccessContext): ConfigurationResponse
++ editCandidate(request: ConfigurationEditRequest, context: AccessContext): ConfigurationResponse
++ testConfiguration(request: ConfigurationTestRequest, context: AccessContext): TestRunResponse
+- checkTypedOperatorsAndEmptySemantics(req: ConfigurationEditRequest): boolean
+- requireCurrentStaffAssignment(ctx: AccessContext): void
+- validateExactRevisionTestAndAssessment(req: ApplyConfigurationRequest): void
+- validateFieldsMappingsAndFlatRules(req: ConfigurationEditRequest): void
+- validateSampleStructure(req: ConfigurationTestRequest): void
+}
+interface IConfigurationService <<service>> {
+
++ applyConfiguration(request: ApplyConfigurationRequest, context: AccessContext): ConfigurationResponse
++ editCandidate(request: ConfigurationEditRequest, context: AccessContext): ConfigurationResponse
++ testConfiguration(request: ConfigurationTestRequest, context: AccessContext): TestRunResponse
+}
+class ConfigurationEditRequest <<DTO>> {
+- workspaceId: UUID
+- draftRef: UUID
+- expectedRevision: long
+- fieldChanges: List<FieldInput>
+- mappingChanges: List<MappingInput>
+- ruleChanges: List<RuleInput>
+}
+class ConfigurationResponse <<DTO>> {
+- configurationRef: UUID
+- revision: long
+- activeVersionRef: UUID
+}
+interface ConfigurationRepository <<repository>> {
+
++ activateRevisionIfCurrent(req: ApplyConfigurationRequest, ctx: AccessContext): MutationResult
++ findActiveAndCandidate(req: ConfigurationEditRequest, ctx: AccessContext): ConfigurationDetail
++ findAuthorizedTestHistory(req: ConfigurationTestRequest, ctx: AccessContext): Page<TestRun>
++ findExactRevision(req: ConfigurationTestRequest): ConfigVersion
++ lockCandidateAndActive(req: ApplyConfigurationRequest): ConfigurationApplyContext
++ saveDraftRevisionIfCurrent(req: ConfigurationEditRequest, ctx: AccessContext): MutationResult
++ saveSafeRunMetadata(req: ConfigurationTestRequest, ctx: AccessContext): MutationResult
+}
+class ConfigurationTestRequest <<DTO>> {
+- configurationRef: UUID
+- revision: long
+- channel: IngestionChannel
+- temporarySamples: SampleInput
+}
+class TestRunResponse <<DTO>> {
+- runRef: UUID
+- testedRevision: long
+- counts: TestCounts
+- temporaryResultRef: UUID
+}
+interface SampleValidationPort <<port>> {
+
++ validateSample(req: ConfigurationTestRequest): ValidationResult
+}
+interface SampleRuleEvaluationPort <<port>> {
+
++ evaluateSample(req: ConfigurationTestRequest): RuleEvaluationResult
+}
+class ApplyConfigurationRequest <<DTO>> {
+- draftRef: UUID
+- revision: long
+- testRef: UUID
+- expectedActiveRef: UUID
+- assessment: String
+}
+IConfigurationService -[hidden]down-> ConfigurationService
+ConfigurationRepository -[hidden]down-> SampleValidationPort
+SampleValidationPort -[hidden]down-> SampleRuleEvaluationPort
+ConfigVersion -[hidden]down-> FieldDefinition
+FieldDefinition -[hidden]down-> ChannelMapping
+ChannelMapping -[hidden]down-> DetectionRule
+DetectionRule -[hidden]down-> RuleCondition
+RuleCondition -[hidden]down-> TestRun
+ConfigurationController -[hidden]right-> IConfigurationService
+IConfigurationService -[hidden]right-> ConfigurationRepository
+ConfigurationRepository -[hidden]right-> ConfigVersion
+ConfigurationController -[hidden]down-> ConfigurationEditRequest
+ConfigurationEditRequest -[hidden]right-> ConfigurationResponse
+ConfigurationResponse -[hidden]right-> ConfigurationTestRequest
+ConfigurationEditRequest -[hidden]down-> TestRunResponse
+TestRunResponse -[hidden]right-> ApplyConfigurationRequest
+ApplyConfigurationRequest -[hidden]right-> AccessContext
+ConfigVersion "1" *-[norank]- "0..*" DetectionRule
+ConfigVersion "1" *-[norank]- "0..3" ChannelMapping
+ConfigVersion "1" *-[norank]- "1..*" FieldDefinition
+ConfigurationController -[norank]-> IConfigurationService
+ConfigurationController -[dashed,norank]-> ApplyConfigurationRequest
+ConfigurationController -[dashed,norank]-> ConfigurationEditRequest
+ConfigurationController -[dashed,norank]-> ConfigurationResponse
+ConfigurationController -[dashed,norank]-> ConfigurationTestRequest
+ConfigurationController -[dashed,norank]-> TestRunResponse
+ConfigurationRepository -[norank]-> ConfigVersion
+ConfigurationService -[norank]-> ConfigVersion
+ConfigurationService -[norank]-> ConfigurationRepository
+ConfigurationService -[norank]-> SampleRuleEvaluationPort
+ConfigurationService -[norank]-> SampleValidationPort
+ConfigurationService -[norank]-> TestRun
+ConfigurationService -[dashed,norank]-> AccessContext
+ConfigurationService -[dashed,norank]-|> IConfigurationService
+DetectionRule "1" *-[norank]- "1..*" RuleCondition
+RuleCondition -[norank]-> FieldDefinition
+TestRun -[norank]-> ConfigVersion : exact revision
+@enduml

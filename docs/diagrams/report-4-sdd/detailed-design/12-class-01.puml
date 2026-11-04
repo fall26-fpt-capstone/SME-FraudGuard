@@ -1,0 +1,117 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class ReportOperation <<entity>> {
+- workspaceId: UUID
+- requestedBy: UUID
+- criteria: ValidatedCriteria
+- status: String
+- resultRef: String [0..1]
+}
+interface ReportingQueryPort <<port>> {
+
++ queryAuthorizedAggregates(req: ReportingQueryRequest, ctx: AccessContext): AuthorizedSummary
++ queryAuthorizedReportData(req: ReportExportRequest, ctx: AccessContext): ProtectedReportData
++ queryAuthorizedReportVersion(req: ReportingQueryRequest, ctx: AccessContext): ProtectedReportVersion
+}
+class ExportArtifact <<entity>> {
+- reportRef: UUID
+- format: SupportedFormat
+- protectedLocation: String
+--
++ serveAuthorized(identity: String): boolean
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class ReportingController <<controller>> {
+- service: IReportingService
+--
++ generateAndExport(request: ReportExportRequest): ReportExportResponse
++ viewDashboardOrReport(request: ReportingQueryRequest): ReportingResponse
+- resolveExecutionContext(): AccessContext
+}
+class ReportingService <<service>> {
+
++ generateAndExport(request: ReportExportRequest, context: AccessContext): ReportExportResponse
++ viewDashboardOrReport(request: ReportingQueryRequest, context: AccessContext): ReportingResponse
+- authorizeGenerationCriteria(req: ReportExportRequest, ctx: AccessContext): void
+- validateCriteriaAndReportingScope(req: ReportingQueryRequest, ctx: AccessContext): void
+}
+interface IReportingService <<service>> {
+
++ generateAndExport(request: ReportExportRequest, context: AccessContext): ReportExportResponse
++ viewDashboardOrReport(request: ReportingQueryRequest, context: AccessContext): ReportingResponse
+}
+class ReportingQueryRequest <<DTO>> {
+- criteria: ReportingCriteria
+- reportRef: UUID
+- page: PageRequest
+}
+class ReportingResponse <<DTO>> {
+- aggregates: AuthorizedSummary
+- report: ProtectedReportVersion
+}
+class ReportExportRequest <<DTO>> {
+- criteria: ReportingCriteria
+- reportRef: UUID
+- format: ExportFormat
+- action: ReportAction
+}
+class ReportExportResponse <<DTO>> {
+- operationRef: UUID
+- status: ReportStage
+- artifactRef: UUID
+}
+interface ReportRepository <<repository>> {
+
++ completeReportOperation(req: ReportExportRequest): MutationResult
++ createReportOperation(req: ReportExportRequest, ctx: AccessContext): MutationResult
++ saveCompleteExport(req: ReportExportRequest, ctx: AccessContext): MutationResult
+}
+IReportingService -[hidden]down-> ReportingService
+ReportingQueryPort -[hidden]down-> ReportRepository
+ReportOperation -[hidden]down-> ExportArtifact
+ReportingController -[hidden]right-> IReportingService
+IReportingService -[hidden]right-> ReportingQueryPort
+ReportingQueryPort -[hidden]right-> ReportOperation
+ReportingController -[hidden]down-> ReportingQueryRequest
+ReportingQueryRequest -[hidden]right-> ReportingResponse
+ReportingResponse -[hidden]right-> ReportExportRequest
+ReportingQueryRequest -[hidden]down-> ReportExportResponse
+ReportExportResponse -[hidden]right-> AccessContext
+ReportOperation "1" -[norank]- "0..*" ExportArtifact
+ReportRepository -[norank]-> ReportOperation
+ReportingController -[norank]-> IReportingService
+ReportingController -[dashed,norank]-> ReportExportRequest
+ReportingController -[dashed,norank]-> ReportExportResponse
+ReportingController -[dashed,norank]-> ReportingQueryRequest
+ReportingController -[dashed,norank]-> ReportingResponse
+ReportingService -[norank]-> ReportOperation
+ReportingService -[norank]-> ReportRepository
+ReportingService -[norank]-> ReportingQueryPort
+ReportingService -[dashed,norank]-> AccessContext
+ReportingService -[dashed,norank]-|> IReportingService
+@enduml

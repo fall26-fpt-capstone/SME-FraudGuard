@@ -1,0 +1,1909 @@
+{
+  "groups": [
+    {
+      "number": 1,
+      "title": "Authentication and Account Access",
+      "count": 4,
+      "purpose": "Sessions bind verified identity to platform or enterprise scope. Mandatory initial password change restricts access until saved; logout ends authorization without deleting business history."
+    },
+    {
+      "number": 2,
+      "title": "Customer and Workspace Management",
+      "count": 4,
+      "purpose": "Platform Admin provisions one workspace per enterprise and its initial SME Admin. Staff accesses assigned setup metadata only; assignment changes never grant production-data access."
+    },
+    {
+      "number": 3,
+      "title": "Plan and Subscription Management",
+      "count": 7,
+      "purpose": "Free and Subscription have fixed entitlements. Purchases retain quotes and only verified server-side payment applies rights once. Calendar validity uses Asia/Ho_Chi_Minh, UTC storage and [start, expiry)."
+    },
+    {
+      "number": 4,
+      "title": "Workspace Onboarding and Activation",
+      "count": 5,
+      "purpose": "Specifications are retained for human configuration work. Staff readiness, Platform Admin handover approval and SME Admin activation are distinct recorded gates; initial Subscription starts only at activation."
+    },
+    {
+      "number": 5,
+      "title": "Enterprise Member and Permission Management",
+      "count": 4,
+      "purpose": "SME Admin manages only own-workspace enterprise accounts and explicit field-view grants. Permission administration does not grant SME Admin plaintext access; history survives role/access changes."
+    },
+    {
+      "number": 6,
+      "title": "Detection Configuration Management",
+      "count": 8,
+      "purpose": "Assigned Staff edits a versioned candidate containing fields, channel mappings and rules. Testing uses the exact revision and temporary samples; explicit application atomically changes one active version for newly accepted work."
+    },
+    {
+      "number": 7,
+      "title": "Integration and Transaction Ingestion",
+      "count": 7,
+      "purpose": "Credentials establish integration workspace scope before mapping. REST, Webhook and production file import share normalization and atomic cross-channel business identity. Acceptance is durable and distinct from detection completion."
+    },
+    {
+      "number": 8,
+      "title": "Rule-Based Detection",
+      "count": 2,
+      "purpose": "Free primary detection and Subscription fallback evaluate the selected configuration with the same typed semantics. All matching rules form one Rule Alert for the completed attempt; no match is distinct from failure."
+    },
+    {
+      "number": 9,
+      "title": "AI Detection and Rule-Based Fallback",
+      "count": 3,
+      "purpose": "Subscription primary processing calls AI only. Unusable AI responses trigger rules and retain both attempt sources. Recovery reuses the transaction, checks historical event-time entitlement and preserves earlier alerts and cases."
+    },
+    {
+      "number": 10,
+      "title": "Transaction and Alert Review",
+      "count": 6,
+      "purpose": "Operator reviews workspace production transactions, alerts and attempt history. Import results have separate SME Admin/Operator scope. Explicit reveal requires current field grants and, for Investigator, the relevant case assignment."
+    },
+    {
+      "number": 11,
+      "title": "Case and Investigation Management",
+      "count": 7,
+      "purpose": "Only Operator opens cases from same-workspace AI Alerts under current Subscription. Assignment is separate from lifecycle. Existing case work continues after expiry; Operator may investigate, submit and confirm without a second person."
+    },
+    {
+      "number": 12,
+      "title": "Dashboard and Reporting",
+      "count": 4,
+      "purpose": "Aggregates, reports and exports preserve workspace, role, assignment and field restrictions. Generation and download each recheck access; plaintext reveal does not authorize plaintext export."
+    },
+    {
+      "number": 13,
+      "title": "Notifications",
+      "count": 2,
+      "purpose": "Relevant enterprise events produce minimal in-app/email content. Recipients and linked records remain scoped; external delivery is retried independently and never reverses or repeats the committed business effect."
+    },
+    {
+      "number": 14,
+      "title": "Platform Monitoring and Audit",
+      "count": 2,
+      "purpose": "Platform Admin sees operational metadata only. Object history follows the underlying administrative, Staff-assignment or enterprise/case scope. Required local change history commits with the business action and excludes values/secrets."
+    }
+  ],
+  "figures": [
+    {
+      "id": "01-class-01",
+      "file": "01-class-01.puml",
+      "group": 1,
+      "type": "class",
+      "title": "Authentication and Account Access Class Diagram",
+      "caption": "Figure 4.3.1.1.1. Authentication and Account Access Class Diagram.",
+      "srs": [
+        "3.2.1",
+        "3.2.2",
+        "3.2.3",
+        "3.2.4"
+      ]
+    },
+    {
+      "id": "01-sequence-01",
+      "file": "01-sequence-01.puml",
+      "group": 1,
+      "type": "sequence",
+      "title": "Log In and Select the Permitted Destination Sequence Diagram",
+      "caption": "Figure 4.3.1.2.1. Log In and Select the Permitted Destination Sequence Diagram.",
+      "srs": [
+        "3.2.1"
+      ]
+    },
+    {
+      "id": "01-sequence-02",
+      "file": "01-sequence-02.puml",
+      "group": 1,
+      "type": "sequence",
+      "title": "Complete Mandatory Initial Password Change Sequence Diagram",
+      "caption": "Figure 4.3.1.2.2. Complete Mandatory Initial Password Change Sequence Diagram.",
+      "srs": [
+        "3.2.2"
+      ]
+    },
+    {
+      "id": "01-sequence-03",
+      "file": "01-sequence-03.puml",
+      "group": 1,
+      "type": "sequence",
+      "title": "Change Current Password Sequence Diagram",
+      "caption": "Figure 4.3.1.2.3. Change Current Password Sequence Diagram.",
+      "srs": [
+        "3.2.3"
+      ]
+    },
+    {
+      "id": "01-sequence-04",
+      "file": "01-sequence-04.puml",
+      "group": 1,
+      "type": "sequence",
+      "title": "Log Out and Reject the Ended Session Sequence Diagram",
+      "caption": "Figure 4.3.1.2.4. Log Out and Reject the Ended Session Sequence Diagram.",
+      "srs": [
+        "3.2.4"
+      ]
+    },
+    {
+      "id": "01-state-01",
+      "file": "01-state-01.puml",
+      "group": 1,
+      "type": "state",
+      "title": "Authenticated Session Lifecycle State Diagram",
+      "caption": "Figure 4.3.1.3.1. Authenticated Session Lifecycle State Diagram.",
+      "srs": [
+        "3.2.1",
+        "3.2.2",
+        "3.2.3",
+        "3.2.4"
+      ]
+    },
+    {
+      "id": "02-class-01",
+      "file": "02-class-01.puml",
+      "group": 2,
+      "type": "class",
+      "title": "Customer and Workspace Management Class Diagram",
+      "caption": "Figure 4.3.2.1.1. Customer and Workspace Management Class Diagram.",
+      "srs": [
+        "3.3.1",
+        "3.3.2",
+        "3.3.3",
+        "3.3.4"
+      ]
+    },
+    {
+      "id": "02-sequence-01",
+      "file": "02-sequence-01.puml",
+      "group": 2,
+      "type": "sequence",
+      "title": "List, Inspect and Update Administrative Workspace Information Sequence Diagram",
+      "caption": "Figure 4.3.2.2.1. List, Inspect and Update Administrative Workspace Information Sequence Diagram.",
+      "srs": [
+        "3.3.1",
+        "3.3.3"
+      ]
+    },
+    {
+      "id": "02-sequence-02",
+      "file": "02-sequence-02.puml",
+      "group": 2,
+      "type": "sequence",
+      "title": "Provision Enterprise, Workspace and Initial SME Admin Sequence Diagram",
+      "caption": "Figure 4.3.2.2.2. Provision Enterprise, Workspace and Initial SME Admin Sequence Diagram.",
+      "srs": [
+        "3.3.2"
+      ]
+    },
+    {
+      "id": "02-sequence-03",
+      "file": "02-sequence-03.puml",
+      "group": 2,
+      "type": "sequence",
+      "title": "Add or Remove Concurrent Implementation Staff Assignments Sequence Diagram",
+      "caption": "Figure 4.3.2.2.3. Add or Remove Concurrent Implementation Staff Assignments Sequence Diagram.",
+      "srs": [
+        "3.3.4"
+      ]
+    },
+    {
+      "id": "03-class-01",
+      "file": "03-class-01.puml",
+      "group": 3,
+      "type": "class",
+      "title": "Plan and Subscription Management Class Diagram",
+      "caption": "Figure 4.3.3.1.1. Plan and Subscription Management Class Diagram.",
+      "srs": [
+        "3.4.1",
+        "3.4.2",
+        "3.4.3",
+        "3.4.4",
+        "3.4.5",
+        "3.4.6",
+        "3.4.7"
+      ]
+    },
+    {
+      "id": "03-sequence-01",
+      "file": "03-sequence-01.puml",
+      "group": 3,
+      "type": "sequence",
+      "title": "Review and Maintain Plan Offers Sequence Diagram",
+      "caption": "Figure 4.3.3.2.1. Review and Maintain Plan Offers Sequence Diagram.",
+      "srs": [
+        "3.4.1",
+        "3.4.2"
+      ]
+    },
+    {
+      "id": "03-sequence-02",
+      "file": "03-sequence-02.puml",
+      "group": 3,
+      "type": "sequence",
+      "title": "Grant the Initial Workspace Plan Sequence Diagram",
+      "caption": "Figure 4.3.3.2.2. Grant the Initial Workspace Plan Sequence Diagram.",
+      "srs": [
+        "3.4.3"
+      ]
+    },
+    {
+      "id": "03-sequence-03",
+      "file": "03-sequence-03.puml",
+      "group": 3,
+      "type": "sequence",
+      "title": "View Subscription and Initiate Purchase or Renewal Sequence Diagram",
+      "caption": "Figure 4.3.3.2.3. View Subscription and Initiate Purchase or Renewal Sequence Diagram.",
+      "srs": [
+        "3.4.4",
+        "3.4.5"
+      ]
+    },
+    {
+      "id": "03-sequence-04",
+      "file": "03-sequence-04.puml",
+      "group": 3,
+      "type": "sequence",
+      "title": "Verify Payment and Apply One Calendar Entitlement Effect Sequence Diagram",
+      "caption": "Figure 4.3.3.2.4. Verify Payment and Apply One Calendar Entitlement Effect Sequence Diagram.",
+      "srs": [
+        "3.4.6"
+      ]
+    },
+    {
+      "id": "03-sequence-05",
+      "file": "03-sequence-05.puml",
+      "group": 3,
+      "type": "sequence",
+      "title": "Enforce Expiry at New Operations and Preserve Existing Work Sequence Diagram",
+      "caption": "Figure 4.3.3.2.5. Enforce Expiry at New Operations and Preserve Existing Work Sequence Diagram.",
+      "srs": [
+        "3.4.7"
+      ]
+    },
+    {
+      "id": "03-state-01",
+      "file": "03-state-01.puml",
+      "group": 3,
+      "type": "state",
+      "title": "Subscription Entitlement Lifecycle State Diagram",
+      "caption": "Figure 4.3.3.3.1. Subscription Entitlement Lifecycle State Diagram.",
+      "srs": [
+        "3.4.1",
+        "3.4.2",
+        "3.4.3",
+        "3.4.4",
+        "3.4.5",
+        "3.4.6",
+        "3.4.7"
+      ]
+    },
+    {
+      "id": "03-state-02",
+      "file": "03-state-02.puml",
+      "group": 3,
+      "type": "state",
+      "title": "Purchase Verification and Local Entitlement Application State Diagram",
+      "caption": "Figure 4.3.3.3.2. Purchase Verification and Local Entitlement Application State Diagram.",
+      "srs": [
+        "3.4.1",
+        "3.4.2",
+        "3.4.3",
+        "3.4.4",
+        "3.4.5",
+        "3.4.6",
+        "3.4.7"
+      ]
+    },
+    {
+      "id": "04-class-01",
+      "file": "04-class-01.puml",
+      "group": 4,
+      "type": "class",
+      "title": "Workspace Onboarding and Activation Class Diagram",
+      "caption": "Figure 4.3.4.1.1. Workspace Onboarding and Activation Class Diagram.",
+      "srs": [
+        "3.5.1",
+        "3.5.2",
+        "3.5.3",
+        "3.5.4",
+        "3.5.5"
+      ]
+    },
+    {
+      "id": "04-sequence-01",
+      "file": "04-sequence-01.puml",
+      "group": 4,
+      "type": "sequence",
+      "title": "Maintain Specifications and Track Onboarding Progress Sequence Diagram",
+      "caption": "Figure 4.3.4.2.1. Maintain Specifications and Track Onboarding Progress Sequence Diagram.",
+      "srs": [
+        "3.5.1",
+        "3.5.2"
+      ]
+    },
+    {
+      "id": "04-sequence-02",
+      "file": "04-sequence-02.puml",
+      "group": 4,
+      "type": "sequence",
+      "title": "Confirm Implementation Readiness Sequence Diagram",
+      "caption": "Figure 4.3.4.2.2. Confirm Implementation Readiness Sequence Diagram.",
+      "srs": [
+        "3.5.3"
+      ]
+    },
+    {
+      "id": "04-sequence-03",
+      "file": "04-sequence-03.puml",
+      "group": 4,
+      "type": "sequence",
+      "title": "Approve or Return Workspace Handover Sequence Diagram",
+      "caption": "Figure 4.3.4.2.3. Approve or Return Workspace Handover Sequence Diagram.",
+      "srs": [
+        "3.5.4"
+      ]
+    },
+    {
+      "id": "04-sequence-04",
+      "file": "04-sequence-04.puml",
+      "group": 4,
+      "type": "sequence",
+      "title": "Activate Approved Workspace and Start the Initial Term Once Sequence Diagram",
+      "caption": "Figure 4.3.4.2.4. Activate Approved Workspace and Start the Initial Term Once Sequence Diagram.",
+      "srs": [
+        "3.5.5"
+      ]
+    },
+    {
+      "id": "04-state-01",
+      "file": "04-state-01.puml",
+      "group": 4,
+      "type": "state",
+      "title": "Workspace Readiness, Handover and Activation Lifecycle State Diagram",
+      "caption": "Figure 4.3.4.3.1. Workspace Readiness, Handover and Activation Lifecycle State Diagram.",
+      "srs": [
+        "3.5.1",
+        "3.5.2",
+        "3.5.3",
+        "3.5.4",
+        "3.5.5"
+      ]
+    },
+    {
+      "id": "05-class-01",
+      "file": "05-class-01.puml",
+      "group": 5,
+      "type": "class",
+      "title": "Enterprise Member and Permission Management Class Diagram",
+      "caption": "Figure 4.3.5.1.1. Enterprise Member and Permission Management Class Diagram.",
+      "srs": [
+        "3.6.1",
+        "3.6.2",
+        "3.6.3",
+        "3.6.4"
+      ]
+    },
+    {
+      "id": "05-sequence-01",
+      "file": "05-sequence-01.puml",
+      "group": 5,
+      "type": "sequence",
+      "title": "List, Provision and Update Enterprise Members Sequence Diagram",
+      "caption": "Figure 4.3.5.2.1. List, Provision and Update Enterprise Members Sequence Diagram.",
+      "srs": [
+        "3.6.1",
+        "3.6.2",
+        "3.6.3"
+      ]
+    },
+    {
+      "id": "05-sequence-02",
+      "file": "05-sequence-02.puml",
+      "group": 5,
+      "type": "sequence",
+      "title": "Grant or Revoke Explicit Sensitive-Field Viewing Permission Sequence Diagram",
+      "caption": "Figure 4.3.5.2.2. Grant or Revoke Explicit Sensitive-Field Viewing Permission Sequence Diagram.",
+      "srs": [
+        "3.6.4"
+      ]
+    },
+    {
+      "id": "06-class-01",
+      "file": "06-class-01.puml",
+      "group": 6,
+      "type": "class",
+      "title": "Detection Configuration Management Class Diagram",
+      "caption": "Figure 4.3.6.1.1. Detection Configuration Management Class Diagram.",
+      "srs": [
+        "3.7.1",
+        "3.7.2",
+        "3.7.3",
+        "3.7.4",
+        "3.7.5",
+        "3.7.6",
+        "3.7.7",
+        "3.7.8"
+      ]
+    },
+    {
+      "id": "06-sequence-01",
+      "file": "06-sequence-01.puml",
+      "group": 6,
+      "type": "sequence",
+      "title": "View and Edit Candidate Fields, Mappings and Rules Sequence Diagram",
+      "caption": "Figure 4.3.6.2.1. View and Edit Candidate Fields, Mappings and Rules Sequence Diagram.",
+      "srs": [
+        "3.7.1",
+        "3.7.2",
+        "3.7.3",
+        "3.7.4",
+        "3.7.5"
+      ]
+    },
+    {
+      "id": "06-sequence-02",
+      "file": "06-sequence-02.puml",
+      "group": 6,
+      "type": "sequence",
+      "title": "Test an Exact Revision and Review Safe Run History Sequence Diagram",
+      "caption": "Figure 4.3.6.2.2. Test an Exact Revision and Review Safe Run History Sequence Diagram.",
+      "srs": [
+        "3.7.6",
+        "3.7.7"
+      ]
+    },
+    {
+      "id": "06-sequence-03",
+      "file": "06-sequence-03.puml",
+      "group": 6,
+      "type": "sequence",
+      "title": "Apply the Tested Candidate Atomically Sequence Diagram",
+      "caption": "Figure 4.3.6.2.3. Apply the Tested Candidate Atomically Sequence Diagram.",
+      "srs": [
+        "3.7.8"
+      ]
+    },
+    {
+      "id": "06-state-01",
+      "file": "06-state-01.puml",
+      "group": 6,
+      "type": "state",
+      "title": "Candidate Configuration Testing and Application Lifecycle State Diagram",
+      "caption": "Figure 4.3.6.3.1. Candidate Configuration Testing and Application Lifecycle State Diagram.",
+      "srs": [
+        "3.7.1",
+        "3.7.2",
+        "3.7.3",
+        "3.7.4",
+        "3.7.5",
+        "3.7.6",
+        "3.7.7",
+        "3.7.8"
+      ]
+    },
+    {
+      "id": "07-class-01",
+      "file": "07-class-01.puml",
+      "group": 7,
+      "type": "class",
+      "title": "Integration and Transaction Ingestion Class Diagram",
+      "caption": "Figure 4.3.7.1.1. Integration and Transaction Ingestion Class Diagram.",
+      "srs": [
+        "3.8.1",
+        "3.8.2",
+        "3.8.3",
+        "3.8.4",
+        "3.8.5",
+        "3.8.6",
+        "3.8.7"
+      ]
+    },
+    {
+      "id": "07-sequence-01",
+      "file": "07-sequence-01.puml",
+      "group": 7,
+      "type": "sequence",
+      "title": "Inspect, Issue, Replace and Disable Workspace API Keys Sequence Diagram",
+      "caption": "Figure 4.3.7.2.1. Inspect, Issue, Replace and Disable Workspace API Keys Sequence Diagram.",
+      "srs": [
+        "3.8.1",
+        "3.8.2",
+        "3.8.3"
+      ]
+    },
+    {
+      "id": "07-sequence-02",
+      "file": "07-sequence-02.puml",
+      "group": 7,
+      "type": "sequence",
+      "title": "Submit Production Transactions through REST API Sequence Diagram",
+      "caption": "Figure 4.3.7.2.2. Submit Production Transactions through REST API Sequence Diagram.",
+      "srs": [
+        "3.8.4"
+      ]
+    },
+    {
+      "id": "07-sequence-03",
+      "file": "07-sequence-03.puml",
+      "group": 7,
+      "type": "sequence",
+      "title": "Authenticate Incoming Webhook and Handle Delivery Retries Sequence Diagram",
+      "caption": "Figure 4.3.7.2.3. Authenticate Incoming Webhook and Handle Delivery Retries Sequence Diagram.",
+      "srs": [
+        "3.8.5"
+      ]
+    },
+    {
+      "id": "07-sequence-04",
+      "file": "07-sequence-04.puml",
+      "group": 7,
+      "type": "sequence",
+      "title": "Import Production CSV/Excel with Reconciled Row Outcomes Sequence Diagram",
+      "caption": "Figure 4.3.7.2.4. Import Production CSV/Excel with Reconciled Row Outcomes Sequence Diagram.",
+      "srs": [
+        "3.8.6"
+      ]
+    },
+    {
+      "id": "07-sequence-05",
+      "file": "07-sequence-05.puml",
+      "group": 7,
+      "type": "sequence",
+      "title": "Normalize and Validate Declared Channel Values Sequence Diagram",
+      "caption": "Figure 4.3.7.2.5. Normalize and Validate Declared Channel Values Sequence Diagram.",
+      "srs": [
+        "3.8.7"
+      ]
+    },
+    {
+      "id": "07-sequence-06",
+      "file": "07-sequence-06.puml",
+      "group": 7,
+      "type": "sequence",
+      "title": "Atomically Resolve Cross-Channel Business Identity and Accept Once Sequence Diagram",
+      "caption": "Figure 4.3.7.2.6. Atomically Resolve Cross-Channel Business Identity and Accept Once Sequence Diagram.",
+      "srs": [
+        "3.8.7"
+      ]
+    },
+    {
+      "id": "07-state-01",
+      "file": "07-state-01.puml",
+      "group": 7,
+      "type": "state",
+      "title": "Workspace API Credential Lifecycle State Diagram",
+      "caption": "Figure 4.3.7.3.1. Workspace API Credential Lifecycle State Diagram.",
+      "srs": [
+        "3.8.1",
+        "3.8.2",
+        "3.8.3",
+        "3.8.4",
+        "3.8.5",
+        "3.8.6",
+        "3.8.7"
+      ]
+    },
+    {
+      "id": "07-state-02",
+      "file": "07-state-02.puml",
+      "group": 7,
+      "type": "state",
+      "title": "Production Import Processing Lifecycle State Diagram",
+      "caption": "Figure 4.3.7.3.2. Production Import Processing Lifecycle State Diagram.",
+      "srs": [
+        "3.8.1",
+        "3.8.2",
+        "3.8.3",
+        "3.8.4",
+        "3.8.5",
+        "3.8.6",
+        "3.8.7"
+      ]
+    },
+    {
+      "id": "08-class-01",
+      "file": "08-class-01.puml",
+      "group": 8,
+      "type": "class",
+      "title": "Rule-Based Detection Class Diagram",
+      "caption": "Figure 4.3.8.1.1. Rule-Based Detection Class Diagram.",
+      "srs": [
+        "3.9.1",
+        "3.9.2"
+      ]
+    },
+    {
+      "id": "08-sequence-01",
+      "file": "08-sequence-01.puml",
+      "group": 8,
+      "type": "sequence",
+      "title": "Evaluate All Enabled Rules and Create One Aggregated Alert Sequence Diagram",
+      "caption": "Figure 4.3.8.2.1. Evaluate All Enabled Rules and Create One Aggregated Alert Sequence Diagram.",
+      "srs": [
+        "3.9.1",
+        "3.9.2"
+      ]
+    },
+    {
+      "id": "09-class-01",
+      "file": "09-class-01.puml",
+      "group": 9,
+      "type": "class",
+      "title": "AI Detection and Rule-Based Fallback Class Diagram",
+      "caption": "Figure 4.3.9.1.1. AI Detection and Rule-Based Fallback Class Diagram.",
+      "srs": [
+        "3.10.1",
+        "3.10.2",
+        "3.10.3"
+      ]
+    },
+    {
+      "id": "09-sequence-01",
+      "file": "09-sequence-01.puml",
+      "group": 9,
+      "type": "sequence",
+      "title": "Classify Subscription Transaction and Fall Back on Unusable AI Sequence Diagram",
+      "caption": "Figure 4.3.9.2.1. Classify Subscription Transaction and Fall Back on Unusable AI Sequence Diagram.",
+      "srs": [
+        "3.10.1",
+        "3.10.2"
+      ]
+    },
+    {
+      "id": "09-sequence-02",
+      "file": "09-sequence-02.puml",
+      "group": 9,
+      "type": "sequence",
+      "title": "Recover Historically Eligible Fallback Work and Reconcile AI Alerts Sequence Diagram",
+      "caption": "Figure 4.3.9.2.2. Recover Historically Eligible Fallback Work and Reconcile AI Alerts Sequence Diagram.",
+      "srs": [
+        "3.10.3"
+      ]
+    },
+    {
+      "id": "09-state-01",
+      "file": "09-state-01.puml",
+      "group": 9,
+      "type": "state",
+      "title": "Transaction Detection and Rule-Based Fallback Processing State Diagram",
+      "caption": "Figure 4.3.9.3.1. Transaction Detection and Rule-Based Fallback Processing State Diagram.",
+      "srs": [
+        "3.10.1",
+        "3.10.2",
+        "3.10.3"
+      ]
+    },
+    {
+      "id": "09-state-02",
+      "file": "09-state-02.puml",
+      "group": 9,
+      "type": "state",
+      "title": "Historically Entitled AI Recovery Processing State Diagram",
+      "caption": "Figure 4.3.9.3.2. Historically Entitled AI Recovery Processing State Diagram.",
+      "srs": [
+        "3.10.1",
+        "3.10.2",
+        "3.10.3"
+      ]
+    },
+    {
+      "id": "10-class-01",
+      "file": "10-class-01.puml",
+      "group": 10,
+      "type": "class",
+      "title": "Transaction and Alert Review Class Diagram",
+      "caption": "Figure 4.3.10.1.1. Transaction and Alert Review Class Diagram.",
+      "srs": [
+        "3.11.1",
+        "3.11.2",
+        "3.11.3",
+        "3.11.4",
+        "3.11.5",
+        "3.11.6"
+      ]
+    },
+    {
+      "id": "10-sequence-01",
+      "file": "10-sequence-01.puml",
+      "group": 10,
+      "type": "sequence",
+      "title": "Review Transactions and Role-Scoped Import Results Sequence Diagram",
+      "caption": "Figure 4.3.10.2.1. Review Transactions and Role-Scoped Import Results Sequence Diagram.",
+      "srs": [
+        "3.11.1",
+        "3.11.2"
+      ]
+    },
+    {
+      "id": "10-sequence-02",
+      "file": "10-sequence-02.puml",
+      "group": 10,
+      "type": "sequence",
+      "title": "Review Rule/AI Alerts, Follow-Up Flags and Attempt History Sequence Diagram",
+      "caption": "Figure 4.3.10.2.2. Review Rule/AI Alerts, Follow-Up Flags and Attempt History Sequence Diagram.",
+      "srs": [
+        "3.11.3",
+        "3.11.4",
+        "3.11.5"
+      ]
+    },
+    {
+      "id": "10-sequence-03",
+      "file": "10-sequence-03.puml",
+      "group": 10,
+      "type": "sequence",
+      "title": "Explicitly Reveal Only Currently Authorized Sensitive Fields Sequence Diagram",
+      "caption": "Figure 4.3.10.2.3. Explicitly Reveal Only Currently Authorized Sensitive Fields Sequence Diagram.",
+      "srs": [
+        "3.11.6"
+      ]
+    },
+    {
+      "id": "11-class-01",
+      "file": "11-class-01.puml",
+      "group": 11,
+      "type": "class",
+      "title": "Case and Investigation Management Class Diagram",
+      "caption": "Figure 4.3.11.1.1. Case and Investigation Management Class Diagram.",
+      "srs": [
+        "3.12.1",
+        "3.12.2",
+        "3.12.3",
+        "3.12.4",
+        "3.12.5",
+        "3.12.6",
+        "3.12.7"
+      ]
+    },
+    {
+      "id": "11-sequence-01",
+      "file": "11-sequence-01.puml",
+      "group": 11,
+      "type": "sequence",
+      "title": "Open One Case from Eligible AI Alert References Sequence Diagram",
+      "caption": "Figure 4.3.11.2.1. Open One Case from Eligible AI Alert References Sequence Diagram.",
+      "srs": [
+        "3.12.1"
+      ]
+    },
+    {
+      "id": "11-sequence-02",
+      "file": "11-sequence-02.puml",
+      "group": 11,
+      "type": "sequence",
+      "title": "View Cases and Assign or Start Self-Investigation Sequence Diagram",
+      "caption": "Figure 4.3.11.2.2. View Cases and Assign or Start Self-Investigation Sequence Diagram.",
+      "srs": [
+        "3.12.2",
+        "3.12.3"
+      ]
+    },
+    {
+      "id": "11-sequence-03",
+      "file": "11-sequence-03.puml",
+      "group": 11,
+      "type": "sequence",
+      "title": "Record Findings and Submit an Investigation Report Sequence Diagram",
+      "caption": "Figure 4.3.11.2.3. Record Findings and Submit an Investigation Report Sequence Diagram.",
+      "srs": [
+        "3.12.4",
+        "3.12.5"
+      ]
+    },
+    {
+      "id": "11-sequence-04",
+      "file": "11-sequence-04.puml",
+      "group": 11,
+      "type": "sequence",
+      "title": "Request Additional Investigation or Confirm the Final Conclusion Sequence Diagram",
+      "caption": "Figure 4.3.11.2.4. Request Additional Investigation or Confirm the Final Conclusion Sequence Diagram.",
+      "srs": [
+        "3.12.6",
+        "3.12.7"
+      ]
+    },
+    {
+      "id": "11-state-01",
+      "file": "11-state-01.puml",
+      "group": 11,
+      "type": "state",
+      "title": "Investigation Case Lifecycle State Diagram",
+      "caption": "Figure 4.3.11.3.1. Investigation Case Lifecycle State Diagram.",
+      "srs": [
+        "3.12.1",
+        "3.12.2",
+        "3.12.3",
+        "3.12.4",
+        "3.12.5",
+        "3.12.6",
+        "3.12.7"
+      ]
+    },
+    {
+      "id": "12-class-01",
+      "file": "12-class-01.puml",
+      "group": 12,
+      "type": "class",
+      "title": "Dashboard and Reporting Class Diagram",
+      "caption": "Figure 4.3.12.1.1. Dashboard and Reporting Class Diagram.",
+      "srs": [
+        "3.13.1",
+        "3.13.2",
+        "3.13.3",
+        "3.13.4"
+      ]
+    },
+    {
+      "id": "12-sequence-01",
+      "file": "12-sequence-01.puml",
+      "group": 12,
+      "type": "sequence",
+      "title": "View Authorized Dashboard and Investigation Reports Sequence Diagram",
+      "caption": "Figure 4.3.12.2.1. View Authorized Dashboard and Investigation Reports Sequence Diagram.",
+      "srs": [
+        "3.13.1",
+        "3.13.2"
+      ]
+    },
+    {
+      "id": "12-sequence-02",
+      "file": "12-sequence-02.puml",
+      "group": 12,
+      "type": "sequence",
+      "title": "Generate and Export a Complete Authorized Enterprise Report Sequence Diagram",
+      "caption": "Figure 4.3.12.2.2. Generate and Export a Complete Authorized Enterprise Report Sequence Diagram.",
+      "srs": [
+        "3.13.3",
+        "3.13.4"
+      ]
+    },
+    {
+      "id": "12-state-01",
+      "file": "12-state-01.puml",
+      "group": 12,
+      "type": "state",
+      "title": "Enterprise Report Generation Lifecycle State Diagram",
+      "caption": "Figure 4.3.12.3.1. Enterprise Report Generation Lifecycle State Diagram.",
+      "srs": [
+        "3.13.1",
+        "3.13.2",
+        "3.13.3",
+        "3.13.4"
+      ]
+    },
+    {
+      "id": "13-class-01",
+      "file": "13-class-01.puml",
+      "group": 13,
+      "type": "class",
+      "title": "Notifications Class Diagram",
+      "caption": "Figure 4.3.13.1.1. Notifications Class Diagram.",
+      "srs": [
+        "3.14.1",
+        "3.14.2"
+      ]
+    },
+    {
+      "id": "13-sequence-01",
+      "file": "13-sequence-01.puml",
+      "group": 13,
+      "type": "sequence",
+      "title": "Create and View Relevant In-App Notifications Sequence Diagram",
+      "caption": "Figure 4.3.13.2.1. Create and View Relevant In-App Notifications Sequence Diagram.",
+      "srs": [
+        "3.14.1"
+      ]
+    },
+    {
+      "id": "13-sequence-02",
+      "file": "13-sequence-02.puml",
+      "group": 13,
+      "type": "sequence",
+      "title": "Send Minimal Email and Retry Delivery Independently Sequence Diagram",
+      "caption": "Figure 4.3.13.2.2. Send Minimal Email and Retry Delivery Independently Sequence Diagram.",
+      "srs": [
+        "3.14.2"
+      ]
+    },
+    {
+      "id": "14-class-01",
+      "file": "14-class-01.puml",
+      "group": 14,
+      "type": "class",
+      "title": "Platform Monitoring and Audit Class Diagram",
+      "caption": "Figure 4.3.14.1.1. Platform Monitoring and Audit Class Diagram.",
+      "srs": [
+        "3.15.1",
+        "3.15.2"
+      ]
+    },
+    {
+      "id": "14-sequence-01",
+      "file": "14-sequence-01.puml",
+      "group": 14,
+      "type": "sequence",
+      "title": "Monitor Platform Operations without Production Content Sequence Diagram",
+      "caption": "Figure 4.3.14.2.1. Monitor Platform Operations without Production Content Sequence Diagram.",
+      "srs": [
+        "3.15.1"
+      ]
+    },
+    {
+      "id": "14-sequence-02",
+      "file": "14-sequence-02.puml",
+      "group": 14,
+      "type": "sequence",
+      "title": "Commit Required Audit Attribution and Read Scoped Object History Sequence Diagram",
+      "caption": "Figure 4.3.14.2.2. Commit Required Audit Attribution and Read Scoped Object History Sequence Diagram.",
+      "srs": [
+        "3.15.2"
+      ]
+    }
+  ],
+  "paragraphs": [
+    {
+      "kind": "body",
+      "text": "This section presents the target detailed design derived from Report 3 functional requirements, Sections 3.2-3.15. Class diagrams identify controllers/listeners, service interfaces and implementations, repositories, DTOs and domain types. Sequence diagrams use the same class names and operations, with explicit calls, returns, activation bars and repository/database interactions. These proposed design signatures are not claims of implemented Java classes or approved HTTP routes; cross-module calls use public APIs/ports within the modular monolith."
+    },
+    {
+      "kind": "body",
+      "text": "All operations enforce current identity, role, workspace and object/assignment scope on the backend. Integration authentication establishes workspace scope before mapping or acceptance. Sensitive values remain protected in ordinary results and diagnostics; required writes retain history atomically. The headings named State Diagram follow the supplied reference: their figures use processing activities, decision diamonds, guarded branches and start/end nodes. Exact external wire formats, upload limits, timeout values and retry schedules remain subject to their confirmed interface specifications."
+    },
+    {
+      "kind": "group",
+      "text": "3.1 Authentication and Account Access"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.2.1-3.2.4. Sessions bind verified identity to platform or enterprise scope. Mandatory initial password change restricts access until saved; logout ends authorization without deleting business history."
+    },
+    {
+      "kind": "type",
+      "text": "3.1.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "01-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.1.1.1. Authentication and Account Access Class Diagram.",
+      "figure": "01-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.1.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "01-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.1.2.1. Log In and Select the Permitted Destination Sequence Diagram.",
+      "figure": "01-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "01-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.1.2.2. Complete Mandatory Initial Password Change Sequence Diagram.",
+      "figure": "01-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "01-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.1.2.3. Change Current Password Sequence Diagram.",
+      "figure": "01-sequence-03"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "01-sequence-04"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.1.2.4. Log Out and Reject the Ended Session Sequence Diagram.",
+      "figure": "01-sequence-04"
+    },
+    {
+      "kind": "type",
+      "text": "3.1.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "01-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.1.3.1. Authenticated Session Lifecycle State Diagram.",
+      "figure": "01-state-01"
+    },
+    {
+      "kind": "group",
+      "text": "3.2 Customer and Workspace Management"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.3.1-3.3.4. Platform Admin provisions one workspace per enterprise and its initial SME Admin. Staff accesses assigned setup metadata only; assignment changes never grant production-data access."
+    },
+    {
+      "kind": "type",
+      "text": "3.2.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "02-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.2.1.1. Customer and Workspace Management Class Diagram.",
+      "figure": "02-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.2.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "02-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.2.2.1. List, Inspect and Update Administrative Workspace Information Sequence Diagram.",
+      "figure": "02-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "02-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.2.2.2. Provision Enterprise, Workspace and Initial SME Admin Sequence Diagram.",
+      "figure": "02-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "02-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.2.2.3. Add or Remove Concurrent Implementation Staff Assignments Sequence Diagram.",
+      "figure": "02-sequence-03"
+    },
+    {
+      "kind": "group",
+      "text": "3.3 Plan and Subscription Management"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.4.1-3.4.7. Free and Subscription have fixed entitlements. Purchases retain quotes and only verified server-side payment applies rights once. Calendar validity uses Asia/Ho_Chi_Minh, UTC storage and [start, expiry)."
+    },
+    {
+      "kind": "type",
+      "text": "3.3.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.1.1. Plan and Subscription Management Class Diagram.",
+      "figure": "03-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.3.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.2.1. Review and Maintain Plan Offers Sequence Diagram.",
+      "figure": "03-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.2.2. Grant the Initial Workspace Plan Sequence Diagram.",
+      "figure": "03-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.2.3. View Subscription and Initiate Purchase or Renewal Sequence Diagram.",
+      "figure": "03-sequence-03"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-sequence-04"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.2.4. Verify Payment and Apply One Calendar Entitlement Effect Sequence Diagram.",
+      "figure": "03-sequence-04"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-sequence-05"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.2.5. Enforce Expiry at New Operations and Preserve Existing Work Sequence Diagram.",
+      "figure": "03-sequence-05"
+    },
+    {
+      "kind": "type",
+      "text": "3.3.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.3.1. Subscription Entitlement Lifecycle State Diagram.",
+      "figure": "03-state-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "03-state-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.3.3.2. Purchase Verification and Local Entitlement Application State Diagram.",
+      "figure": "03-state-02"
+    },
+    {
+      "kind": "group",
+      "text": "3.4 Workspace Onboarding and Activation"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.5.1-3.5.5. Specifications are retained for human configuration work. Staff readiness, Platform Admin handover approval and SME Admin activation are distinct recorded gates; initial Subscription starts only at activation."
+    },
+    {
+      "kind": "type",
+      "text": "3.4.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "04-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.4.1.1. Workspace Onboarding and Activation Class Diagram.",
+      "figure": "04-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.4.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "04-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.4.2.1. Maintain Specifications and Track Onboarding Progress Sequence Diagram.",
+      "figure": "04-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "04-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.4.2.2. Confirm Implementation Readiness Sequence Diagram.",
+      "figure": "04-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "04-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.4.2.3. Approve or Return Workspace Handover Sequence Diagram.",
+      "figure": "04-sequence-03"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "04-sequence-04"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.4.2.4. Activate Approved Workspace and Start the Initial Term Once Sequence Diagram.",
+      "figure": "04-sequence-04"
+    },
+    {
+      "kind": "type",
+      "text": "3.4.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "04-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.4.3.1. Workspace Readiness, Handover and Activation Lifecycle State Diagram.",
+      "figure": "04-state-01"
+    },
+    {
+      "kind": "group",
+      "text": "3.5 Enterprise Member and Permission Management"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.6.1-3.6.4. SME Admin manages only own-workspace enterprise accounts and explicit field-view grants. Permission administration does not grant SME Admin plaintext access; history survives role/access changes."
+    },
+    {
+      "kind": "type",
+      "text": "3.5.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "05-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.5.1.1. Enterprise Member and Permission Management Class Diagram.",
+      "figure": "05-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.5.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "05-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.5.2.1. List, Provision and Update Enterprise Members Sequence Diagram.",
+      "figure": "05-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "05-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.5.2.2. Grant or Revoke Explicit Sensitive-Field Viewing Permission Sequence Diagram.",
+      "figure": "05-sequence-02"
+    },
+    {
+      "kind": "group",
+      "text": "3.6 Detection Configuration Management"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.7.1-3.7.8. Assigned Staff edits a versioned candidate containing fields, channel mappings and rules. Testing uses the exact revision and temporary samples; explicit application atomically changes one active version for newly accepted work."
+    },
+    {
+      "kind": "type",
+      "text": "3.6.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "06-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.6.1.1. Detection Configuration Management Class Diagram.",
+      "figure": "06-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.6.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "06-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.6.2.1. View and Edit Candidate Fields, Mappings and Rules Sequence Diagram.",
+      "figure": "06-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "06-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.6.2.2. Test an Exact Revision and Review Safe Run History Sequence Diagram.",
+      "figure": "06-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "06-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.6.2.3. Apply the Tested Candidate Atomically Sequence Diagram.",
+      "figure": "06-sequence-03"
+    },
+    {
+      "kind": "type",
+      "text": "3.6.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "06-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.6.3.1. Candidate Configuration Testing and Application Lifecycle State Diagram.",
+      "figure": "06-state-01"
+    },
+    {
+      "kind": "group",
+      "text": "3.7 Integration and Transaction Ingestion"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.8.1-3.8.7. Credentials establish integration workspace scope before mapping. REST, Webhook and production file import share normalization and atomic cross-channel business identity. Acceptance is durable and distinct from detection completion."
+    },
+    {
+      "kind": "type",
+      "text": "3.7.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.1.1. Integration and Transaction Ingestion Class Diagram.",
+      "figure": "07-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.7.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.2.1. Inspect, Issue, Replace and Disable Workspace API Keys Sequence Diagram.",
+      "figure": "07-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.2.2. Submit Production Transactions through REST API Sequence Diagram.",
+      "figure": "07-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.2.3. Authenticate Incoming Webhook and Handle Delivery Retries Sequence Diagram.",
+      "figure": "07-sequence-03"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-sequence-04"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.2.4. Import Production CSV/Excel with Reconciled Row Outcomes Sequence Diagram.",
+      "figure": "07-sequence-04"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-sequence-05"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.2.5. Normalize and Validate Declared Channel Values Sequence Diagram.",
+      "figure": "07-sequence-05"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-sequence-06"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.2.6. Atomically Resolve Cross-Channel Business Identity and Accept Once Sequence Diagram.",
+      "figure": "07-sequence-06"
+    },
+    {
+      "kind": "type",
+      "text": "3.7.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.3.1. Workspace API Credential Lifecycle State Diagram.",
+      "figure": "07-state-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "07-state-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.7.3.2. Production Import Processing Lifecycle State Diagram.",
+      "figure": "07-state-02"
+    },
+    {
+      "kind": "group",
+      "text": "3.8 Rule-Based Detection"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.9.1-3.9.2. Free primary detection and Subscription fallback evaluate the selected configuration with the same typed semantics. All matching rules form one Rule Alert for the completed attempt; no match is distinct from failure."
+    },
+    {
+      "kind": "type",
+      "text": "3.8.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "08-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.8.1.1. Rule-Based Detection Class Diagram.",
+      "figure": "08-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.8.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "08-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.8.2.1. Evaluate All Enabled Rules and Create One Aggregated Alert Sequence Diagram.",
+      "figure": "08-sequence-01"
+    },
+    {
+      "kind": "group",
+      "text": "3.9 AI Detection and Rule-Based Fallback"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.10.1-3.10.3. Subscription primary processing calls AI only. Unusable AI responses trigger rules and retain both attempt sources. Recovery reuses the transaction, checks historical event-time entitlement and preserves earlier alerts and cases."
+    },
+    {
+      "kind": "type",
+      "text": "3.9.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "09-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.9.1.1. AI Detection and Rule-Based Fallback Class Diagram.",
+      "figure": "09-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.9.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "09-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.9.2.1. Classify Subscription Transaction and Fall Back on Unusable AI Sequence Diagram.",
+      "figure": "09-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "09-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.9.2.2. Recover Historically Eligible Fallback Work and Reconcile AI Alerts Sequence Diagram.",
+      "figure": "09-sequence-02"
+    },
+    {
+      "kind": "type",
+      "text": "3.9.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "09-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.9.3.1. Transaction Detection and Rule-Based Fallback Processing State Diagram.",
+      "figure": "09-state-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "09-state-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.9.3.2. Historically Entitled AI Recovery Processing State Diagram.",
+      "figure": "09-state-02"
+    },
+    {
+      "kind": "group",
+      "text": "3.10 Transaction and Alert Review"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.11.1-3.11.6. Operator reviews workspace production transactions, alerts and attempt history. Import results have separate SME Admin/Operator scope. Explicit reveal requires current field grants and, for Investigator, the relevant case assignment."
+    },
+    {
+      "kind": "type",
+      "text": "3.10.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "10-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.10.1.1. Transaction and Alert Review Class Diagram.",
+      "figure": "10-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.10.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "10-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.10.2.1. Review Transactions and Role-Scoped Import Results Sequence Diagram.",
+      "figure": "10-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "10-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.10.2.2. Review Rule/AI Alerts, Follow-Up Flags and Attempt History Sequence Diagram.",
+      "figure": "10-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "10-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.10.2.3. Explicitly Reveal Only Currently Authorized Sensitive Fields Sequence Diagram.",
+      "figure": "10-sequence-03"
+    },
+    {
+      "kind": "group",
+      "text": "3.11 Case and Investigation Management"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.12.1-3.12.7. Only Operator opens cases from same-workspace AI Alerts under current Subscription. Assignment is separate from lifecycle. Existing case work continues after expiry; Operator may investigate, submit and confirm without a second person."
+    },
+    {
+      "kind": "type",
+      "text": "3.11.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "11-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.11.1.1. Case and Investigation Management Class Diagram.",
+      "figure": "11-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.11.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "11-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.11.2.1. Open One Case from Eligible AI Alert References Sequence Diagram.",
+      "figure": "11-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "11-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.11.2.2. View Cases and Assign or Start Self-Investigation Sequence Diagram.",
+      "figure": "11-sequence-02"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "11-sequence-03"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.11.2.3. Record Findings and Submit an Investigation Report Sequence Diagram.",
+      "figure": "11-sequence-03"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "11-sequence-04"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.11.2.4. Request Additional Investigation or Confirm the Final Conclusion Sequence Diagram.",
+      "figure": "11-sequence-04"
+    },
+    {
+      "kind": "type",
+      "text": "3.11.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "11-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.11.3.1. Investigation Case Lifecycle State Diagram.",
+      "figure": "11-state-01"
+    },
+    {
+      "kind": "group",
+      "text": "3.12 Dashboard and Reporting"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.13.1-3.13.4. Aggregates, reports and exports preserve workspace, role, assignment and field restrictions. Generation and download each recheck access; plaintext reveal does not authorize plaintext export."
+    },
+    {
+      "kind": "type",
+      "text": "3.12.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "12-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.12.1.1. Dashboard and Reporting Class Diagram.",
+      "figure": "12-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.12.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "12-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.12.2.1. View Authorized Dashboard and Investigation Reports Sequence Diagram.",
+      "figure": "12-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "12-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.12.2.2. Generate and Export a Complete Authorized Enterprise Report Sequence Diagram.",
+      "figure": "12-sequence-02"
+    },
+    {
+      "kind": "type",
+      "text": "3.12.3 State Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "12-state-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.12.3.1. Enterprise Report Generation Lifecycle State Diagram.",
+      "figure": "12-state-01"
+    },
+    {
+      "kind": "group",
+      "text": "3.13 Notifications"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.14.1-3.14.2. Relevant enterprise events produce minimal in-app/email content. Recipients and linked records remain scoped; external delivery is retried independently and never reverses or repeats the committed business effect."
+    },
+    {
+      "kind": "type",
+      "text": "3.13.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "13-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.13.1.1. Notifications Class Diagram.",
+      "figure": "13-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.13.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "13-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.13.2.1. Create and View Relevant In-App Notifications Sequence Diagram.",
+      "figure": "13-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "13-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.13.2.2. Send Minimal Email and Retry Delivery Independently Sequence Diagram.",
+      "figure": "13-sequence-02"
+    },
+    {
+      "kind": "group",
+      "text": "3.14 Platform Monitoring and Audit"
+    },
+    {
+      "kind": "body",
+      "text": "SRS reference: 3.15.1-3.15.2. Platform Admin sees operational metadata only. Object history follows the underlying administrative, Staff-assignment or enterprise/case scope. Required local change history commits with the business action and excludes values/secrets."
+    },
+    {
+      "kind": "type",
+      "text": "3.14.1 Class Diagram"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "14-class-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.14.1.1. Platform Monitoring and Audit Class Diagram.",
+      "figure": "14-class-01"
+    },
+    {
+      "kind": "type",
+      "text": "3.14.2 Sequence Diagrams"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "14-sequence-01"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.14.2.1. Monitor Platform Operations without Production Content Sequence Diagram.",
+      "figure": "14-sequence-01"
+    },
+    {
+      "kind": "image",
+      "text": "",
+      "figure": "14-sequence-02"
+    },
+    {
+      "kind": "caption",
+      "text": "Figure 4.3.14.2.2. Commit Required Audit Attribution and Read Scoped Object History Sequence Diagram.",
+      "figure": "14-sequence-02"
+    }
+  ]
+}

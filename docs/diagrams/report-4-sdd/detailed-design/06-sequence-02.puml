@@ -1,0 +1,79 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Assigned Staff" as User
+participant "Sample Test Page" as UI
+participant "ConfigurationController" as C
+participant "ConfigurationService" as S
+participant "SampleValidationPort" as P
+participant "SampleRuleEvaluationPort" as E
+participant "ConfigurationRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: testConfiguration(request)
+C -> C: resolveExecutionContext()
+C -> S ++: testConfiguration(request, context)
+S -> S: requireCurrentStaffAssignment(ctx)
+S -> R ++: findExactRevision(req)
+R -> DB ++: SELECT immutable configuration at requested revision
+DB --> R --: rows / committed result
+R --> S --: pinnedConfiguration
+
+S -> S: validateSampleStructure(req)
+alt usableSampleInput
+  loop eachSample
+S -> P ++: validateSample(req)
+P --> S --: normalizedSample / safeFieldErrors
+
+    opt sampleValid
+S -> E ++: evaluateSample(req)
+E --> S --: matchedRules / explicitFailure
+
+    end
+  end
+end
+S -> R ++: saveSafeRunMetadata(req, ctx)
+R -> DB ++: INSERT runner, time, revision, counts and outcome\nExclude sample contents; COMMIT
+DB --> R --: rows / committed result
+R --> S --: testRunRef
+
+S -> S: cleanupTemporarySamplesInFinally(req)
+opt historyRequested
+S -> R ++: findAuthorizedTestHistory(req, ctx)
+R -> DB ++: SELECT safe run metadata in assigned workspace
+DB --> R --: rows / committed result
+R --> S --: testRunPage
+end
+S --> C --: TestRunResponse / controlled error
+C --> UI --: TestRunResponse / safe error
+UI --> User --: render permitted result
+@enduml

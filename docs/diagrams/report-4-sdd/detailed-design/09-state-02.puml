@@ -1,0 +1,57 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:AI recovers; select stored fallback transaction;
+:Check event time against historical Subscription periods;
+if (Historically entitled?) then (yes)
+  :Resolve idempotent recovery operation reference;
+  if (Recovery already completed?) then (yes)
+    :Reuse recorded recovery result;
+  else (no)
+    :Call AI on the same stored transaction;
+    if (Usable classification and\nmodel version?) then (yes)
+      :Append separate AI recovery attempt;
+      if (Anomaly?) then (yes)
+        :Create or reuse the transaction's single AI Alert;
+      else (Normal)
+        :Retain Normal history without deleting existing alerts;
+      endif
+    else (no)
+      :Retain controlled recovery failure for eligible retry;
+    endif
+  endif
+  :Preserve earlier Rule Alerts, AI Alerts and existing cases;
+  :Recheck current Subscription on any later new-case request;
+else (no)
+  :Exclude from recovery AI processing;
+endif
+stop
+@enduml

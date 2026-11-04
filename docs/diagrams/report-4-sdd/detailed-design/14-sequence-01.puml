@@ -1,0 +1,55 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Platform Admin" as User
+participant "Platform Monitoring Page" as UI
+participant "MonitoringController" as C
+participant "MonitoringService" as S
+participant "OperationalTelemetryPort" as P
+User -> UI ++: submit(request)
+UI -> C ++: monitorOperations(request)
+C -> C: resolveExecutionContext()
+C -> S ++: monitorOperations(request, context)
+S -> S: requirePlatformAdmin(ctx)
+S -> S: validateOperationalFilters(req)
+S -> P ++: readSafeOperationalTelemetry(req)
+P --> S --: observedStatus + time + safeCounts
+
+alt currentTelemetry
+  S -> S: mapObservedHealth()
+else staleMissingOrUnavailable
+  S -> S: mapUnknownOrLastKnownState()
+end
+S --> C --: MonitoringResponse / controlled error
+C --> UI --: MonitoringResponse / safe error
+UI --> User --: render permitted result
+@enduml

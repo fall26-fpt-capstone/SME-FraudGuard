@@ -1,0 +1,72 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Accepted Subscription Work" as User
+participant "DetectionCoordinator" as C
+participant "ScoringService" as S
+participant "AIServicePort" as P
+participant "RuleEnginePort" as E
+participant "AlertCommandPort" as A
+participant "DetectionAttemptRepository" as R
+participant "Database" as DB
+User -> C ++: classifyAcceptedTransaction(request)
+C -> C: resolveExecutionContext()
+C -> S ++: classifyAcceptedTransaction(request, context)
+S -> P ++: classify(req)
+P --> S --: Normal / Anomaly + modelVersion / unusable
+
+alt validClassificationAndVersion
+S -> R ++: saveAiAttempt(req)
+R -> DB ++: INSERT AI attempt + model/service version; COMMIT
+DB --> R --: rows / committed result
+R --> S --: aiAttempt
+
+  opt classificationIsAnomaly
+S -> A ++: createOrReuseAiAlert(req)
+A --> S --: singleTransactionAiAlert
+
+  end
+else timeoutUnavailableOrInvalidResponse
+S -> R ++: saveFailedAiAttempt(req)
+R -> DB ++: INSERT failed AI attempt with safe reason; COMMIT
+DB --> R --: rows / committed result
+R --> S --: failedAiAttempt
+S -> E ++: evaluateFallback(req)
+E --> S --: matched / noMatch / explicitFailure
+S -> R ++: linkFallbackAttempt(req)
+R -> DB ++: SAVE distinct fallback attempt/source; COMMIT
+DB --> R --: rows / committed result
+R --> S --: fallbackResult
+end
+S --> C --: DetectionResult / controlled error
+C --> User --: processing result / acknowledgment
+@enduml

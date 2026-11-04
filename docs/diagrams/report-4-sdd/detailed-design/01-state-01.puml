@@ -1,0 +1,66 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Trigger: login / password change / logout;
+switch (Action type?)
+case (login)
+  :Verify account, credential and portal/workspace membership;
+  if (Valid available account?) then (yes)
+    if (Initial password change\nrequired?) then (yes)
+      :Issue setup-only session and open password form;
+    else (no)
+      :Create scoped session; route unactivated SME Admin to onboarding;
+    endif
+  else (no)
+    :Deny login with safe error;
+  endif
+case (password change)
+  :Verify setup/current identity and password policy;
+  if (Valid request?) then (yes)
+    :Save protected credential;
+    if (Save committed?) then (yes)
+      :Clear initial-change restriction when applicable;
+    else (no)
+      :Keep existing credential and restriction;
+    endif
+  else (no)
+    :Return safe validation error;
+  endif
+case (logout)
+  :Invalidate server session and clear local authentication;
+  if (Server termination\nconfirmed?) then (yes)
+    :Return logged-out state;
+  else (no)
+    :Show unconfirmed termination; allow retry;
+  endif
+endswitch
+stop
+@enduml

@@ -1,0 +1,57 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Receive payment confirmation or reconciliation;
+:Authenticate provider and resolve stored purchase;
+if (Successful payment matches\nidentity, amount and\ncurrency?) then (yes)
+  :Serialize purchase and entitlement update;
+  if (Purchase already applied?) then (yes)
+    :Return previously committed paid effect;
+  else (no)
+    if (Current Subscription still\nvalid?) then (yes)
+      :Extend from current expiry;
+    else (no)
+      :Start from paid-entitlement activation;
+    endif
+    :Calculate calendar month/year in Asia/Ho_Chi_Minh;
+    :Clamp missing calendar date to month end;
+    :Commit payment, UTC period and history once;
+    if (Local commit succeeded?) then (yes)
+      :Expose active entitlement;
+    else (no)
+      :Retain recoverable outcome without another charge;
+    endif
+  endif
+else (no)
+  :Record unapplied outcome; grant no rights;
+endif
+stop
+@enduml

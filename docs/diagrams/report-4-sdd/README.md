@@ -1,13 +1,14 @@
 # Report 4 design diagrams
 
-Only the two diagrams currently used in Report 4 are retained:
+The following diagram sources support Report 4:
 
 | Section | Source and exports |
 | --- | --- |
 | 1.1 System Architecture | [PlantUML relationship model](system-design/architecture.puml), [SVG layout renderer](system-design/render_architecture.py), [PNG](system-design/exports/architecture.png), [SVG](system-design/exports/architecture.svg) |
 | 2. Database Design | [Model, editable sources and exports](database-design/README.md) |
+| 3. Detailed Design | [SRS-aligned class, sequence and state sources, catalogue and exports](detailed-design/README.md) |
 
-Package Diagram and Detailed Design remain deferred. The ERD is a proposed documentation model, not an applied database migration. Its unresolved Staff-assignment and other business constraints remain in the model notes.
+Package Diagram remains outside the section 3 task. The ERD is a proposed documentation model, not an applied database migration. Detailed Design follows the finalized functional requirements; older provisional ERD notes are not overrides of confirmed SRS decisions. No application contracts, schema or migrations are changed by these documentation assets.
 
 The architecture's publication image is rendered from its fixed-layout SVG with local logo assets. The PlantUML file preserves the same relationships; automatic PlantUML layout differs from the publication image. Validate it with Java 21 / PlantUML 1.2026.9:
 

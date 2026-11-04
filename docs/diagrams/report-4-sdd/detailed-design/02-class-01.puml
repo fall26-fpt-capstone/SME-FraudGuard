@@ -1,0 +1,137 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class Enterprise <<entity>> {
+- id: UUID
+- name: String
+- contactEmail: String
+}
+class Workspace <<entity>> {
+- id: UUID
+- enterpriseId: UUID
+- slug: String
+- activatedAt: Instant [0..1]
+--
++ isActivated(): Boolean
+}
+class StaffAssignment <<entity>> {
+- staffId: UUID
+- assignedBy: UUID
+- assignedAt: Instant
+- endedAt: Instant [0..1]
+--
++ end(): boolean
+}
+class Account <<entity>> {
+- id: UUID
+- role: Role
+- mustChangePassword: Boolean
+}
+interface WorkspaceRepository <<repository>> {
+
++ applyAssignmentChanges(req: StaffAssignmentRequest, ctx: AccessContext): MutationResult
++ createWorkspaceAndAdmin(req: ProvisionWorkspaceRequest, ctx: AccessContext): MutationResult
++ findAuthorizedWorkspaces(req: WorkspaceRequest, ctx: AccessContext): Page<Workspace>
++ findCurrentAssignments(req: StaffAssignmentRequest): List<StaffAssignment>
++ findProvisioningConflicts(req: ProvisionWorkspaceRequest): List<ProvisioningConflict>
++ updateMetadataIfCurrent(req: WorkspaceRequest, ctx: AccessContext): MutationResult
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class WorkspaceController <<controller>> {
+- service: IWorkspaceService
+--
++ provisionWorkspace(request: ProvisionWorkspaceRequest): WorkspaceResponse
++ readOrUpdateWorkspace(request: WorkspaceRequest): WorkspaceResponse
++ updateStaffAssignments(request: StaffAssignmentRequest): WorkspaceResponse
+- resolveExecutionContext(): AccessContext
+}
+class WorkspaceService <<service>> {
+
++ provisionWorkspace(request: ProvisionWorkspaceRequest, context: AccessContext): WorkspaceResponse
++ readOrUpdateWorkspace(request: WorkspaceRequest, context: AccessContext): WorkspaceResponse
++ updateStaffAssignments(request: StaffAssignmentRequest, context: AccessContext): WorkspaceResponse
+- authorizeAdministrativeScope(ctx: AccessContext): void
+- requirePlatformAdmin(ctx: AccessContext): void
+- validateAssignmentChanges(req: StaffAssignmentRequest): void
+- validateMetadata(req: WorkspaceRequest): void
+- validateProvisioning(req: ProvisionWorkspaceRequest): void
+}
+interface IWorkspaceService <<service>> {
+
++ provisionWorkspace(request: ProvisionWorkspaceRequest, context: AccessContext): WorkspaceResponse
++ readOrUpdateWorkspace(request: WorkspaceRequest, context: AccessContext): WorkspaceResponse
++ updateStaffAssignments(request: StaffAssignmentRequest, context: AccessContext): WorkspaceResponse
+}
+class WorkspaceRequest <<DTO>> {
+- workspaceId: UUID
+- criteria: WorkspaceFilter
+- changes: WorkspaceMetadata
+- expectedVersion: long
+}
+class WorkspaceResponse <<DTO>> {
+- workspaceId: UUID
+- metadata: WorkspaceMetadata
+- version: long
+}
+class ProvisionWorkspaceRequest <<DTO>> {
+- enterprise: EnterpriseInput
+- workspaceSlug: String
+- adminLogin: String
+- contactEmail: String
+}
+class StaffAssignmentRequest <<DTO>> {
+- workspaceId: UUID
+- additions: Set<UUID>
+- removals: Set<UUID>
+- expectedVersion: long
+}
+IWorkspaceService -[hidden]down-> WorkspaceService
+Enterprise -[hidden]down-> Workspace
+Workspace -[hidden]down-> StaffAssignment
+StaffAssignment -[hidden]down-> Account
+WorkspaceController -[hidden]right-> IWorkspaceService
+IWorkspaceService -[hidden]right-> WorkspaceRepository
+WorkspaceRepository -[hidden]right-> Enterprise
+WorkspaceController -[hidden]down-> WorkspaceRequest
+WorkspaceRequest -[hidden]right-> WorkspaceResponse
+WorkspaceResponse -[hidden]right-> ProvisionWorkspaceRequest
+WorkspaceRequest -[hidden]down-> StaffAssignmentRequest
+StaffAssignmentRequest -[hidden]right-> AccessContext
+Enterprise "1" -[norank]- "1" Workspace
+StaffAssignment "0..*" -[norank]-> "1" Account : implementation Staff
+Workspace "0..1" -[norank]- "0..*" Account : enterprise membership
+Workspace "1" -[norank]- "0..*" StaffAssignment
+WorkspaceController -[norank]-> IWorkspaceService
+WorkspaceController -[dashed,norank]-> ProvisionWorkspaceRequest
+WorkspaceController -[dashed,norank]-> StaffAssignmentRequest
+WorkspaceController -[dashed,norank]-> WorkspaceRequest
+WorkspaceController -[dashed,norank]-> WorkspaceResponse
+WorkspaceRepository -[norank]-> Workspace
+WorkspaceService -[norank]-> WorkspaceRepository
+WorkspaceService -[dashed,norank]-> AccessContext
+WorkspaceService -[dashed,norank]-|> IWorkspaceService
+@enduml

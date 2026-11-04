@@ -1,0 +1,72 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "SME Admin / Operator" as User
+participant "Production Import Page" as UI
+participant "FileImportController" as C
+participant "TransactionIngestionService" as S
+participant "TransactionAcceptancePort" as A
+participant "ImportBatchRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: importTransactions(request)
+C -> C: resolveExecutionContext()
+C -> S ++: importTransactions(request, context)
+S -> S: requireAdminOrOperator(ctx)
+S -> S: validateActivationAndFileStructure(req)
+alt structurallyValidFile
+S -> R ++: createImportBatch(req, ctx)
+R -> DB ++: INSERT import reference and processing stage; COMMIT
+DB --> R --: rows / committed result
+R --> S --: batchRef
+
+  loop eachReadableRow
+S -> A ++: validateAndAccept(req)
+A --> S --: new / duplicate / conflict / invalid
+S -> R ++: saveExclusiveRowOutcome(req)
+R -> DB ++: INSERT one row outcome + safe reference; COMMIT
+DB --> R --: rows / committed result
+R --> S --: rowRecorded
+
+  end
+S -> R ++: reconcileBatchCounts(req)
+R -> DB ++: UPDATE completed categories and pending count; COMMIT
+DB --> R --: rows / committed result
+R --> S --: importSummary
+
+else unreadableOrInvalidStructure
+  S -> S: rejectFileWithoutProductionRows()
+end
+S --> C --: ImportResponse / controlled error
+C --> UI --: ImportResponse / safe error
+UI --> User --: render permitted result
+@enduml

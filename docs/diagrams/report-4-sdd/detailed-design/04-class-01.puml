@@ -1,0 +1,163 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class Workspace <<entity>> {
+- id: UUID
+- status: String
+- activatedAt: Instant [0..1]
+--
++ isActivated(): Boolean
+}
+class OnboardingDocument <<entity>> {
+- workspaceId: UUID
+- uploadedBy: UUID
+- storageRef: String
+- fileName: String
+}
+class OnboardingEvent <<entity>> {
+- workspaceId: UUID
+- actorId: UUID
+- action: String
+- comment: String
+- createdAt: Instant
+}
+interface SubscriptionPort <<port>> {
+
++ prepareInitialTerm(req: ActivationRequest): SubscriptionPeriod
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class OnboardingController <<controller>> {
+- service: IOnboardingService
+--
++ activateWorkspace(request: ActivationRequest): OnboardingResponse
++ confirmReadiness(request: ReadinessRequest): OnboardingResponse
++ maintainSpecifications(request: SpecificationRequest): OnboardingResponse
++ reviewHandover(request: HandoverRequest): OnboardingResponse
+- resolveExecutionContext(): AccessContext
+}
+class OnboardingService <<service>> {
+
++ activateWorkspace(request: ActivationRequest, context: AccessContext): OnboardingResponse
++ confirmReadiness(request: ReadinessRequest, context: AccessContext): OnboardingResponse
++ maintainSpecifications(request: SpecificationRequest, context: AccessContext): OnboardingResponse
++ reviewHandover(request: HandoverRequest, context: AccessContext): OnboardingResponse
+- authorizeSetupScope(ctx: AccessContext): void
+- requireAssignedStaff(ctx: AccessContext): void
+- requireOwnWorkspaceAdmin(ctx: AccessContext): void
+- requirePlatformAdmin(ctx: AccessContext): void
+- validateCurrentAssessment(req: ReadinessRequest): void
+- validateDocumentAndSpecifications(req: SpecificationRequest): void
+- validateHandoverDecision(req: HandoverRequest): void
+}
+interface IOnboardingService <<service>> {
+
++ activateWorkspace(request: ActivationRequest, context: AccessContext): OnboardingResponse
++ confirmReadiness(request: ReadinessRequest, context: AccessContext): OnboardingResponse
++ maintainSpecifications(request: SpecificationRequest, context: AccessContext): OnboardingResponse
++ reviewHandover(request: HandoverRequest, context: AccessContext): OnboardingResponse
+}
+class SpecificationRequest <<DTO>> {
+- workspaceId: UUID
+- specifications: SpecificationInput
+- document: UploadedDocument
+- expectedVersion: long
+}
+class OnboardingResponse <<DTO>> {
+- workspaceId: UUID
+- stage: OnboardingStage
+- configurationRef: UUID
+- version: long
+}
+interface OnboardingRepository <<repository>> {
+
++ activateWithInitialTermOnce(req: ActivationRequest, ctx: AccessContext): MutationResult
++ findCurrentReadiness(req: HandoverRequest): ReadinessRecord
++ findProgressAndSpecifications(req: SpecificationRequest, ctx: AccessContext): OnboardingDetail
++ lockActivationState(req: ActivationRequest, ctx: AccessContext): ActivationContext
++ saveApprovalIfCurrent(req: HandoverRequest, ctx: AccessContext): MutationResult
++ saveReadinessIfCurrent(req: ReadinessRequest, ctx: AccessContext): MutationResult
++ saveReturnIfCurrent(req: HandoverRequest, ctx: AccessContext): MutationResult
++ saveSpecificationsWithHistory(req: SpecificationRequest, ctx: AccessContext): MutationResult
+}
+interface DocumentStoragePort <<port>> {
+
++ storeProtectedDocument(req: SpecificationRequest): ProtectedDocumentReference
+}
+class ReadinessRequest <<DTO>> {
+- workspaceId: UUID
+- configurationRef: UUID
+- testRef: UUID
+- assessment: String
+- expectedVersion: long
+}
+interface ConfigurationQueryPort <<port>> {
+
++ getAppliedConfigurationEvidence(req: ReadinessRequest): ConfigurationEvidence
+}
+class HandoverRequest <<DTO>> {
+- readinessRef: UUID
+- decision: HandoverDecision
+- comments: String
+- expectedVersion: long
+}
+class ActivationRequest <<DTO>> {
+- workspaceId: UUID
+- approvalRef: UUID
+- expectedVersion: long
+}
+IOnboardingService -[hidden]down-> OnboardingService
+SubscriptionPort -[hidden]down-> OnboardingRepository
+OnboardingRepository -[hidden]down-> DocumentStoragePort
+DocumentStoragePort -[hidden]down-> ConfigurationQueryPort
+Workspace -[hidden]down-> OnboardingDocument
+OnboardingDocument -[hidden]down-> OnboardingEvent
+OnboardingController -[hidden]right-> IOnboardingService
+IOnboardingService -[hidden]right-> SubscriptionPort
+SubscriptionPort -[hidden]right-> Workspace
+OnboardingController -[hidden]down-> SpecificationRequest
+SpecificationRequest -[hidden]right-> OnboardingResponse
+OnboardingResponse -[hidden]right-> ReadinessRequest
+SpecificationRequest -[hidden]down-> HandoverRequest
+HandoverRequest -[hidden]right-> ActivationRequest
+ActivationRequest -[hidden]right-> AccessContext
+OnboardingController -[norank]-> IOnboardingService
+OnboardingController -[dashed,norank]-> ActivationRequest
+OnboardingController -[dashed,norank]-> HandoverRequest
+OnboardingController -[dashed,norank]-> OnboardingResponse
+OnboardingController -[dashed,norank]-> ReadinessRequest
+OnboardingController -[dashed,norank]-> SpecificationRequest
+OnboardingRepository -[norank]-> OnboardingEvent
+OnboardingService -[norank]-> ConfigurationQueryPort
+OnboardingService -[norank]-> DocumentStoragePort
+OnboardingService -[norank]-> OnboardingRepository
+OnboardingService -[norank]-> SubscriptionPort
+OnboardingService -[norank]-> Workspace
+OnboardingService -[dashed,norank]-> AccessContext
+OnboardingService -[dashed,norank]-|> IOnboardingService
+Workspace "1" -[norank]- "0..*" OnboardingDocument
+Workspace "1" -[norank]- "0..*" OnboardingEvent
+@enduml

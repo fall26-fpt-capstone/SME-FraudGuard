@@ -1,0 +1,63 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Platform Admin" as User
+participant "Plan Catalogue Page" as UI
+participant "SubscriptionController" as C
+participant "SubscriptionService" as S
+participant "PlanRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: maintainOffer(request)
+C -> C: resolveExecutionContext()
+C -> S ++: maintainOffer(request, context)
+S -> S: requirePlatformAdmin(ctx)
+S -> R ++: findOffersAndUsage(req)
+R -> DB ++: SELECT offer metadata + usage references
+DB --> R --: rows / committed result
+R --> S --: offers
+
+opt saveOrRetireRequested
+  S -> S: validateFixedEntitlementsAndPrices(req)
+  alt usedOfferDeletion
+    S -> S: rejectDeletionAndRequireRetirement()
+  else validOfferChange
+S -> R ++: saveOfferIfCurrent(req, ctx)
+R -> DB ++: UPDATE/INSERT offer + audit; COMMIT\nPreserve historical quotes and periods
+DB --> R --: rows / committed result
+R --> S --: saved / stale / failed
+  end
+end
+S --> C --: PlanOfferResponse / controlled error
+C --> UI --: PlanOfferResponse / safe error
+UI --> User --: render permitted result
+@enduml
