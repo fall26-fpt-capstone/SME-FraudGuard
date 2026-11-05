@@ -79,7 +79,7 @@ export function canChangeEnterpriseSets(previous: ManagedRuleSet[], next: Manage
     if (JSON.stringify(old) === JSON.stringify(set)) continue;
     const enterprise = enterprises.find(e => e.id === set.enterpriseId);
     if (!enterprise || !canDeploy(user, enterprise) || old && old.enterpriseId !== set.enterpriseId) return false;
-    if (enterprise.specification && !enterprise.specification.confirmedAt && (set.versions.length > (old?.versions.length ?? 0) || set.activeVersion !== old?.activeVersion || JSON.stringify(set.handover) !== JSON.stringify(old?.handover))) return false;
+    if (enterprise.specification && (!enterprise.specification.confirmedAt || enterprise.specification.dataAndEvaluationClarified === false) && (set.versions.length > (old?.versions.length ?? 0) || set.activeVersion !== old?.activeVersion || JSON.stringify(set.handover) !== JSON.stringify(old?.handover))) return false;
     if (!set.projectIds.length || set.projectIds.some(p => !enterprise.projectIds.includes(p))) return false;
     if (set.activeVersion && !set.versions.some(v => v.version === set.activeVersion)) return false;
     const snapshots = [...(set.draft?.rules ?? []), ...set.versions.flatMap(v => v.rules)];

@@ -5,7 +5,7 @@ export const initialAuditLogs: AuditLogEntry[] = [
     id: "aud-001",
     timestamp: "2026-10-01T15:42:10Z",
     actor: {
-      name: "Đặng Tuấn Kiệt",
+      name: "Đặng t",
       email: "kiet.dt@abcfashion.vn",
       role: "Operator",
     },

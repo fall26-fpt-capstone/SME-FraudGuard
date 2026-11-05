@@ -29,7 +29,7 @@ export function RuleSetsView({ initialEnterpriseId, sets, rules, projects, enter
   const [approved, setApproved] = useState(false);
   const selectedSet = sets.find(s => s.id === selected);
   const enterprise = allowed.find(e => e.id === selectedSet?.enterpriseId);
-  const specificationReady = !enterprise?.specification || !!enterprise.specification.confirmedAt;
+  const specificationReady = !enterprise?.specification || (!!enterprise.specification.confirmedAt && enterprise.specification.dataAndEvaluationClarified !== false);
   const canManage = !!enterprise && canDeploy(currentUser, enterprise);
   const visible = enterprise && isInternal ? selectedSet : undefined;
   const enterpriseName = (id: string) => enterprises.find(e => e.id === id)?.name ?? id;

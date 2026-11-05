@@ -1,78 +1,405 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { Building2, ArrowRight } from 'lucide-react';
-import type { UserProfile } from '@/types/fraudguard';
-import { canDeploy } from "@/utils/enterprise";
-import { type Enterprise, type DeploymentSpecification } from "@/types/enterprise";
-import type { ManagedRuleSet } from '@/utils/rule-set-lifecycle';
-import { parseRuleSetSamples } from '@/utils/rule-set';
-import { normalizeFields, validateDataSchema, type DataField } from '@/utils/ingestion-validation';
-import { useLanguage } from '@/context/LanguageContext';
-import styles from './SecurityDashboard.module.css';
-interface Props { enterprises: Enterprise[]; users: UserProfile[]; currentUser: UserProfile; sets: ManagedRuleSet[]; onCreate: (name: string, staffId: string, adminName: string, adminEmail: string) => boolean; onSave: (id: string, specification: DeploymentSpecification) => boolean; onOpenRules: (id: string) => void }
-export function OnboardingView(props: Props) {
- const { language } = useLanguage(); const vi=language==='vi';
- const [selected,setSelected]=useState(''); const [name,setName]=useState(''); const [staff,setStaff]=useState('');
- const [createdName,setCreatedName]=useState(''); const [createError,setCreateError]=useState('');
- const [adminName,setAdminName]=useState(''); const [adminEmail,setAdminEmail]=useState('');
- useEffect(()=>{if(selected)document.getElementById('enterprise-record')?.scrollIntoView({block:'start'});},[selected]);
- const owner=props.enterprises.find(e=>e.id===selected); const admin=props.currentUser.role==='Platform Admin';
- return <>
- <div className={styles.pageHeading}><div><h1>{vi?'Thiết lập doanh nghiệp':'Enterprise setup'}</h1><p>{vi?'Tiếp nhận yêu cầu, xác nhận dữ liệu và theo dõi bàn giao. Dữ liệu demo được lưu trên trình duyệt.':'Capture requirements, confirm data and track handover. Demo data is saved in this browser.'}</p></div></div>
+import { ArrowLeft, Plus } from "lucide-react";
+import { enterprisePlan } from "@/utils/enterprise";
+import {
+  useOnboardingWorkflow,
+  type OnboardingViewProps,
+} from "@/hooks/useOnboardingWorkflow";
+import { useLanguage } from "@/context/LanguageContext";
+import { OnboardingEnterpriseListScreen } from "./OnboardingEnterpriseListScreen";
+import { OnboardingIntakeScreen } from "./OnboardingIntakeScreen";
+import { OnboardingClarifyScreen } from "./OnboardingClarifyScreen";
+import { OnboardingConfirmationScreen } from "./OnboardingConfirmationScreen";
+import { OnboardingModals } from "./OnboardingModals";
+import styles from "./SecurityDashboard.module.css";
 
- {admin && <section className={`${styles.panel} ${styles.workflowPanel}`}>
- <div className={styles.panelHeader}><h2>{vi?'Thêm doanh nghiệp mới':'Add an enterprise'}</h2></div>
- <p className={styles.setupIntro}>{vi?'Chỉ cần tạo doanh nghiệp một lần. Hệ thống tự tạo không gian làm việc riêng để lưu dữ liệu và quy tắc của doanh nghiệp đó.':'Create the enterprise once. Its dedicated workspace for data and detection rules is created automatically.'}</p>
- <form className={styles.setupForm} onSubmit={e=>{
- e.preventDefault();setCreateError('');setCreatedName('');
- if(props.enterprises.some(item=>item.name.toLowerCase()===name.trim().toLowerCase())){setCreateError(vi?'Tên doanh nghiệp đã có trong danh sách. Hãy mở hồ sơ hiện có hoặc nhập tên khác.':'This enterprise already exists. Open its record or enter another name.');return;}
- if(props.users.some(item=>item.email.toLowerCase()===adminEmail.trim().toLowerCase())){setCreateError(vi?'Email quản trị viên đã được sử dụng. Hãy nhập email khác.':'This administrator email is already in use. Enter a different email.');return;}
- if(props.onCreate(name.trim(),staff,adminName.trim(),adminEmail.trim())){setCreatedName(name.trim());setName('');setAdminName('');setAdminEmail('');setStaff('');}
- else setCreateError(vi?'Chưa tạo được doanh nghiệp. Kiểm tra lại các thông tin và người phụ trách.':'Unable to create the enterprise. Check the details and assigned staff.');
- }}>
- <fieldset className={styles.setupSection}><legend>{vi?'1. Doanh nghiệp khách hàng':'1. Customer enterprise'}</legend>
- <label className={styles.workflowField}>{vi?'Tên doanh nghiệp':'Enterprise name'}<input required maxLength={120} className={styles.control} placeholder={vi?'Ví dụ: Công ty ABC':'For example: ABC Company'} value={name} onChange={e=>setName(e.target.value)} /></label>
- </fieldset>
- <fieldset className={styles.setupSection}><legend>{vi?'2. Người quản trị phía doanh nghiệp':'2. Enterprise administrator'}</legend>
- <p>{vi?'Người này quản lý thành viên và xem dữ liệu của doanh nghiệp sau khi bàn giao.':'This person manages enterprise members and views its data after handover.'}</p>
- <div className={styles.onboardingCreateForm}>
- <label>{vi?'Họ tên người quản trị':'Administrator name'}<input required maxLength={120} autoComplete="name" className={styles.control} value={adminName} onChange={e=>setAdminName(e.target.value)} /></label>
- <label>{vi?'Email người quản trị':'Administrator email'}<input required type="email" maxLength={254} autoComplete="email" placeholder="name@company.com" className={styles.control} value={adminEmail} onChange={e=>setAdminEmail(e.target.value)} /></label>
- </div></fieldset>
- <fieldset className={styles.setupSection}><legend>{vi?'3. Người phụ trách phía FraudGuard':'3. FraudGuard implementation owner'}</legend>
- <p>{vi?'Nhân viên được chọn sẽ tiếp nhận yêu cầu, thiết lập quy tắc, kiểm thử và bàn giao cho doanh nghiệp.':'The assigned staff member reviews requirements, configures and tests rules, then hands over the setup.'}</p>
- <label className={styles.workflowField}>{vi?'Nhân viên triển khai':'Implementation staff'}<select required className={styles.control} value={staff} onChange={e=>setStaff(e.target.value)}><option value="">{vi?'Chọn người phụ trách':'Select staff'}</option>{props.users.filter(u=>u.role==='Implementation Staff').map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
- </fieldset>
- <div className={styles.setupFooter}><p className={styles.muted}>{vi?'Bản demo chỉ lưu trên trình duyệt. Chưa gửi email mời hoặc tạo thông tin đăng nhập thật.':'This demo saves locally in your browser. No invitations or real sign-in credentials are created.'}</p><button className={styles.btnPrimary} type="submit">{vi?'Tạo doanh nghiệp và phân công':'Create and assign enterprise'}</button></div>
- {createError&&<p className={styles.workflowError} role="alert">{createError}</p>}
- </form>
- {createdName&&<div className={styles.workflowFeedback} role="status"><strong>{vi?'Đã tạo doanh nghiệp: ':'Enterprise created: '}{createdName}</strong><p>{vi?'Không gian làm việc và tài khoản quản trị demo đã sẵn sàng. Tiếp theo, nhân viên triển khai được phân công tiếp nhận yêu cầu và dữ liệu mẫu; doanh nghiệp chưa được bàn giao để sử dụng quy tắc.':'The workspace and demo administrator are ready. Assigned staff now review requirements and samples; rules have not been handed over yet.'}</p><button className={styles.button} onClick={()=>{const created=props.enterprises.find(item=>item.name===createdName);if(created){setSelected(created.id);}}}>{vi?'Xem hồ sơ vừa tạo':'View new record'}</button></div>}
- </section>}
+export function OnboardingView(props: OnboardingViewProps) {
+  const { language } = useLanguage();
+  const vi = language === "vi";
+  const wf = useOnboardingWorkflow(props, vi);
 
- <section className={`${styles.panel} ${styles.workflowPanel}`}><div className={styles.panelHeader}><h2>{vi?'Hồ sơ triển khai':'Implementation records'}</h2></div><div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>{vi?'Doanh nghiệp':'Enterprise'}</th><th>{vi?'Người phụ trách':'Assigned staff'}</th><th>{vi?'Tiến độ':'Progress'}</th><th>{vi?'Thao tác':'Actions'}</th></tr></thead><tbody>{props.enterprises.map(e=>{const set=props.sets.find(s=>s.enterpriseId===e.id);const status=set?.activeVersion&&set.handover?.version===set.activeVersion ? (vi?'Đã bàn giao':'Handed over') : set?.activeVersion ? (vi?'Chờ bàn giao':'Awaiting handover') : set?.versions.length ? (vi?'Đã phát hành':'Published') : set?.draft ? (vi?'Đang cấu hình và kiểm thử':'Configuration and testing') : e.specification?.confirmedAt ? (vi?'Đã xác nhận đặc tả':'Specification confirmed') : e.specification ? (vi?'Đang xác nhận đặc tả':'Specification review') : (vi?'Chờ đặc tả':'Awaiting specification');return <tr key={e.id}><td><strong>{e.name}</strong></td><td>{props.users.find(u=>u.id===e.deploymentStaffId)?.name||'—'}</td><td>{status}{e.specification&&!e.specification.confirmedAt&&set?.versions.length ? <p className={styles.muted}>{vi?'Đặc tả mới chưa xác nhận':'New specification pending confirmation'}</p>:null}</td><td><button className={styles.button} onClick={()=>setSelected(e.id)}>{vi?'Xem hồ sơ':'View record'}</button></td></tr>;})}</tbody></table></div>{!props.enterprises.length&&<p>{vi?'Chưa có doanh nghiệp được phân công.':'No enterprises assigned.'}</p>}</section>
- {owner&&admin&&<section id="enterprise-record" className={`${styles.panel} ${styles.workflowPanel}`}><div className={styles.panelHeader}><h2>{owner.name}</h2></div><p>{vi?'Người phụ trách triển khai: ':'Implementation owner: '}{props.users.find(u=>u.id===owner.deploymentStaffId)?.name||'—'}</p><p>{vi?'Quản trị viên doanh nghiệp: ':'Enterprise administrator: '}{props.users.filter(u=>u.enterpriseId===owner.id&&u.role==='SME Admin').map(u=>u.name+' · '+u.email).join(', ')||(vi?'Chưa có tài khoản':'No account yet')}</p><p className={styles.muted}>{vi?'Platform Admin theo dõi tiến độ. Nhân viên triển khai được phân công sẽ cập nhật yêu cầu và cấu hình quy tắc.':'Platform Admin tracks progress. Assigned implementation staff update requirements and configure rules.'}</p></section>}
- {owner&&<details id={admin?undefined:'enterprise-record'} className={styles.workflowDetails} open={admin?undefined:true}><summary>{vi?'Yêu cầu và dữ liệu triển khai':'Implementation requirements and data'}</summary><SpecificationEditor key={owner.id+String(owner.specification?.updatedAt)} enterprise={owner} staffName={props.users.find(u=>u.id===owner.deploymentStaffId)?.name} editable={canDeploy(props.currentUser,owner)} onSave={spec=>props.onSave(owner.id,spec)} onOpenRules={()=>props.onOpenRules(owner.id)} /></details>}
- </>;
-}
-function SpecificationEditor({enterprise,staffName,editable,onSave,onOpenRules}:{enterprise:Enterprise;staffName?:string;editable:boolean;onSave:(spec:DeploymentSpecification)=>boolean;onOpenRules:()=>void}){
- const {language}=useLanguage();const vi=language==='vi';
- const [schema,setSchema]=useState<DataField[]>(enterprise.specification?.schema ?? []);
- const schemaTable = <section className={styles.workflowDetails}><h3>{vi?'Cấu hình kiểm tra dữ liệu':'Data validation fields'}</h3><p>{vi?'Khai báo các trường trong dữ liệu đánh giá. Mã giao dịch và loại giao dịch luôn bắt buộc.':'Define evaluation fields. Transaction reference and transaction type are always required.'}</p><div className={styles.tableScroll}><table className={styles.table}><thead><tr><th>{vi?'Tên trường':'Field'}</th><th>{vi?'Kiểu dữ liệu':'Type'}</th><th>{vi?'Bắt buộc':'Required'}</th>{editable&&<th>{vi?'Thao tác':'Action'}</th>}</tr></thead><tbody>{schema.map((field,index)=><tr key={index}><td>{editable?<input aria-label={'Field '+(index+1)} className={styles.control} value={field.name} onChange={e=>setSchema(prev=>prev.map((item,i)=>i===index?{...item,name:e.target.value.trim()}:item))}/>:field.name}</td><td>{editable?<select aria-label={'Type '+(index+1)} className={styles.control} value={field.type} onChange={e=>setSchema(prev=>prev.map((item,i)=>i===index?{...item,type:e.target.value as DataField['type']}:item))}><option value="string">{vi?'Văn bản':'Text'}</option><option value="number">{vi?'Số':'Number'}</option><option value="boolean">{vi?'Đúng / Sai':'True / False'}</option></select>:field.type}</td><td><input aria-label={'Required '+(index+1)} type="checkbox" disabled={!editable} checked={field.required} onChange={e=>setSchema(prev=>prev.map((item,i)=>i===index?{...item,required:e.target.checked}:item))}/></td>{editable&&<td><button className={styles.button} onClick={()=>setSchema(prev=>prev.filter((_,i)=>i!==index))}>{vi?'Xóa':'Remove'}</button></td>}</tr>)}</tbody></table></div>{!schema.length&&<p>{vi?'Chưa khai báo trường dữ liệu.':'No fields configured.'}</p>}{editable&&<button className={styles.button} onClick={()=>setSchema(prev=>[...prev,{name:'',type:'string',required:true}])}>{vi?'Thêm trường':'Add field'}</button>}</section>;
- const [requirements,setRequirements]=useState(enterprise.specification?.requirements||'');const [fields,setFields]=useState(enterprise.specification?.fields||'');const [conditions,setConditions]=useState(enterprise.specification?.conditions||'');const [sampleJson,setSampleJson]=useState(enterprise.specification?.sampleJson||'');const [message,setMessage]=useState('');
- if (!editable) return <section className={`${styles.panel} ${styles.workflowPanel}`}>
-   <div className={styles.panelHeader}><h2><Building2 size={18} /> {enterprise.name}</h2><button className={styles.button} onClick={onOpenRules}>{vi?'Xem tập quy tắc':'View rule set'} <ArrowRight size={16}/></button></div>
-   <p className={styles.workflowFeedback}>{vi?'Chỉ xem · Nhân viên triển khai phụ trách cập nhật':'Read only · Updated by assigned implementation staff'}</p>
-   <p>{vi?'Người phụ trách: ':'Assigned staff: '}{staffName || (vi?'Chưa phân công':'Not assigned')}</p>
-   <p className={styles.muted}>{enterprise.specification?.confirmedAt ? (vi?'Yêu cầu và dữ liệu đã được xác nhận.':'Requirements and data have been confirmed.') : (vi?'Chờ nhân viên triển khai bổ sung hoặc xác nhận yêu cầu và dữ liệu.':'Waiting for implementation staff to add or confirm requirements and data.')}</p>
-   <dl className={styles.specificationReadOnly}>
-     {[[vi?'Yêu cầu nghiệp vụ':'Business requirements',requirements],[vi?'Trường dữ liệu và kiểu dữ liệu':'Data fields and types',fields],[vi?'Các trường hợp bất thường cần phát hiện':'Known anomaly conditions',conditions]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value.trim() || (vi?'Chờ nhân viên triển khai bổ sung':'Waiting for implementation staff to provide this information')}</dd></div>)}
-   </dl>{schemaTable}
-   <details className={styles.workflowDetails}><summary>{vi?'Xem dữ liệu mẫu kiểm thử':'View test sample data'}</summary>{sampleJson.trim() ? <pre>{sampleJson}</pre> : <p className={styles.muted}>{vi?'Chưa có dữ liệu mẫu. Nhân viên triển khai sẽ bổ sung sau khi tiếp nhận từ doanh nghiệp.':'No samples yet. Implementation staff will add them after receiving enterprise data.'}</p>}</details>
- </section>;
- const save=(confirm:boolean)=>{try{validateDataSchema(schema);if(confirm){if(!schema.length)throw Error(vi?"Khai báo ít nhất một trường để xác nhận đặc tả.":"Add at least one field before confirming.");if(!requirements.trim()||!fields.trim()||!conditions.trim())throw Error(vi?'Điền đủ yêu cầu, trường dữ liệu và điều kiện phát hiện.':'Complete requirements, fields and detection conditions.');const samples=parseRuleSetSamples(sampleJson);samples.forEach(sample=>normalizeFields(sample.fields,schema));if(samples.some(s=>!enterprise.projectIds.includes(s.projectId)))throw Error(vi?'Mẫu có phạm vi không thuộc doanh nghiệp này.':'Sample scope does not belong to this enterprise.');}if(!onSave({schema,requirements:requirements.trim(),fields:fields.trim(),conditions:conditions.trim(),sampleJson,updatedAt:new Date().toISOString(),confirmedAt:confirm?new Date().toISOString():undefined}))throw Error(vi?'Không có quyền cập nhật hồ sơ này.':'You cannot update this record.');setMessage(vi?'Đã lưu hồ sơ.':'Record saved.');}catch(e){setMessage((e as Error).message);}};
- return <section className={`${styles.panel} ${styles.workflowPanel}`}><div className={styles.panelHeader}><h2><Building2 size={18} /> {enterprise.name}</h2><button className={styles.button} onClick={onOpenRules}>{vi?'Mở tập quy tắc':'Open rule set'} <ArrowRight size={16}/></button></div><p className={styles.muted}>{enterprise.specification?.confirmedAt ? (vi?'Đặc tả đã được xác nhận. Lưu thay đổi sẽ cần xác nhận và kiểm thử lại bản nháp.':'Specification confirmed. Changes require reconfirmation and draft retesting.') : (vi?'Chưa xác nhận đặc tả. Ghi nhận nội dung đã thống nhất với doanh nghiệp.':'Specification is not confirmed. Record the agreed business requirements.')}</p>
- <div className={styles.sandboxStack}>{[[vi?'Yêu cầu nghiệp vụ':'Business requirements',requirements,setRequirements],[vi?'Trường dữ liệu và kiểu dữ liệu':'Data fields and types',fields,setFields],[vi?'Các trường hợp bất thường cần phát hiện':'Known anomaly conditions',conditions,setConditions]].map(([label,value,setter],i)=><label key={i} className={styles.drawerLabel}>{label as string}<textarea className={styles.control} rows={3} style={{width:'100%',height:'auto'}} readOnly={!editable} value={value as string} onChange={e=>(setter as (v:string)=>void)(e.target.value)} /></label>)}
- {schemaTable}
- <details className={styles.workflowDetails}><summary>{vi?'Dữ liệu mẫu kiểm thử (JSON)':'Test samples (JSON)'}</summary><p className={styles.muted}>{vi?'Mỗi mẫu gồm id, ref, projectId, transactionType và fields. expected là tùy chọn. Phạm vi hợp lệ: ':'Each sample contains id, ref, projectId, transactionType and fields. expected is optional. Allowed scopes: '}{enterprise.projectIds.join(', ')||'—'}</p>{editable&&<label>{vi?'Tải mẫu JSON':'Upload JSON samples'}<input type="file" accept=".json" onChange={async e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>1024*1024){setMessage(vi?'File tối đa 1 MB.':'Maximum file size is 1 MB.');return;}setSampleJson(await file.text());e.target.value='';}} /></label>}<textarea aria-label={vi?'Mẫu kiểm thử JSON':'JSON test samples'} readOnly={!editable} className={styles.control} rows={8} style={{width:'100%',height:'auto',fontFamily:'monospace'}} value={sampleJson} onChange={e=>setSampleJson(e.target.value)} /></details>
- {editable&&<div className={styles.sandboxActions}><button className={styles.button} onClick={()=>save(false)}>{vi?'Lưu bản nháp':'Save draft'}</button><button className={styles.btnPrimary} onClick={()=>save(true)}>{vi?'Xác nhận đặc tả':'Confirm specification'}</button></div>}{message && <p className={styles.workflowFeedback} role="status">{message}</p>}</div></section>;
+  if (!wf.selectedEnterprise || !wf.spec) {
+    return (
+      <OnboardingEnterpriseListScreen
+        vi={vi}
+        enterprises={props.enterprises}
+        filteredEnterprises={wf.filteredEnterprises}
+        users={props.users}
+        currentUser={props.currentUser}
+        staffMembers={wf.staffMembers}
+        stageLabels={wf.stageLabels}
+        totalCount={wf.totalCount}
+        activeClarifyingCount={wf.activeClarifyingCount}
+        readyCount={wf.readyCount}
+        searchQuery={wf.searchQuery}
+        onSearchQueryChange={wf.setSearchQuery}
+        stageFilter={wf.stageFilter}
+        onStageFilterChange={wf.setStageFilter}
+        companyName={wf.companyName}
+        onCompanyNameChange={wf.setCompanyName}
+        staffId={wf.staffId}
+        onStaffIdChange={wf.setStaffId}
+        adminName={wf.adminName}
+        onAdminNameChange={wf.setAdminName}
+        adminEmail={wf.adminEmail}
+        onAdminEmailChange={wf.setAdminEmail}
+        createError={wf.createError}
+        createMessage={wf.createMessage}
+        onCreateSubmit={wf.handleCreateEnterpriseSubmit}
+        onProvisionWorkspace={props.onProvisionWorkspace}
+        onProvisionClick={wf.handleProvisionWorkspace}
+        onEnterProfile={wf.handleEnterProfile}
+      />
+    );
+  }
+
+  const { selectedEnterprise, spec, currentStage, canEdit, readiness } = wf;
+
+  return (
+    <div className={styles.onboardingContainer}>
+      <div>
+        <button
+          type="button"
+          className={styles.onboardingBtnSecondary}
+          onClick={() => wf.setSelectedEnterpriseId("")}
+        >
+          <ArrowLeft size={15} aria-hidden="true" />
+          {vi ? "Quay lại danh sách doanh nghiệp được phân công" : "Back to assigned enterprises"}
+        </button>
+      </div>
+
+      <header className={styles.onboardingProfileHeader}>
+        <div className={styles.onboardingTitleRow}>
+          <div className={styles.onboardingTitleMain}>
+            <div className={styles.onboardingTitleHeading}>
+              <h1>{selectedEnterprise.name}</h1>
+              <span className={styles.onboardingStageBadge} data-stage={currentStage}>
+                {wf.stageLabels[currentStage]}
+              </span>
+            </div>
+            <div className={styles.onboardingMetaRow}>
+              <span className={styles.onboardingMetaItem}>
+                <strong>{vi ? "Mã hồ sơ:" : "Code:"}</strong>{" "}
+                {selectedEnterprise.code ?? selectedEnterprise.id}
+              </span>
+              <span className={styles.onboardingMetaItem}>
+                <strong>{vi ? "Nhân sự triển khai:" : "Implementation Staff:"}</strong>{" "}
+                {wf.assignedStaffName}
+              </span>
+              <span className={styles.onboardingMetaItem}>
+                <strong>{vi ? "Đại diện doanh nghiệp:" : "Representative:"}</strong>{" "}
+                {spec.representativeName ?? (vi ? "Chưa cập nhật" : "Not set")}
+              </span>
+              <span className={styles.onboardingMetaItem}>
+                <strong>{vi ? "Gói dịch vụ:" : "Plan:"}</strong>{" "}
+                {enterprisePlan(selectedEnterprise) ?? "Subscription"}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.onboardingActionButtons}>
+            <span className={styles.setAccessLabel}>
+              {canEdit
+                ? vi
+                  ? "Chế độ thao tác: Nhân sự phụ trách"
+                  : "Mode: Assigned Implementation Staff"
+                : vi
+                ? "Chế độ xem: Chỉ đọc"
+                : "Mode: Read-only"}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.onboardingStepperWrap}>
+          <ol
+            className={styles.onboardingStepper}
+            aria-label={vi ? "Các chặng làm rõ đặc tả trên giao diện" : "UI workflow stages"}
+          >
+            <li>
+              <button
+                type="button"
+                className={`${styles.onboardingStepItem} ${
+                  wf.activeUiStep === 1 ? styles.onboardingStepItemActive : ""
+                } ${
+                  currentStage !== "intake" && currentStage !== "supplement_pending"
+                    ? styles.onboardingStepItemDone
+                    : ""
+                }`}
+                style={{ width: "100%" }}
+                onClick={() => wf.setActiveUiStep(1)}
+              >
+                <span className={styles.onboardingStepNumber}>1</span>
+                <span>{vi ? "Tiếp nhận & Rà soát hồ sơ" : "1. Intake & Profile Review"}</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={`${styles.onboardingStepItem} ${
+                  wf.activeUiStep === 2 ? styles.onboardingStepItemActive : ""
+                } ${
+                  currentStage === "waiting_confirmation" ||
+                  currentStage === "waiting_reconfirmation" ||
+                  currentStage === "confirmed"
+                    ? styles.onboardingStepItemDone
+                    : ""
+                }`}
+                style={{ width: "100%" }}
+                onClick={() => wf.setActiveUiStep(2)}
+              >
+                <span className={styles.onboardingStepNumber}>2</span>
+                <span>{vi ? "Làm rõ đặc tả & Lưu nháp" : "2. Clarify & Save Draft"}</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={`${styles.onboardingStepItem} ${
+                  wf.activeUiStep === 3 ? styles.onboardingStepItemActive : ""
+                } ${readiness.ready ? styles.onboardingStepItemDone : ""}`}
+                style={{ width: "100%" }}
+                onClick={() => wf.setActiveUiStep(3)}
+              >
+                <span className={styles.onboardingStepNumber}>3</span>
+                <span>{vi ? "Phản hồi & Xác nhận đặc tả" : "3. Feedback & Confirmation"}</span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={`${styles.onboardingStepItem} ${
+                  wf.activeSet?.activeVersion ? styles.onboardingStepItemDone : ""
+                }`}
+                style={{ width: "100%" }}
+                disabled={!readiness.ready}
+                onClick={() => {
+                  if (readiness.ready) props.onOpenRules(selectedEnterprise.id);
+                }}
+              >
+                <span className={styles.onboardingStepNumber}>4</span>
+                <span>{vi ? "Thiết lập quy tắc & Kiểm thử" : "4. Rule Setup & Testing"}</span>
+              </button>
+            </li>
+          </ol>
+          <p className={styles.onboardingStepNote}>
+            {vi
+              ? "Lưu ý: 4 chặng trên là cách tổ chức giao diện (UI) giúp nhân sự triển khai theo dõi tiến độ hồ sơ; không ghi rằng Proposal quy định cứng bước đánh số 4."
+              : "Note: These 4 tabs organize the UI workflow for Implementation Staff; the Proposal does not mandate a fixed numbered Step 4."}
+          </p>
+        </div>
+      </header>
+
+      {selectedEnterprise.projectIds.length === 0 && (
+        <section className={styles.onboardingWarningCallout} role="status">
+          <div className={styles.onboardingTitleRow}>
+            <div>
+              <strong>
+                {vi
+                  ? `Hồ sơ ${selectedEnterprise.name} hiện chưa có phạm vi dự án/workspace triển khai (projectIds đang trống)`
+                  : `${selectedEnterprise.name} currently has no linked deployment project/workspace (projectIds is empty)`}
+              </strong>
+              <p style={{ margin: "6px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
+                {vi
+                  ? `Không gắn dự án của doanh nghiệp khác hoặc tự đoán mã dự án. Thao tác thiết lập tương ứng: Quản trị Nền tảng (Platform Admin — Lê Hoàng Phúc) chọn "Khởi tạo workspace triển khai" ngay tại hồ sơ này để cấp mã phạm vi chính thức (workspace-${selectedEnterprise.id}) mà vẫn giữ nguyên toàn bộ đặc tả, bản nháp, xác nhận và tài liệu đã lưu.`
+                  : `Do not attach another enterprise's project or guess project codes. Corresponding setup action: Platform Admin clicks "Provision deployment workspace" on this profile to assign the official scope (workspace-${selectedEnterprise.id}) while preserving all saved specifications, drafts, confirmations, and documents.`}
+              </p>
+            </div>
+            {props.currentUser.role === "Platform Admin" && props.onProvisionWorkspace && (
+              <div className={styles.onboardingActionButtons}>
+                <button
+                  type="button"
+                  className={styles.onboardingBtnPrimary}
+                  onClick={() => wf.handleProvisionWorkspace(selectedEnterprise)}
+                >
+                  <Plus size={14} aria-hidden="true" />
+                  {vi
+                    ? `Khởi tạo workspace triển khai (workspace-${selectedEnterprise.id})`
+                    : `Provision workspace (workspace-${selectedEnterprise.id})`}
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {wf.statusFeedback && (
+        <div className={styles.onboardingSuccessCallout} role="status">
+          {wf.statusFeedback}
+        </div>
+      )}
+
+      {wf.actionError && (
+        <div className={styles.workflowError} role="alert">
+          {wf.actionError}
+        </div>
+      )}
+
+      {wf.activeUiStep === 1 && (
+        <OnboardingIntakeScreen
+          vi={vi}
+          selectedEnterprise={selectedEnterprise}
+          spec={spec}
+          currentStage={currentStage}
+          canEdit={canEdit}
+          intakeDocs={wf.intakeDocs}
+          supplementRequests={wf.supplementRequests}
+          latestPendingSupplement={wf.latestPendingSupplement}
+          onUploadIntakeDocument={wf.handleUploadIntakeDocument}
+          onPreviewDoc={wf.setPreviewDoc}
+          onDownloadDoc={wf.handleDownloadDocument}
+          onOpenReceiveSupplementModal={() => {
+            wf.setReceiveError("");
+            wf.setReceiveModalOpen(true);
+          }}
+          onOpenSupplementModal={() => wf.openSupplementModal(selectedEnterprise)}
+          onStartClarification={wf.handleStartClarification}
+        />
+      )}
+
+      {wf.activeUiStep === 2 && (
+        <OnboardingClarifyScreen
+          vi={vi}
+          selectedEnterprise={selectedEnterprise}
+          spec={spec}
+          currentStage={currentStage}
+          canEdit={canEdit}
+          intakeDocs={wf.intakeDocs}
+          latestFeedback={wf.latestFeedback}
+          isRevisingOrHasSent={wf.isRevisingOrHasSent}
+          activeSentSnapshot={wf.activeSentSnapshot}
+          workingRequirements={wf.workingRequirements}
+          onWorkingRequirementsChange={wf.setWorkingRequirements}
+          workingConditions={wf.workingConditions}
+          workingSchema={wf.workingSchema}
+          workingSampleJson={wf.workingSampleJson}
+          onWorkingSampleJsonChange={wf.setWorkingSampleJson}
+          workingRevisionSummary={wf.workingRevisionSummary}
+          onWorkingRevisionSummaryChange={wf.setWorkingRevisionSummary}
+          onLoadSampleTransactionFile={wf.handleLoadSampleTransactionFile}
+          onPreviewDoc={wf.setPreviewDoc}
+          onOpenSentSnapshotModal={wf.setSnapshotModalData}
+          condFormOpen={wf.condFormOpen}
+          onCloseCondForm={() => {
+            wf.setCondFormOpen(false);
+            wf.setEditingCondId(null);
+            wf.setCondFormError("");
+          }}
+          editingCondId={wf.editingCondId}
+          condName={wf.condName}
+          onCondNameChange={wf.setCondName}
+          condCriteria={wf.condCriteria}
+          onCondCriteriaChange={wf.setCondCriteria}
+          condScope={wf.condScope}
+          onCondScopeChange={wf.setCondScope}
+          condFormError={wf.condFormError}
+          onOpenAddConditionForm={wf.openAddConditionForm}
+          onOpenEditConditionForm={wf.openEditConditionForm}
+          onSaveConditionItem={wf.handleSaveConditionItem}
+          onDeleteConditionItem={wf.handleDeleteConditionItem}
+          fieldFormOpen={wf.fieldFormOpen}
+          onCloseFieldForm={() => {
+            wf.setFieldFormOpen(false);
+            wf.setEditingFieldIndex(null);
+            wf.setFieldFormError("");
+          }}
+          editingFieldIndex={wf.editingFieldIndex}
+          fieldName={wf.fieldName}
+          onFieldNameChange={wf.setFieldName}
+          fieldType={wf.fieldType}
+          onFieldTypeChange={wf.setFieldType}
+          fieldRequired={wf.fieldRequired}
+          onFieldRequiredChange={wf.setFieldRequired}
+          fieldDesc={wf.fieldDesc}
+          onFieldDescChange={wf.setFieldDesc}
+          fieldFormError={wf.fieldFormError}
+          onOpenAddFieldForm={wf.openAddFieldForm}
+          onOpenEditFieldForm={wf.openEditFieldForm}
+          onSaveFieldItem={wf.handleSaveFieldItem}
+          onDeleteFieldItem={wf.handleDeleteFieldItem}
+          onCancelChanges={wf.handleCancelChanges}
+          onSaveDraft={wf.handleSaveDraft}
+          onRecordSentDraft={wf.handleRecordSentDraft}
+        />
+      )}
+
+      {wf.activeUiStep === 3 && (
+        <OnboardingConfirmationScreen
+          vi={vi}
+          selectedEnterprise={selectedEnterprise}
+          spec={spec}
+          currentStage={currentStage}
+          canEdit={canEdit}
+          currentUser={props.currentUser}
+          assignedStaffName={wf.assignedStaffName}
+          readiness={readiness}
+          feedbackList={wf.feedbackList}
+          activeSentSnapshot={wf.activeSentSnapshot}
+          activeConfirmedSnapshot={wf.activeConfirmedSnapshot}
+          onOpenSentSnapshotModal={wf.setSnapshotModalData}
+          feedbackTime={wf.feedbackTime}
+          onFeedbackTimeChange={wf.setFeedbackTime}
+          feedbackChannel={wf.feedbackChannel}
+          onFeedbackChannelChange={wf.setFeedbackChannel}
+          feedbackContact={wf.feedbackContact}
+          onFeedbackContactChange={wf.setFeedbackContact}
+          feedbackContent={wf.feedbackContent}
+          onFeedbackContentChange={wf.setFeedbackContent}
+          feedbackError={wf.feedbackError}
+          onRecordFeedbackAndRevise={wf.handleRecordFeedbackAndRevise}
+          onOpenConfirmationModal={wf.openConfirmationModal}
+          onToggleDataAndEvaluationClarified={wf.handleToggleDataAndEvaluationClarified}
+          onProvisionWorkspace={props.onProvisionWorkspace}
+          onProvisionClick={wf.handleProvisionWorkspace}
+          onSwitchToDraftStep={() => wf.setActiveUiStep(2)}
+          onOpenRules={props.onOpenRules}
+        />
+      )}
+
+      <OnboardingModals
+        vi={vi}
+        selectedEnterprise={selectedEnterprise}
+        spec={spec}
+        activeSentSnapshot={wf.activeSentSnapshot}
+        previewDoc={wf.previewDoc}
+        onClosePreviewDoc={() => wf.setPreviewDoc(null)}
+        onDownloadDoc={wf.handleDownloadDocument}
+        snapshotModalData={wf.snapshotModalData}
+        onCloseSnapshotModal={() => wf.setSnapshotModalData(null)}
+        supplementModalOpen={wf.supplementModalOpen}
+        onCloseSupplementModal={() => wf.setSupplementModalOpen(false)}
+        selectedSupplementItems={wf.selectedSupplementItems}
+        onSelectedSupplementItemsChange={wf.setSelectedSupplementItems}
+        customSupplementItem={wf.customSupplementItem}
+        onCustomSupplementItemChange={wf.setCustomSupplementItem}
+        supplementNote={wf.supplementNote}
+        onSupplementNoteChange={wf.setSupplementNote}
+        guidanceFileName={wf.guidanceFileName}
+        onClearGuidanceAttachment={wf.clearGuidanceAttachment}
+        onSelectGuidanceFile={wf.handleSelectGuidanceFile}
+        supplementFormError={wf.supplementFormError}
+        onRecordSupplementRequest={wf.handleRecordSupplementRequest}
+        receiveModalOpen={wf.receiveModalOpen}
+        onCloseReceiveModal={() => wf.setReceiveModalOpen(false)}
+        receivedNote={wf.receivedNote}
+        onReceivedNoteChange={wf.setReceivedNote}
+        receivedDocName={wf.receivedDocName}
+        onClearReceivedSupplementAttachment={wf.clearReceivedSupplementAttachment}
+        onSelectReceivedSupplementFile={wf.handleSelectReceivedSupplementFile}
+        receiveError={wf.receiveError}
+        onRecordSupplementReceived={wf.handleRecordSupplementReceived}
+        confirmModalOpen={wf.confirmModalOpen}
+        onCloseConfirmModal={() => wf.setConfirmModalOpen(false)}
+        confirmBy={wf.confirmBy}
+        onConfirmByChange={wf.setConfirmBy}
+        confirmTime={wf.confirmTime}
+        onConfirmTimeChange={wf.setConfirmTime}
+        confirmChannel={wf.confirmChannel}
+        onConfirmChannelChange={wf.setConfirmChannel}
+        confirmNote={wf.confirmNote}
+        onConfirmNoteChange={wf.setConfirmNote}
+        confirmError={wf.confirmError}
+        onRecordEnterpriseConfirmation={wf.handleRecordEnterpriseConfirmation}
+      />
+    </div>
+  );
 }
