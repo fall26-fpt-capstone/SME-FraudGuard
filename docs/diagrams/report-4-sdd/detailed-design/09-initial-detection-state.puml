@@ -1,0 +1,49 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Awaiting Detection" as Pending
+state "AI Processing" as AI
+state "Primary Rule\nProcessing" as Rules
+state "Fallback Rule\nProcessing" as Fallback
+state "Completed" as Completed
+state "Failed" as Failed
+state PlanRoute <<choice>>
+state DetectionEnd <<end>>
+[*] --> Pending
+Pending -down-> PlanRoute : Start detection
+PlanRoute --> Rules : [Free at acceptance]
+PlanRoute --> AI : [Subscription at acceptance]
+AI -down-> Completed : Save valid AI result\nand required alert
+AI --> Fallback : AI unavailable or result invalid
+Rules --> Completed : Save rule result\nand required alert
+Rules --> Failed : Evaluation cannot complete
+Fallback --> Completed : Save fallback result\nand required alert
+Fallback --> Failed : Fallback cannot complete
+Completed --> DetectionEnd
+Failed --> DetectionEnd
+@enduml

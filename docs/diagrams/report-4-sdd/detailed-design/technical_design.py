@@ -1254,19 +1254,286 @@ def class_source(group):
     return source+'\n'.join(declarations+layout+formatted),set(classes)
 
 
+STATE_MACHINES = {
+    3: ('03-subscription-validity-state', 'Subscription Validity Period', [3, 5, 6, 7], r'''
+state "Awaiting Activation" as Waiting
+state "Active" as Active
+state "Expired" as Expired
+state Origin <<choice>>
+[*] --> Origin
+Origin --> Waiting : [onboarding grant]
+Origin --> Active : [verified paid activation]
+Waiting -down-> Active : SME Admin activates workspace
+Active -down-> Expired : Validity ends\n[now >= expiry]
+Expired --> [*]
+note bottom of Active
+  Scope: one continuous Subscription validity period, not the workspace's lifetime or a payment attempt. An initial onboarding grant waits for approved workspace activation; a paid period is created only after verified payment and local entitlement application succeed once. Free has no Subscription period.
+  Active means start <= authoritative time < expiry. A verified renewal before expiry extends the same active period; after expiry it starts a new period, not a transition out of Expired. Calculate calendar months/years in Asia/Ho_Chi_Minh and store instants in UTC. Duplicate payments and repeated workspace activation never extend a period twice.
+  Expiry uses the latest committed validity, keeps accepted transaction context and existing cases/history, and denies new cases. AI failure does not expire Subscription. The final node ends this period; it does not delete history or terminate the workspace.
+end note
+'''),
+    4: ('04-workspace-onboarding-state', 'Workspace Onboarding', [1, 2, 3, 4, 5], r'''
+state "Implementation in Progress" as Implementing
+state "Awaiting Handover Review" as Reviewing
+state "Awaiting Activation" as Approved
+state "Operational" as Operational
+state HandoverDecision <<choice>>
+[*] --> Implementing
+Implementing -down-> Reviewing : Staff confirms readiness
+Reviewing -down-> HandoverDecision : Platform Admin records decision
+HandoverDecision -up-> Implementing : [returned with comments]
+HandoverDecision -down-> Approved : [approved]
+Approved -down-> Operational : SME Admin activates workspace
+Operational --> [*]
+note bottom of Implementing
+  Scope: onboarding of one newly provisioned workspace, ending when it becomes Operational. Platform Admin creates the customer, isolated workspace and initial SME Admin account (SRS 3.3.2); provisioning does not enable production or start an initial Subscription.
+  Specifications, protected onboarding files, Staff assignment, field/mapping/rule configuration and sample testing belong to implementation. Assigned Staff explicitly assesses the current configuration before confirming readiness; test success alone is insufficient.
+end note
+note bottom of Operational
+  Platform Admin approves current Staff readiness or returns work with required comments. Returned work needs renewed readiness and review. SME Admin activates only with current readiness and approval; activation and the initial entitlement term commit once with history.
+  Missing setup, stale configuration/approval, unauthorized requests or persistence failure leave the last committed stage unchanged. Logical stage labels are design terms, not implemented enums. The final node ends onboarding only; the workspace remains available for ongoing operation and Staff support.
+end note
+'''),
+    11: ('11-investigation-case-state', 'Investigation Case', [1, 2, 3, 4, 5, 6, 7], r'''
+state "Open" as Open
+state "Investigating" as Investigating
+state "Pending Review" as Review
+state "Closed" as Closed
+state ReportCheck <<choice>>
+state ReviewDecision <<choice>>
+[*] --> Open
+Open -down-> Investigating : Assign investigator\nor start self-investigation
+Investigating -down-> ReportCheck : Submit report
+ReportCheck -up-> Investigating : [invalid or not saved]
+ReportCheck -down-> Review : [valid report; saved]
+Review -down-> ReviewDecision : Operator records decision
+ReviewDecision -up-> Investigating : [more work requested]
+ReviewDecision -down-> Closed : [final conclusion confirmed]
+Closed --> [*]
+note bottom of Open
+  Operator creates an Open case under active Subscription, using eligible, unlinked same-workspace AI Alerts. Operator may assign an eligible Investigator or investigate personally.
+end note
+note bottom of Closed
+  Operator investigating directly or assigned Investigator submits findings, evidence and a proposed conclusion. Recheck content, assignment and version, then commit report/status/history together. Invalid or failed submissions keep Investigating.
+  Only Operator requests more work with comments or confirms a supported conclusion with its rationale. Invalid review actions or failed persistence keep Pending Review. Findings and reassignment retain current status and attribution; a second reviewer is not required.
+  Conclusion is separate from Closed: Confirmed Fraud, Anomalous but Legitimate, False Alert or Insufficient Evidence. Existing cases survive Subscription expiry. The final node completes handling, retaining history without reopening, automatic AI training or customer-system enforcement.
+end note
+'''),
+}
+
+
+ADDITIONAL_STATE_MACHINES = {
+    1: [('01-session-state', 'Authenticated Session', [1, 2, 3, 4], r'''
+state "Password Change Required" as Setup
+state "Active Session" as Active
+state "Ended" as Ended
+state InitialAccess <<choice>>
+state PasswordCheck <<choice>>
+[*] --> InitialAccess
+InitialAccess --> Setup : [initial change required]
+InitialAccess --> Active : [setup complete]
+Setup -down-> PasswordCheck : Submit initial password
+PasswordCheck -up-> Setup : [invalid or not saved]
+PasswordCheck -down-> Active : [valid; saved]
+Setup --> Ended : Log out\n[termination confirmed]
+Active -down-> Ended : Log out\n[termination confirmed]
+Ended --> [*]
+note bottom of Active
+  SRS 3.2.1-3.2.4: this session begins only after successful credential, availability and portal/workspace verification. Setup access permits the initial password change only. Ordinary password changes retain the current scoped session; role, workspace and object permissions are rechecked per protected request.
+  A failed password save preserves the setup restriction. Unconfirmed logout clears local access, offers retry and does not claim server termination. The final node ends this session, not the account or retained business history. Technical session expiry/recovery policy is not invented here.
+end note
+''')],
+    3: [('03-subscription-purchase-state', 'Subscription Purchase', [5, 6], r'''
+state "Pending Payment" as Pending
+state "Paid, Not Applied" as Paid
+state "Applied" as Applied
+state "Payment Failed" as Failed
+state "Cancelled" as Cancelled
+state PaymentResult <<choice>>
+state PurchaseEnd <<end>>
+[*] --> Pending
+Pending -down-> PaymentResult : Record verified gateway result
+PaymentResult -down-> Paid : [successful payment]
+PaymentResult --> Failed : [failed payment]
+PaymentResult --> Cancelled : [cancelled payment]
+Paid -down-> Applied : Apply entitlement\n[local commit succeeds]
+Applied --> PurchaseEnd
+Failed --> PurchaseEnd
+Cancelled --> PurchaseEnd
+note bottom of Paid
+  SRS 3.4.5-3.4.6: one stored purchase quote for an available offer, owned by SME Admin of an operational workspace. Verify provider identity, purchase/workspace, amount, currency and final status on the server. Pending/unverified/mismatched callbacks do not grant rights or enter a final-result branch; browser redirects are not payment proof.
+  Successful payment with a local application failure remains Paid, Not Applied for reconciliation without another charge. Duplicate/concurrent confirmations have one entitlement effect. Applied ends this purchase's handling; the Subscription validity period is modeled separately. Failed/cancelled checkout grants no rights; safe retry must retain its purchase/payment identity and cannot duplicate an applied effect.
+end note
+''')],
+    6: [('06-configuration-candidate-state', 'Configuration Candidate', list(range(1, 9)), r'''
+state "Draft" as Draft
+state "Tested" as Tested
+state "Ready to Apply" as Ready
+state "Applied" as Applied
+state TestOutcome <<choice>>
+[*] --> Draft
+Draft -down-> TestOutcome : Test current revision
+TestOutcome -up-> Draft : [interrupted]
+TestOutcome -down-> Tested : [completed]
+Tested -up-> Draft : Edit candidate\n/ create new revision
+Tested -down-> Ready : Staff accepts test results
+Ready -up-> Draft : Edit candidate\n/ create new revision
+Ready -down-> Applied : Apply tested revision\n[checks valid; commit succeeds]
+Applied --> [*]
+note bottom of Tested
+  SRS 3.7.1-3.7.8: one logical candidate with a current saved revision. A completed test binds to that exact revision and does not imply automatic acceptance; expected sample validation failures alone do not prove a configuration defect. Assigned Staff explicitly assesses suitability.
+  Editing invalidates prior test/assessment applicability and creates a new draft revision. Apply requires complete valid configuration, an exact-revision completed test, Staff assessment and expected active-version checks. Stale/failed application preserves the committed candidate and previous active version; no partial release is exposed.
+  Applied ends this candidate's promotion lifecycle. The applied immutable version and older versions remain traceable, and accepted transactions keep their original plan/configuration. Sample payloads are temporary; only safe test metadata is retained. Logical stages are design labels, not implemented status enums.
+end note
+''')],
+    7: [('07-api-credential-state', 'Workspace API Credential', [1, 2, 3], r'''
+state "Active" as Active
+state "Disabled" as Disabled
+[*] --> Active
+Active -down-> Disabled : Disable key\n[authorized; revocation saved]
+Disabled --> [*]
+note bottom of Active
+  SRS 3.8.1-3.8.3: one persisted workspace-bound submission key, issued by Platform Admin or assigned Staff. Disclose its secret once, keep verification material and safe metadata, and do not provide later plaintext retrieval. Replacement creates another key; the old key stays Active until explicitly disabled.
+  Platform Admin, assigned Staff or own-workspace SME Admin may disable the key. Failed revocation leaves the persisted availability unchanged; repeated disable returns the existing result. Subsequent disabled-key authentication fails while accepted transactions and administrative history remain. The final node ends usable-key handling, not metadata retention.
+end note
+'''), ('07-production-import-state', 'Production Import Batch', [6, 7], r'''
+state "Accepted" as Accepted
+state "Processing Rows" as Processing
+state "Completed" as Completed
+state "Completed with\nRow Issues" as Partial
+state "Interrupted" as Interrupted
+state ImportResult <<choice>>
+state ImportEnd <<end>>
+[*] --> Accepted
+Accepted -down-> Processing : Start row processing
+Processing -down-> ImportResult : Record processing outcome
+ImportResult -down-> Completed : [all rows finished; no errors]
+ImportResult --> Partial : [finished; row issues]
+ImportResult --> Interrupted : [unfinished work]
+Completed --> ImportEnd
+Partial --> ImportEnd
+Interrupted --> ImportEnd
+note bottom of Processing
+  SRS 3.8.6-3.8.7: one import run starts after SME Admin/Operator authorization, workspace activation and supported-file/required-column validation. Structurally rejected files never reach row processing or create production rows. CSV and Excel share the approved file mapping.
+  Classify each row as accepted, duplicate, conflicting or invalid; totals reconcile without double counting. Process independent valid rows and send newly accepted transactions into detection. Completed means all rows were handled without invalid/conflicting rows; duplicates remain distinct from newly accepted rows. Row processing completion is not a claim that asynchronous detection has finished.
+  Interrupted runs expose finished versus unfinished work. A controlled retry uses retained progress and workspace transaction identity rather than accepting completed rows twice. Final nodes end this processing run's outcome, not the retained batch reference, row summaries or accepted transactions. Safe result access never reveals unauthorized plaintext.
+end note
+''')],
+    9: [('09-initial-detection-state', 'Initial Transaction Detection', [1, 2], r'''
+state "Awaiting Detection" as Pending
+state "AI Processing" as AI
+state "Primary Rule\nProcessing" as Rules
+state "Fallback Rule\nProcessing" as Fallback
+state "Completed" as Completed
+state "Failed" as Failed
+state PlanRoute <<choice>>
+state DetectionEnd <<end>>
+[*] --> Pending
+Pending -down-> PlanRoute : Start detection
+PlanRoute --> Rules : [Free at acceptance]
+PlanRoute --> AI : [Subscription at acceptance]
+AI -down-> Completed : Save valid AI result\nand required alert
+AI --> Fallback : AI unavailable or result invalid
+Rules --> Completed : Save rule result\nand required alert
+Rules --> Failed : Evaluation cannot complete
+Fallback --> Completed : Save fallback result\nand required alert
+Fallback --> Failed : Fallback cannot complete
+Completed --> DetectionEnd
+Failed --> DetectionEnd
+note bottom of Pending
+  SRS 3.9.1-3.10.2: one accepted transaction's initial detection operation, not a single immutable detection-attempt record. Keep acceptance-time plan/configuration and record AI, primary-rule and fallback attempts with their own sources/versions. Ordinary Subscription processing does not run AI and rules simultaneously.
+  Normal/Anomaly and rule match/no-match are outcomes, not lifecycle states. A required alert means an AI Alert for Anomaly or one aggregated Rule Alert for matching rules; normal/no-match creates no such alert. A late AI response must not overwrite completed fallback history. Failure is not fabricated Normal/no-match, and AI failure does not remove Subscription.
+  Final nodes complete the initial operation. Later recovery is a separate operation on the same stored transaction; it preserves the original outcomes. Existing transaction/attempt identities govern safe repetition.
+end note
+'''), ('09-ai-recovery-state', 'AI Recovery Operation', [3], r'''
+state "Selected for Recovery" as Selected
+state "AI Reanalysis" as Processing
+state "Completed" as Completed
+state "Failed" as Failed
+state "Excluded" as Excluded
+state HistoricalEligibility <<choice>>
+state RecoveryOutcome <<choice>>
+state RecoveryEnd <<end>>
+[*] --> Selected
+Selected -down-> HistoricalEligibility : Check transaction-time entitlement
+HistoricalEligibility -down-> Processing : [historically entitled]
+HistoricalEligibility --> Excluded : [not entitled]
+Processing -down-> RecoveryOutcome : Record AI attempt
+RecoveryOutcome -down-> Completed : [valid result; effects saved]
+RecoveryOutcome --> Failed : [AI or persistence failure]
+Completed --> RecoveryEnd
+Failed --> RecoveryEnd
+Excluded --> RecoveryEnd
+note bottom of Processing
+  SRS 3.10.3: one recovery operation for an existing fallback-processed transaction. Eligibility uses the transaction event time and historical Subscription validity, even if the current plan expired. Recovery is not new ingestion and cannot open a case automatically.
+  Store a separate attempt/model version, preserve prior fallback and Rule Alert history, and reconcile effects idempotently. Anomaly creates/reuses the transaction's single AI Alert; a later Normal result never deletes an existing alert or case. Repeated execution of the same operation must not duplicate effects.
+  Failed means this operation cannot complete; a later controlled recovery operation keeps its own identity/history instead of rewriting this outcome. Excluded ends selection without AI execution. No timeout, retry schedule or external wire schema is invented.
+end note
+''')],
+    12: [('12-report-generation-state', 'Enterprise Report Generation', [3, 4], r'''
+state "Accepted Request" as Requested
+state "Generating" as Generating
+state "Available" as Available
+state "Failed" as Failed
+state ReportOutcome <<choice>>
+state GenerationEnd <<end>>
+[*] --> Requested
+Requested -down-> Generating : Start authorized generation
+Generating -down-> ReportOutcome : Record generation outcome
+ReportOutcome -down-> Available : [complete result saved]
+ReportOutcome --> Failed : [generation failed]
+Available --> GenerationEnd
+Failed --> GenerationEnd
+note bottom of Available
+  SRS 3.13.3-3.13.4: one report-generation operation, accepted after scope and filter validation. Available means a complete authorized result, including a valid empty report when nothing matches. Failed/incomplete output is not labeled successful.
+  Apply role, workspace and sensitive-field policy during generation. Recheck access when reading/downloading/exporting the result; availability is not blanket authorization or plaintext permission. Export safely handles cell/text values and reports generation/transfer failures separately. Exporting or viewing does not add another report lifecycle state.
+  Final nodes complete generation handling, not result retention or access checks. A new request has its own operation reference; no unconfirmed export formats, columns, retention policy or reporting tier are introduced.
+end note
+''')],
+    13: [('13-email-delivery-state', 'Email Delivery Attempt', [2], r'''
+state "Pending Delivery" as Pending
+state "Sending" as Sending
+state "Sent" as Sent
+state "Failed" as Failed
+state DeliveryOutcome <<choice>>
+state DeliveryEnd <<end>>
+[*] --> Pending
+Pending -down-> Sending : Send configured notification
+Sending -down-> DeliveryOutcome : Record provider outcome
+DeliveryOutcome -down-> Sent : [send succeeded]
+DeliveryOutcome --> Failed : [send or recipient validation failed]
+Sent --> DeliveryEnd
+Failed --> DeliveryEnd
+note bottom of Sending
+  SRS 3.14.2 and CR-15: one notification delivery attempt for a relevant committed business event. Resolve the authorized recipient's separately stored configured contact, use a minimal safe template and authenticate protected target links. Internal login identifiers are not assumed to be email addresses.
+  Sent records a successful send outcome, not proof that a person read the message. Missing/invalid contact, unavailable provider, unauthorized recipient or sensitive content prevents successful delivery. Recipient/content validation occurs before disclosure; failures may be recorded without making a provider call.
+  Failure is independent from committed case/payment/detection effects. A controlled retry has separate attempt metadata and must not repeat the business event. Final nodes end this delivery attempt while retaining safe outcome/retry references; vendor and retry scheduling remain unspecified.
+end note
+''')],
+}
+
+STATE_MACHINES = {group: [item] for group, item in STATE_MACHINES.items()}
+for group, items in ADDITIONAL_STATE_MACHINES.items():
+    STATE_MACHINES.setdefault(group, []).extend(items)
+
+
 def build():
     groups=json.loads((ROOT/'design_model.json').read_text(encoding='utf-8'));figures=[];paragraphs=[]
     def paragraph(kind,text,**kwargs):paragraphs.append(dict(kind=kind,text=text,**kwargs))
     paragraph('body','This section presents the target detailed design derived from Report 3 functional requirements, Sections 3.2-3.15. Class diagrams identify controllers/listeners, service interfaces and implementations, repositories, DTOs and domain types. Sequence diagrams use the same class names and operations, with explicit calls, returns, activation bars and repository/database interactions. These proposed design signatures are not claims of implemented Java classes or approved HTTP routes; cross-module calls use public APIs/ports within the modular monolith.')
-    paragraph('body','All operations enforce current identity, role, workspace and object/assignment scope on the backend. Integration authentication establishes workspace scope before mapping or acceptance. Sensitive values remain protected in ordinary results and diagnostics; required writes retain history atomically. The headings named State Diagram follow the supplied reference: their figures use processing activities, decision diamonds, guarded branches and start/end nodes. Exact external wire formats, upload limits, timeout values and retry schedules remain subject to their confirmed interface specifications.')
+    paragraph('body','All operations enforce current identity, role, workspace and object/assignment scope on the backend. Integration authentication establishes workspace scope before mapping or acceptance. Sensitive values remain protected in ordinary results and diagnostics; required writes retain history atomically. Activity diagrams describe workflows and decisions. State machines cover the SRS-defined lifecycles of sessions, purchases, Subscription periods, onboarding, configuration candidates, API keys, import batches, initial detection, recovery, cases, report generation and email delivery. Each figure identifies its object/operation scope and initial/final boundary; completion does not delete retained records. Stage labels outside the explicit case lifecycle are logical design terms, not implemented enums. Read-only views, audit attribution and unspecified review flags do not introduce invented status models. Exact external wire formats, technical limits and retry schedules remain subject to confirmed interface specifications.')
     for group in groups:
         n=group['number'];paragraph('group',f"3.{n} {group['title']}")
         paragraph('body',f"SRS reference: 3.{n+1}.1-3.{n+1}.{group['count']}. {group['purpose']}")
         class_body,class_names=class_source(group)
-        def figure(kind,sub,index,title,source,functions=None):
-            name=f'{n:02d}-{kind}-{index:02d}'
+        def figure(kind,sub,index,title,source,functions=None,identifier=None):
+            name=identifier or f'{n:02d}-{kind}-{index:02d}'
             (ROOT/(name+'.puml')).write_text(STYLE+source.strip()+'\n@enduml\n',encoding='utf-8')
             item=dict(id=name,file=name+'.puml',group=n,type=kind,title=title,caption=f'Figure 4.3.{n}.{sub}.{index}. {title}.',srs=[f'3.{n+1}.{f}' for f in functions or range(1,group['count']+1)])
+            if kind == 'state-machine' and n == 4:
+                item['srs'].insert(0, '3.3.2')
+            if kind == 'state-machine' and name == '09-initial-detection-state':
+                item['srs'] = ['3.9.1', '3.9.2'] + item['srs']
             figures.append(item);paragraph('image','',figure=name);paragraph('caption',item['caption'],figure=name)
         paragraph('type',f'3.{n}.1 Class Diagram');figure('class',1,1,group['title']+' Class Diagram',class_body)
         paragraph('type',f'3.{n}.2 Sequence Diagrams');covered=set()
@@ -1275,18 +1542,33 @@ def build():
             assert all(name in class_names for alias,name in participant_map(group,spec).items() if alias!='DB')
             figure('sequence',2,i,s['title']+' Sequence Diagram',sequence_source(group,spec),s['functions']);covered.update(s['functions'])
         assert covered==set(range(1,group['count']+1)),group['title']
-        if group['states']:
-            paragraph('type',f'3.{n}.3 State Diagrams')
-            for i,s in enumerate(group['states'],1):
+        if group['activities']:
+            paragraph('type',f'3.{n}.3 Activity Diagrams')
+            for i,s in enumerate(group['activities'],1):
                 body=re.sub(r'(?m)^(\s*(?:if|repeat while)) \((.+?)\)(?=\s+(?:then|is)\s+\()',lambda m:m[1]+' ('+r'\n'.join(textwrap.wrap(m[2],28))+')',ACTIVITIES[n,i])
-                figure('state',3,i,s['title']+' State Diagram',ACTIVITY_STYLE+body)
-    assert len(figures)==68 and len(FLOWS)==43 and len(ACTIVITIES)==11
-    assert sum(g['count'] for g in groups)==65 and len({f['id'] for f in figures})==68
-    result=dict(groups=[{k:v for k,v in g.items() if k not in ('classes','relations','sequences','states')} for g in groups],figures=figures,paragraphs=paragraphs)
+                figure('activity',3,i,s['title']+' Activity Diagram',ACTIVITY_STYLE+body)
+        if n in STATE_MACHINES:
+            paragraph('type',f'3.{n}.4 State Machine Diagrams')
+            for i,(identifier,title,functions,body) in enumerate(STATE_MACHINES[n],1):
+                notes = re.findall(r'note bottom of \w+\n(.*?)end note', body, re.S)
+                body = re.sub(r'note bottom of \w+\n.*?end note', '', body, flags=re.S)
+                assert not re.search(r'(?m)^\w+\s*:', body), 'State blocks contain names only'
+                assert '[*] -->' in body and ('--> [*]' in body or '<<end>>' in body), 'State lifecycle needs initial and final nodes'
+                assert all(a != b for a, b in re.findall(r'(?m)^(\w+)\s+-[^\n]*?>\s+(\w+)', body)), 'Use named branches instead of tiny self-loop hooks'
+                figure('state-machine',4,i,title+' State Machine Diagram',
+                       'skinparam stateBackgroundColor white\nskinparam stateBorderColor #222222\n'
+                       'skinparam stateFontSize 22\nskinparam ArrowFontSize 20\n'
+                       '!pragma layout elk\ntop to bottom direction\n'
+                       'hide empty description\nskinparam linetype ortho\n'
+                       'skinparam nodesep 65\nskinparam ranksep 65\n'+body,functions,identifier)
+                paragraph('body', ' '.join(' '.join(note.split()) for note in notes))
+    assert len(figures)==80 and len(FLOWS)==43 and len(ACTIVITIES)==11
+    assert sum(g['count'] for g in groups)==65 and len({f['id'] for f in figures})==80
+    result=dict(groups=[{k:v for k,v in g.items() if k not in ('classes','relations','sequences','activities')} for g in groups],figures=figures,paragraphs=paragraphs)
     (ROOT/'catalogue.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
     md=['# 3. Detailed Design','']
     for p in paragraphs:
         if p['kind']=='image':md += [f"![{p['figure']}](../../../diagrams/report-4-sdd/detailed-design/exports/{p['figure']}.png)",'']
         else:md += [('## ' if p['kind']=='group' else '### ' if p['kind']=='type' else '')+p['text'],'']
     (ROOT.parents[2]/'02_Reports/Report4_SDD/sections/detailed-design.md').write_text('\n'.join(md),encoding='utf-8')
-    print('Built 68 detailed UML sources; 65 SRS functions covered; every sequence participant appears in its class diagram.')
+    print('Built 80 UML sources: 14 class, 43 sequence, 11 activity and 12 state machine; 65 SRS functions covered.')

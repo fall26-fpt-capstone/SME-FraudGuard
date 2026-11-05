@@ -854,12 +854,13 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 - BR-02, BR-12, BR-13, BR-25; CR-06, CR-13, CR-17.
 - Uploading a document does not automatically extract rules, approve configuration or enable production.
 - Retained specifications are not temporary test transaction samples.
+- Cloudinary stores retained onboarding files; the application database retains workspace-scoped metadata and protected asset references. Upload and retrieval require current role, workspace and object authorization; sensitive files must not be publicly accessible.
 
 **Normal case:**
 
 1. The actor opens the authorized workspace's onboarding details.
 2. The actor enters or updates specifications and attaches supported documents.
-3. The system validates the upload and stores protected references and attribution.
+3. The system validates the upload, stores the file in Cloudinary and records protected references and attribution only after successful storage.
 4. The system displays the saved information for Staff and enterprise coordination.
 
 **Abnormal cases:**

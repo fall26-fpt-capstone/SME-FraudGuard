@@ -23,6 +23,7 @@ frame "AWS hosting" {
   component "Spring Boot / Java\nModular-monolith backend" as backend #DAEBF7
 }
 database "Neon / PostgreSQL" as db
+cloud "Cloudinary\nProtected file storage" as files
 component "AI service\nNormal / Anomaly + version" as ai
 component "VNPay\nPayment gateway" as pay
 component "Domain email service" as email
@@ -31,6 +32,7 @@ browser <--> web : HTTPS
 web <--> backend : REST API / HTTPS
 customer <--> backend : REST API / Webhook / HTTPS
 backend <--> db : TLS / SQL
+backend <--> files : HTTPS / authorized file upload and retrieval
 backend <--> ai : Inference
 backend <--> pay : Payment / verified confirmation
 backend --> email : Notifications

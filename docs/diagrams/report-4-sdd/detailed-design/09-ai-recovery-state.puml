@@ -1,0 +1,47 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Selected for Recovery" as Selected
+state "AI Reanalysis" as Processing
+state "Completed" as Completed
+state "Failed" as Failed
+state "Excluded" as Excluded
+state HistoricalEligibility <<choice>>
+state RecoveryOutcome <<choice>>
+state RecoveryEnd <<end>>
+[*] --> Selected
+Selected -down-> HistoricalEligibility : Check transaction-time entitlement
+HistoricalEligibility -down-> Processing : [historically entitled]
+HistoricalEligibility --> Excluded : [not entitled]
+Processing -down-> RecoveryOutcome : Record AI attempt
+RecoveryOutcome -down-> Completed : [valid result; effects saved]
+RecoveryOutcome --> Failed : [AI or persistence failure]
+Completed --> RecoveryEnd
+Failed --> RecoveryEnd
+Excluded --> RecoveryEnd
+@enduml

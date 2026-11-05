@@ -1,0 +1,45 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Pending Payment" as Pending
+state "Paid, Not Applied" as Paid
+state "Applied" as Applied
+state "Payment Failed" as Failed
+state "Cancelled" as Cancelled
+state PaymentResult <<choice>>
+state PurchaseEnd <<end>>
+[*] --> Pending
+Pending -down-> PaymentResult : Record verified gateway result
+PaymentResult -down-> Paid : [successful payment]
+PaymentResult --> Failed : [failed payment]
+PaymentResult --> Cancelled : [cancelled payment]
+Paid -down-> Applied : Apply entitlement\n[local commit succeeds]
+Applied --> PurchaseEnd
+Failed --> PurchaseEnd
+Cancelled --> PurchaseEnd
+@enduml

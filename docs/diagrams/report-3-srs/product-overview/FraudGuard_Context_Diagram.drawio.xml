@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Context Diagram" id="fraudguard-context">
+    <mxGraphModel dx="2071" dy="1109" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1120" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=25;fontStyle=1;" value="&lt;br&gt;&lt;br&gt;SME-FraudGuard&lt;br&gt;Transaction Anomaly&lt;br&gt;Detection Platform" vertex="1">
+          <mxGeometry height="510" width="510" x="745" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=25;fontStyle=1" value="CONTEXT DIAGRAM" vertex="1">
+          <mxGeometry height="45" width="1000" x="500" y="77" as="geometry" />
+        </mxCell>
+        <mxCell id="pa" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=20;" value="Platform Admin" vertex="1">
+          <mxGeometry height="140" width="235" x="41" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="pa_flow0" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0007" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="194" />
+              <mxPoint x="824.5" y="194" />
+            </Array>
+            <mxPoint x="280" y="194" as="sourcePoint" />
+            <mxPoint x="824.5007122521575" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pa_label0" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Customer and workspace information" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="166" as="geometry" />
+        </mxCell>
+        <mxCell id="pa_flow1" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="0.0014" as="geometry">
+            <Array as="points">
+              <mxPoint x="678" y="224" />
+              <mxPoint x="800" y="224" />
+            </Array>
+            <mxPoint x="280" y="224" as="sourcePoint" />
+            <mxPoint x="801.4427034833523" y="415" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pa_label1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Implementation staff assignments" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="pa_flow2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0032" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="254" />
+            </Array>
+            <mxPoint x="783.6669234721606" y="440" as="sourcePoint" />
+            <mxPoint x="280" y="254" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pa_label2" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=#ffffff;fontFamily=Arial;fontSize=17;fillStyle=hatch;" value="Customer and workspace status" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="226" as="geometry" />
+        </mxCell>
+        <mxCell id="pa_flow3" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0004" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="370" />
+              <mxPoint x="770" y="284" />
+            </Array>
+            <mxPoint x="769.9456585934531" y="465" as="sourcePoint" />
+            <mxPoint x="280" y="284" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="pa_label3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=#ffffff;fontFamily=Arial;fontSize=17;fillStyle=hatch;" value="Platform status and major errors" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="256" as="geometry" />
+        </mxCell>
+        <mxCell id="impl" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=20;" value="Implementation Staff" vertex="1">
+          <mxGeometry height="140" width="235" x="38" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="impl_flow0" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;entryX=0.002;entryY=0.438;entryDx=0;entryDy=0;entryPerimeter=0;" target="system" value="">
+          <mxGeometry relative="1" x="0.0214" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="544" />
+              <mxPoint x="680" y="544" />
+            </Array>
+            <mxPoint x="280" y="544" as="sourcePoint" />
+            <mxPoint x="745.7855236222767" y="555" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="impl_label0" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Business specifications and sample data" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="517" as="geometry" />
+        </mxCell>
+        <mxCell id="impl_label1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Data mapping and detection rules" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="546" as="geometry" />
+        </mxCell>
+        <mxCell id="impl_flow2" edge="1" parent="1" source="system" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;exitX=0.001;exitY=0.556;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" x="-0.0044" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="604" />
+              <mxPoint x="696" y="604" />
+            </Array>
+            <mxPoint x="746.770854757988" y="605" as="sourcePoint" />
+            <mxPoint x="280" y="604" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="impl_label2" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Validation and configuration test results" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="576" as="geometry" />
+        </mxCell>
+        <mxCell id="impl_label3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Onboarding and handover status" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="606" as="geometry" />
+        </mxCell>
+        <mxCell id="sources" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=20;" value="Enterprise Systems&lt;br&gt;(Data Sources)" vertex="1">
+          <mxGeometry height="140" width="235" x="41" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="sources_flow0" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0004" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="894" />
+              <mxPoint x="790.24" y="894" />
+            </Array>
+            <mxPoint x="280" y="894" as="sourcePoint" />
+            <mxPoint x="790.2382303659697" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sources_label0" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Transaction data (REST API)" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="866" as="geometry" />
+        </mxCell>
+        <mxCell id="sources_flow1" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0013" as="geometry">
+            <Array as="points">
+              <mxPoint x="678" y="924" />
+              <mxPoint x="809.93" y="924" />
+            </Array>
+            <mxPoint x="280" y="924" as="sourcePoint" />
+            <mxPoint x="809.9342219125178" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sources_label1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Transaction events (Webhook)" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="896" as="geometry" />
+        </mxCell>
+        <mxCell id="sources_flow2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0006" as="geometry">
+            <Array as="points">
+              <mxPoint x="835.68" y="954" />
+              <mxPoint x="696" y="954" />
+            </Array>
+            <mxPoint x="835.6832327484501" y="770" as="sourcePoint" />
+            <mxPoint x="280" y="954" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sources_label2" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Data ingestion acknowledgements" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="926" as="geometry" />
+        </mxCell>
+        <mxCell id="sources_flow3" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0014" as="geometry">
+            <Array as="points">
+              <mxPoint x="870" y="984" />
+              <mxPoint x="714" y="984" />
+            </Array>
+            <mxPoint x="871.0620304177237" y="795" as="sourcePoint" />
+            <mxPoint x="280" y="984" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sources_label3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Validation and ingestion errors" vertex="1">
+          <mxGeometry height="24" width="388" x="278" y="956" as="geometry" />
+        </mxCell>
+        <mxCell id="sme" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=20;" value="SME Admin" vertex="1">
+          <mxGeometry height="140" width="235" x="1724" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="sme_flow0" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="0.4009" as="geometry">
+            <Array as="points">
+              <mxPoint x="1640" y="210" />
+              <mxPoint x="1175.5" y="210" />
+              <mxPoint x="1175.5" y="340" />
+            </Array>
+            <mxPoint x="1720" y="210" as="sourcePoint" />
+            <mxPoint x="1175.4992877478423" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sme_label0" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Workspace members and permissions" vertex="1">
+          <mxGeometry height="24" width="388" x="1255" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="sme_flow1" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="0.3368" as="geometry">
+            <Array as="points">
+              <mxPoint x="1660" y="230" />
+              <mxPoint x="1198.56" y="230" />
+            </Array>
+            <mxPoint x="1720" y="230" as="sourcePoint" />
+            <mxPoint x="1198.5572965166477" y="415" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sme_label1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Business requirements and confirmations" vertex="1">
+          <mxGeometry height="24" width="388" x="1260" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="sme_flow2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.2243" as="geometry">
+            <Array as="points">
+              <mxPoint x="1216.33" y="254" />
+              <mxPoint x="1680" y="254" />
+            </Array>
+            <mxPoint x="1216.3330765278392" y="440" as="sourcePoint" />
+            <mxPoint x="1720" y="254" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sme_label2" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Workspace and member information" vertex="1">
+          <mxGeometry height="24" width="388" x="1270" y="234" as="geometry" />
+        </mxCell>
+        <mxCell id="sme_flow3" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;exitX=0.971;exitY=0.314;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" x="-0.0684" as="geometry">
+            <Array as="points">
+              <mxPoint x="1237" y="280" />
+            </Array>
+            <mxPoint x="1237.21" y="480.1399999999999" as="sourcePoint" />
+            <mxPoint x="1717" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sme_label3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Dashboards, alerts and reports" vertex="1">
+          <mxGeometry height="24" width="388" x="1270" y="258" as="geometry" />
+        </mxCell>
+        <mxCell id="op" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=20;" value="Operator" vertex="1">
+          <mxGeometry height="140" width="235" x="1722" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="op_label0" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="CSV/Excel transaction data" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="op_label1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Case assignments; investigation outcomes" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="546" as="geometry" />
+        </mxCell>
+        <mxCell id="op_label2" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Transactions, Rule Alerts and AI Alerts" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="576" as="geometry" />
+        </mxCell>
+        <mxCell id="op_label3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="&lt;code&gt;Detection results&lt;/code&gt;, dashboards and reports" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="606" as="geometry" />
+        </mxCell>
+        <mxCell id="inv" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;fontFamily=Arial;fontSize=20;" value="Investigator" vertex="1">
+          <mxGeometry height="140" width="235" x="1722" y="870" as="geometry" />
+        </mxCell>
+        <mxCell id="inv_flow0" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0004" as="geometry">
+            <Array as="points">
+              <mxPoint x="1340" y="894" />
+              <mxPoint x="1209.76" y="894" />
+            </Array>
+            <mxPoint x="1720" y="894" as="sourcePoint" />
+            <mxPoint x="1209.7617696340303" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inv_label0" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Investigation findings and conclusions" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="866" as="geometry" />
+        </mxCell>
+        <mxCell id="inv_flow1" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0013" as="geometry">
+            <Array as="points">
+              <mxPoint x="1322" y="924" />
+              <mxPoint x="1190.07" y="924" />
+            </Array>
+            <mxPoint x="1720" y="924" as="sourcePoint" />
+            <mxPoint x="1190.0657780874822" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inv_label1" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Investigation reports" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="896" as="geometry" />
+        </mxCell>
+        <mxCell id="inv_flow2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="0.0004" as="geometry">
+            <Array as="points">
+              <mxPoint x="1164.32" y="954" />
+              <mxPoint x="1304" y="954" />
+            </Array>
+            <mxPoint x="1164.31676725155" y="770" as="sourcePoint" />
+            <mxPoint x="1720" y="954" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inv_label2" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="Assigned cases and transaction context" vertex="1">
+          <mxGeometry height="24" width="388" x="1334" y="926" as="geometry" />
+        </mxCell>
+        <mxCell id="inv_flow3" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;" value="">
+          <mxGeometry relative="1" x="-0.0001" as="geometry">
+            <Array as="points">
+              <mxPoint x="1128.94" y="984" />
+              <mxPoint x="1286" y="984" />
+            </Array>
+            <mxPoint x="1128.9379695822763" y="795" as="sourcePoint" />
+            <mxPoint x="1720" y="984" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inv_label3" parent="1" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;" value="&lt;code&gt;Transaction details and recorded investigation information&lt;/code&gt;" vertex="1">
+          <mxGeometry height="24" width="548" x="1163" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="xWcuebWxARIZ5gHafpi_-2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;entryX=0.002;entryY=0.438;entryDx=0;entryDy=0;entryPerimeter=0;" value="">
+          <mxGeometry relative="1" x="0.0214" as="geometry">
+            <Array as="points">
+              <mxPoint x="659" y="571" />
+              <mxPoint x="679" y="571" />
+            </Array>
+            <mxPoint x="279" y="571" as="sourcePoint" />
+            <mxPoint x="745" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xWcuebWxARIZ5gHafpi_-4" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;exitX=0.007;exitY=0.606;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" x="0.0033" as="geometry">
+            <Array as="points">
+              <mxPoint x="721" y="629" />
+              <mxPoint x="697" y="629" />
+            </Array>
+            <mxPoint x="750.5699999999999" y="629.06" as="sourcePoint" />
+            <mxPoint x="281" y="629" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xWcuebWxARIZ5gHafpi_-5" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;exitX=0.001;exitY=0.556;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" x="-0.0044" as="geometry">
+            <Array as="points">
+              <mxPoint x="1696" y="540" />
+              <mxPoint x="1672" y="540" />
+            </Array>
+            <mxPoint x="1722" y="540" as="sourcePoint" />
+            <mxPoint x="1256" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xWcuebWxARIZ5gHafpi_-6" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;exitX=0.001;exitY=0.556;exitDx=0;exitDy=0;exitPerimeter=0;" value="">
+          <mxGeometry relative="1" x="-0.0044" as="geometry">
+            <Array as="points">
+              <mxPoint x="1695" y="570" />
+              <mxPoint x="1671" y="570" />
+            </Array>
+            <mxPoint x="1721" y="570" as="sourcePoint" />
+            <mxPoint x="1255" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xWcuebWxARIZ5gHafpi_-7" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;entryX=0.002;entryY=0.438;entryDx=0;entryDy=0;entryPerimeter=0;" value="">
+          <mxGeometry relative="1" x="0.0214" as="geometry">
+            <Array as="points">
+              <mxPoint x="1635" y="601" />
+              <mxPoint x="1655" y="601" />
+            </Array>
+            <mxPoint x="1255" y="601" as="sourcePoint" />
+            <mxPoint x="1721" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xWcuebWxARIZ5gHafpi_-8" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.2;noEdgeStyle=1;entryX=0.002;entryY=0.438;entryDx=0;entryDy=0;entryPerimeter=0;" value="">
+          <mxGeometry relative="1" x="0.0214" as="geometry">
+            <Array as="points">
+              <mxPoint x="1630" y="628" />
+              <mxPoint x="1650" y="628" />
+            </Array>
+            <mxPoint x="1250" y="628" as="sourcePoint" />
+            <mxPoint x="1716" y="627" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

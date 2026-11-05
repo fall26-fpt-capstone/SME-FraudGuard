@@ -35,6 +35,11 @@
     "bytes": 4164
   },
   {
+    "name": "cloudinary",
+    "source": "https://raw.githubusercontent.com/gilbarbara/logos/main/logos/cloudinary.svg",
+    "bytes": 15474
+  },
+  {
     "name": "vnpay",
     "source": "https://1889324617.cloud.edgevnpay.vn/assets/images/logo-icon/logo-primary.svg",
     "bytes": 27007

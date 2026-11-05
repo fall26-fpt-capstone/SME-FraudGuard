@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent
 WIDTH, HEIGHT = 1200, 900
 parts = [f'''<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}">
 <title>SME-FraudGuard system architecture</title>
-<desc>Cloudflare provides DNS resolution. Web portals and the modular-monolith backend are hosted on AWS. The backend integrates with Neon PostgreSQL, customer systems, an AI service, domain email and VNPay. AI hosting and the email provider are unspecified.</desc>
+<desc>Cloudflare provides DNS resolution. Web portals and the modular-monolith backend are hosted on AWS. The backend integrates with Neon PostgreSQL, Cloudinary protected file storage, customer systems, an AI service, domain email and VNPay. AI hosting and the email provider are unspecified.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#263746"/></marker></defs>
 <rect width="1200" height="900" fill="white"/>
 <g font-family="Arial, sans-serif" fill="#15232f" stroke-linecap="round" stroke-linejoin="round">''']
@@ -66,6 +66,12 @@ line('610,425 610,315', dash=True)
 text(634, 366, 'REST API', 21, 'start', True)
 text(634, 390, 'HTTPS', 20, 'start')
 
+box(920, 200, 250, 160, 'File Storage')
+logo('cloudinary', 948, 249, 194, 49)
+text(1045, 335, 'Protected files', 20)
+line('760,455 840,455 840,280 920,280', both=True)
+text(1045, 184, 'HTTPS upload / retrieval', 19)
+
 box(920, 425, 250, 160, 'Database')
 logo('neon', 955, 466, 48, 48)
 text(1020, 499, 'NEON', 29, 'start', True)
@@ -109,4 +115,4 @@ ET.fromstring(svg)
 output=ROOT/'exports'/'architecture.svg'
 output.parent.mkdir(exist_ok=True)
 output.write_text(svg,encoding='utf-8')
-print(f'Generated {output}; validated 8 logo assets and SVG bounds.')
+print(f'Generated {output}; validated 9 logo assets and SVG bounds.')

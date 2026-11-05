@@ -7,7 +7,7 @@ The following diagram sources support Report 4:
 | 1.1 System Architecture | [PlantUML relationship model](system-design/architecture.puml), [SVG layout renderer](system-design/render_architecture.py), [PNG](system-design/exports/architecture.png), [SVG](system-design/exports/architecture.svg) |
 | 1.2 Package Diagram | [Overview source](system-design/package-overview.puml), [layer source](system-design/package-layers.puml), [overview PNG](system-design/exports/package-overview.png), [layer PNG](system-design/exports/package-layers.png) |
 | 2. Database Design | [Model, editable sources and exports](database-design/README.md) |
-| 3. Detailed Design | [SRS-aligned class, sequence and state sources, catalogue and exports](detailed-design/README.md) |
+| 3. Detailed Design | [SRS-aligned class, sequence, activity and state-machine sources, catalogue and exports](detailed-design/README.md) |
 
 Package diagrams reflect the agreed backend scaffold: eleven business modules, common infrastructure and integration adapters. The layer diagram shows permitted design dependencies, not implemented runtime calls. The ERD is a proposed documentation model, not an applied database migration. Detailed Design follows the finalized functional requirements; older provisional ERD notes are not overrides of confirmed SRS decisions. No application contracts, schema or migrations are changed by these documentation assets.
 
@@ -25,7 +25,9 @@ Run `python docs/diagrams/report-4-sdd/system-design/render_architecture.py` fro
 
 Cloudflare is shown for DNS resolution, consistent with the team's selected scope and [Cloudflare DNS documentation](https://developers.cloudflare.com/dns/). The diagram does not select Tunnel, proxy mode, an AWS compute product, AI hosting placement, or an email vendor. The separate AI node represents a logical service, not a claim that an external AI vendor hosts it. VNPay is the team's current gateway choice.
 
-Brand SVG snapshots for AWS, Cloudflare, Next.js, React, Spring, PostgreSQL and Neon are from the [SVG Logos collection](https://github.com/gilbarbara/logos); VNPay's SVG comes from its [official site](https://vnpay.vn/). Exact asset URLs are retained in [sources.json](system-design/assets/sources.json). Logos retain their respective owners' marks. Browser, AI and email symbols are generic vector artwork in the renderer.
+Cloudinary is the selected protected file-storage provider, connected to the backend over HTTPS. PostgreSQL retains file metadata and workspace-scoped asset references. Upload/retrieval authorization and temporary-file cleanup remain backend responsibilities; public delivery of sensitive documents is not permitted. Cloudinary credentials, delivery configuration and retention details remain integration/deployment specifications. See [Cloudinary upload parameters](https://cloudinary.com/documentation/upload_parameters) and [access-control documentation](https://cloudinary.com/documentation/control_access_to_media).
+
+Brand SVG snapshots for AWS, Cloudflare, Cloudinary, Next.js, React, Spring, PostgreSQL and Neon are from the [SVG Logos collection](https://github.com/gilbarbara/logos); VNPay's SVG comes from its [official site](https://vnpay.vn/). Exact asset URLs are retained in [sources.json](system-design/assets/sources.json). Logos retain their respective owners' marks. Browser, AI and email symbols are generic vector artwork in the renderer.
 
 ## Package diagrams
 

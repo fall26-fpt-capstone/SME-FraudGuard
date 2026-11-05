@@ -69,7 +69,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Authenticated Session Lifecycle"
       }
@@ -141,7 +141,7 @@
         ]
       }
     ],
-    "states": []
+    "activities": []
   },
   {
     "number": 3,
@@ -222,7 +222,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Subscription Entitlement Lifecycle"
       },
@@ -302,7 +302,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Workspace Readiness, Handover and Activation Lifecycle"
       }
@@ -362,7 +362,7 @@
         ]
       }
     ],
-    "states": []
+    "activities": []
   },
   {
     "number": 6,
@@ -441,7 +441,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Candidate Configuration Testing and Application Lifecycle"
       }
@@ -537,7 +537,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Workspace API Credential Lifecycle"
       },
@@ -600,7 +600,7 @@
         ]
       }
     ],
-    "states": []
+    "activities": []
   },
   {
     "number": 9,
@@ -668,7 +668,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Transaction Detection and Rule-Based Fallback Processing"
       },
@@ -745,7 +745,7 @@
         ]
       }
     ],
-    "states": []
+    "activities": []
   },
   {
     "number": 11,
@@ -821,7 +821,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Investigation Case Lifecycle"
       }
@@ -881,7 +881,7 @@
         ]
       }
     ],
-    "states": [
+    "activities": [
       {
         "title": "Enterprise Report Generation Lifecycle"
       }
@@ -945,7 +945,7 @@
         ]
       }
     ],
-    "states": []
+    "activities": []
   },
   {
     "number": 14,
@@ -1004,6 +1004,6 @@
         ]
       }
     ],
-    "states": []
+    "activities": []
   }
 ]

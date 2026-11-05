@@ -1,0 +1,44 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Open" as Open
+state "Investigating" as Investigating
+state "Pending Review" as Review
+state "Closed" as Closed
+state ReportCheck <<choice>>
+state ReviewDecision <<choice>>
+[*] --> Open
+Open -down-> Investigating : Assign investigator\nor start self-investigation
+Investigating -down-> ReportCheck : Submit report
+ReportCheck -up-> Investigating : [invalid or not saved]
+ReportCheck -down-> Review : [valid report; saved]
+Review -down-> ReviewDecision : Operator records decision
+ReviewDecision -up-> Investigating : [more work requested]
+ReviewDecision -down-> Closed : [final conclusion confirmed]
+Closed --> [*]
+@enduml

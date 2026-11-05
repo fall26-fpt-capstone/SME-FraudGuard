@@ -1,0 +1,41 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Implementation in Progress" as Implementing
+state "Awaiting Handover Review" as Reviewing
+state "Awaiting Activation" as Approved
+state "Operational" as Operational
+state HandoverDecision <<choice>>
+[*] --> Implementing
+Implementing -down-> Reviewing : Staff confirms readiness
+Reviewing -down-> HandoverDecision : Platform Admin records decision
+HandoverDecision -up-> Implementing : [returned with comments]
+HandoverDecision -down-> Approved : [approved]
+Approved -down-> Operational : SME Admin activates workspace
+Operational --> [*]
+@enduml
