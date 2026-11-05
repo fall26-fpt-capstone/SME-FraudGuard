@@ -2,6 +2,8 @@
 
 This directory is the repository snapshot of the project's working documentation.
 
+The [Review 2 documentation snapshot (`review-2`)](https://github.com/fall26-fpt-capstone/SME-FraudGuard/tree/refs/tags/review-2) is fixed at commit `fdf1d8b`. BM01 links to this snapshot. BM02's original review was run against commit `3be42a8` before the tag was created; its findings and evidence retain that baseline. The snapshot contains reference/demo frontend code and a backend scaffold, with implementation gaps recorded as Planned. The tag is not evidence of executed business tests or deployment readiness.
+
 ## Software v1 working specification
 
 Read [Software v1 business specification](02_Reports/SOFTWARE_V1_BUSINESS_SPEC.md) for the team's consolidated business rules, role boundaries, workflows, acceptance criteria, and open decisions. It is a working input to the SRS, SDD, and ERD, not a statement of implemented behavior or an approved replacement for the [current registration proposal](01_Registration/SEP490_FA26SE215_R2_Registration.pdf). Use registration v2 and the latest confirmed SRS decisions when an older working-spec statement differs; registration v1 is obsolete.
