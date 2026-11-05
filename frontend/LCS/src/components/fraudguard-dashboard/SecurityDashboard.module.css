@@ -3357,3 +3357,654 @@
 .setupFooter p { flex: 1 1 320px; margin: 0; line-height: 1.6; }
 .setupFooter button { min-height: 40px; }
 @media(max-width:680px) { .setupFooter button { width: 100%; min-height: 44px; } }
+
+/* ── Implementation Staff Onboarding & Specification Clarification ── */
+.onboardingContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.onboardingKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.onboardingKpiCard {
+  border: 1px solid var(--security-border);
+  border-radius: var(--panel-radius);
+  background: var(--security-panel);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onboardingKpiLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--security-text-secondary);
+}
+
+.onboardingKpiValue {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--security-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.onboardingKpiSub {
+  font-size: 12px;
+  color: var(--security-muted);
+}
+
+.onboardingFilterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--security-border);
+  background: var(--security-panel);
+}
+
+.onboardingSearchBox {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.onboardingSearchBox svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--security-muted);
+  pointer-events: none;
+}
+
+.onboardingSearchInput {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid var(--security-border-strong);
+  border-radius: 4px;
+  background: var(--security-control);
+  color: var(--security-text);
+  font-size: 13px;
+}
+
+.onboardingProfileHeader {
+  border: 1px solid var(--security-border);
+  border-radius: var(--panel-radius);
+  background: var(--security-panel);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.onboardingTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.onboardingTitleMain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.onboardingTitleHeading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.onboardingTitleHeading h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--security-text);
+  letter-spacing: -0.01em;
+}
+
+.onboardingMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--security-text-secondary);
+}
+
+.onboardingMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.onboardingStepperWrap {
+  border-top: 1px solid var(--security-border);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onboardingStepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.onboardingStepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-control);
+  color: var(--security-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.onboardingStepItemActive {
+  border-color: var(--security-blue);
+  background: var(--security-blue-bg);
+  color: var(--security-text);
+  font-weight: 600;
+}
+
+.onboardingStepItemDone {
+  border-color: var(--low-border);
+  background: var(--low-bg);
+  color: var(--low-text);
+}
+
+.onboardingStepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--security-panel);
+  border: 1px solid var(--security-border-strong);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.onboardingStepNote {
+  font-size: 11px;
+  color: var(--security-muted);
+  margin: 0;
+}
+
+/* Unified 2-Column Equal Grid (strictly aligned center line across rows) */
+.onboardingTwoColGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.onboardingCard {
+  border: 1px solid var(--security-border);
+  border-radius: var(--panel-radius);
+  background: var(--security-panel);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.onboardingCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--security-border);
+}
+
+.onboardingCardHeader h2,
+.onboardingCardHeader h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--security-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboardingCardSub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--security-text-secondary);
+  line-height: 1.5;
+}
+
+.onboardingCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.onboardingInfoList {
+  display: grid;
+  grid-template-columns: minmax(130px, 160px) minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.onboardingInfoList dt {
+  color: var(--security-text-secondary);
+  font-weight: 500;
+}
+
+.onboardingInfoList dd {
+  margin: 0;
+  color: var(--security-text);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.onboardingScopeCallout {
+  padding: 12px 14px;
+  border: 1px solid var(--security-border-strong);
+  border-left: 3px solid var(--security-blue);
+  border-radius: 4px;
+  background: var(--security-control);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--security-text);
+}
+
+.onboardingWarningCallout {
+  padding: 14px 16px;
+  border: 1px solid var(--high-border);
+  border-left: 3px solid var(--security-orange);
+  border-radius: 4px;
+  background: var(--high-bg);
+  color: var(--high-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.onboardingSuccessCallout {
+  padding: 14px 16px;
+  border: 1px solid var(--low-border);
+  border-left: 3px solid var(--security-green);
+  border-radius: 4px;
+  background: var(--low-bg);
+  color: var(--low-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.onboardingDocItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-control);
+}
+
+.onboardingDocMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.onboardingDocName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--security-text);
+  overflow-wrap: anywhere;
+}
+
+.onboardingDocDesc {
+  font-size: 12px;
+  color: var(--security-text-secondary);
+  line-height: 1.5;
+}
+
+.onboardingDocActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.onboardingEmptyBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border: 1px dashed var(--security-border-strong);
+  border-radius: 4px;
+  background: var(--security-control);
+  color: var(--security-text-secondary);
+  flex: 1;
+}
+
+.onboardingEmptyBox p {
+  margin: 0;
+  font-size: 13px;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.onboardingInlineForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--security-blue);
+  border-radius: 4px;
+  background: var(--security-control);
+}
+
+.onboardingFormRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.onboardingFieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--security-text-secondary);
+}
+
+.onboardingFieldInput,
+.onboardingFieldSelect,
+.onboardingFieldTextarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--security-border-strong);
+  border-radius: 4px;
+  background: var(--security-panel);
+  color: var(--security-text);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.onboardingFieldTextarea {
+  min-height: 84px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.onboardingItemRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-control);
+}
+
+.onboardingItemContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.onboardingItemTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--security-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.onboardingItemDetail {
+  font-size: 12px;
+  color: var(--security-text-secondary);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.onboardingActionBar {
+  border: 1px solid var(--security-border);
+  border-radius: var(--panel-radius);
+  background: var(--security-panel);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.onboardingOversightNote {
+  font-size: 12px;
+  color: var(--security-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1 1 320px;
+}
+
+.onboardingActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.onboardingBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--action-bg);
+  border-radius: 4px;
+  background: var(--action-bg);
+  color: var(--action-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.onboardingBtnPrimary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.onboardingBtnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.onboardingBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--security-border-strong);
+  border-radius: 4px;
+  background: var(--security-control);
+  color: var(--security-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.onboardingBtnSecondary:hover:not(:disabled) {
+  background: var(--security-control-hover);
+}
+
+.onboardingBtnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.onboardingBtnDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--critical-border);
+  border-radius: 4px;
+  background: var(--critical-bg);
+  color: var(--critical-text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.onboardingModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(15, 23, 42, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.onboardingModalDialog {
+  width: min(680px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid var(--security-border-strong);
+  border-radius: var(--panel-radius);
+  background: var(--security-panel);
+  color: var(--security-text);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+.onboardingModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--security-border);
+}
+
+.onboardingModalHeader h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--security-text);
+}
+
+.onboardingModalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.onboardingModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--security-border);
+  background: var(--security-control);
+}
+
+.onboardingStageBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--security-border-strong);
+  background: var(--security-control);
+  color: var(--security-text-secondary);
+  white-space: nowrap;
+}
+
+.onboardingStageBadge[data-stage="intake"] {
+  border-color: var(--security-blue);
+  background: var(--security-blue-bg);
+  color: var(--security-blue);
+}
+
+.onboardingStageBadge[data-stage="supplement_pending"],
+.onboardingStageBadge[data-stage="waiting_confirmation"],
+.onboardingStageBadge[data-stage="waiting_reconfirmation"] {
+  border-color: var(--high-border);
+  background: var(--high-bg);
+  color: var(--high-text);
+}
+
+.onboardingStageBadge[data-stage="clarifying"],
+.onboardingStageBadge[data-stage="revising"] {
+  border-color: var(--medium-border);
+  background: var(--medium-bg);
+  color: var(--medium-text);
+}
+
+.onboardingStageBadge[data-stage="confirmed"] {
+  border-color: var(--low-border);
+  background: var(--low-bg);
+  color: var(--low-text);
+}
+
+@media (max-width: 1024px) {
+  .onboardingTwoColGrid,
+  .onboardingKpiGrid,
+  .onboardingStepper,
+  .onboardingFormRow {
+    grid-template-columns: 1fr;
+  }
+}

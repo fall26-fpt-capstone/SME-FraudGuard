@@ -16,10 +16,8 @@ import type {
   UserProfile,
 } from "@/types/fraudguard";
 import { previewTransactionImport } from "@/utils/transaction-import";
-import { normalizeFields, validateDataSchema } from '@/utils/ingestion-validation';
-import { parseRuleSetSamples } from "@/utils/rule-set";
 import { canUpdateCase, isActiveInvestigation, isCaseAssignee } from "@/utils/case-workflow";
-import { auditForUser, visibleEnterprises, canDeploy, transactionsForEnterprise } from "@/utils/enterprise";
+import { auditForUser, canDeploy, evaluateSetupReadiness, reconcileEnterpriseProjects, visibleEnterprises, transactionsForEnterprise, validateOnboardingSave } from "@/utils/enterprise";
 import { demoEnterprises } from "@/data/fraudguard-enterprises";
 import { type Enterprise } from "@/types/enterprise";
 import { MembersView } from "./MembersView";
@@ -97,22 +95,30 @@ function FraudGuardDashboardContent({
       const saved = JSON.parse(current || localStorage.getItem('fraudguard-demo-workspace-v2') || 'null');
       if (saved && Array.isArray(saved.rules) && saved.rules.every((r: RuleTemplate) => r.id && r.conditionGroup?.children && r.appliesTo?.projects)) {
         setRules(saved.rules);
-        if (current && Array.isArray(saved.enterprises)) setEnterprises(saved.enterprises);
+        const mergedProjects = Array.isArray(saved.projects) && saved.projects.every((p: ProjectItem) => p.id && p.quota)
+          ? [...saved.projects, ...defaultProjects.filter(p => !saved.projects.some((old: ProjectItem) => old.id === p.id))]
+          : defaultProjects;
+        setProjects(mergedProjects);
+        let loadedRuleSets: ManagedRuleSet[] = [];
         if (Array.isArray(saved.ruleSets)) {
-          if (current) { setRuleSets(saved.ruleSets); setLegacyUnassigned(saved.legacyUnassigned ?? []); }
-          else { const migrated = migrateProjectSets(saved.ruleSets, demoEnterprises); setRuleSets(migrated.sets); setLegacyUnassigned(migrated.unassigned); }
+          if (current) { loadedRuleSets = saved.ruleSets; setRuleSets(saved.ruleSets); setLegacyUnassigned(saved.legacyUnassigned ?? []); }
+          else { const migrated = migrateProjectSets(saved.ruleSets, demoEnterprises); loadedRuleSets = migrated.sets; setRuleSets(migrated.sets); setLegacyUnassigned(migrated.unassigned); }
+        }
+        if (current && Array.isArray(saved.enterprises)) {
+          setEnterprises(reconcileEnterpriseProjects(saved.enterprises, demoEnterprises, mergedProjects, loadedRuleSets));
         }
         if (Array.isArray(saved.transactions) && saved.transactions.every((tx: TransactionRisk) => tx.id && tx.processedAt && Array.isArray(tx.triggeredRules))) setTransactions(saved.transactions);
         if (Array.isArray(saved.auditLogs) && saved.auditLogs.every((log: AuditLogEntry) => log.id && log.actor && log.action)) setAuditLogs(saved.auditLogs);
-        if (Array.isArray(saved.projects) && saved.projects.every((p: ProjectItem) => p.id && p.quota)) setProjects([...saved.projects, ...defaultProjects.filter(p => !saved.projects.some((old: ProjectItem) => old.id === p.id))]);
       }
     } catch { setStorageError(true); }
     setRestored(true);
   }, []);
   useEffect(() => {
     if (!restored) return;
-    try { localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises, legacyUnassigned, projects, transactions, auditLogs })); }
-    catch { setStorageError(true); }
+    try {
+      localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises, legacyUnassigned, projects, transactions, auditLogs }));
+      setStorageError(false);
+    } catch { setStorageError(true); }
   }, [rules, ruleSets, enterprises, legacyUnassigned, projects, transactions, auditLogs, restored]);
 
   useEffect(() => { if (restored) { try { localStorage.setItem('fraudguard-demo-users-v1', JSON.stringify(users.filter(u => u.enterpriseId))); } catch { setStorageError(true); } } }, [users, restored]);
@@ -403,17 +409,76 @@ function FraudGuardDashboardContent({
         return <OnboardingView enterprises={accessibleEnterprises} users={users} currentUser={currentUser} sets={ruleSets} onCreate={(name,staffId,adminName,adminEmail)=>{
           if(!canProvisionEnterpriseAdmin(currentUser,adminName,adminEmail,users)||!name.trim()||enterprises.some(e=>e.name.toLowerCase()===name.trim().toLowerCase())||!users.some(u=>u.id===staffId&&u.role==='Implementation Staff'))return false;
           const id=crypto.randomUUID(),projectId='workspace-'+id;
-          setUsers(prev=>[...prev,{id:crypto.randomUUID(),enterpriseId:id,name:adminName.trim(),email:adminEmail.trim().toLowerCase(),role:'SME Admin',title:'Quản trị doanh nghiệp',avatarLetter:adminName.trim().charAt(0).toUpperCase(),avatarBg:'#7c3aed',description:'Tài khoản quản trị demo của '+name.trim()}]);
-          setEnterprises(prev=>[...prev,{id,name:name.trim(),deploymentStaffId:staffId,projectIds:[projectId],specification:{requirements:'',fields:'',conditions:'',sampleJson:'',updatedAt:new Date().toISOString()}}]);
-          setProjects(prev=>[...prev,{id:projectId,name:name.trim(),code:id,description:'Phạm vi triển khai chính',environment:'Staging',apiKey:'',quota:{used:0,total:0,resetDate:''},status:'Inactive',createdAt:new Date().toISOString()}]);
+          const code = name.trim().replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() + '-2026';
+          const nextUsers: UserProfile[] = [...users,{id:crypto.randomUUID(),enterpriseId:id,name:adminName.trim(),email:adminEmail.trim().toLowerCase(),role:'SME Admin',title:'Quản trị doanh nghiệp',avatarLetter:adminName.trim().charAt(0).toUpperCase(),avatarBg:'#7c3aed',description:'Tài khoản quản trị demo của '+name.trim()}];
+          const nextEnterprises: Enterprise[] = [...enterprises,{id,code,name:name.trim(),deploymentStaffId:staffId,projectIds:[projectId],specification:{stage:'intake',representativeName:adminName.trim(),representativeRole:'Quản trị Doanh nghiệp (SME Admin)',representativeEmail:adminEmail.trim().toLowerCase(),smeAdminName:adminName.trim(),smeAdminEmail:adminEmail.trim().toLowerCase(),intakeDocuments:[],supplementRequests:[],conditionsList:[],schema:[],feedbackHistory:[],dataAndEvaluationClarified:false,requirements:'',fields:'',conditions:'',sampleJson:'[]',updatedAt:new Date().toISOString()}}];
+          const nextProjects: ProjectItem[] = [...projects,{id:projectId,name:name.trim(),code:id,description:'Phạm vi triển khai chính',environment:'Staging',apiKey:'',quota:{used:0,total:0,resetDate:''},status:'Inactive',createdAt:new Date().toISOString()}];
+          if (typeof localStorage !== 'undefined') {
+            try {
+              localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises: nextEnterprises, legacyUnassigned, projects: nextProjects, transactions, auditLogs }));
+              localStorage.setItem('fraudguard-demo-users-v1', JSON.stringify(nextUsers.filter(u => u.enterpriseId)));
+              setStorageError(false);
+            } catch {
+              setStorageError(true);
+              return false;
+            }
+          }
+          setUsers(nextUsers);
+          setEnterprises(nextEnterprises);
+          setProjects(nextProjects);
           recordAudit('PROJECT_UPDATED',id,'Tạo workspace và phân công triển khai: '+staffId,id);return true;
-        }} onSave={(id,specification)=>{
-          const owner=enterprises.find(e=>e.id===id);if(!owner||!canDeploy(currentUser,owner))return false;
-          if(specification.confirmedAt){try{if(!specification.schema?.length)return false;validateDataSchema(specification.schema);parseRuleSetSamples(specification.sampleJson).forEach(sample=>normalizeFields(sample.fields,specification.schema!));if(!specification.requirements.trim()||!specification.fields.trim()||!specification.conditions.trim()||parseRuleSetSamples(specification.sampleJson).some(s=>!owner.projectIds.includes(s.projectId)))return false;}catch{return false;}}
-          const spec={...specification,confirmedBy:specification.confirmedAt?currentUser.id:undefined};
-          setEnterprises(prev=>prev.map(e=>e.id===id?{...e,specification:spec}:e));
-          setRuleSets(prev=>prev.map(set=>set.enterpriseId===id&&set.draft?{...set,draft:{...set.draft,test:undefined}}:set));
-          recordAudit('PROJECT_UPDATED',id,spec.confirmedAt?'Xác nhận đặc tả':'Lưu đặc tả nháp');return true;
+        }} onProvisionWorkspace={id=>{
+          const target=enterprises.find(e=>e.id===id);
+          if(currentUser.role!=='Platform Admin'||!target||target.projectIds.length>0)return false;
+          const existingProject=projects.find(p=>p.id==='workspace-'+id||p.code===id);
+          const projectId=existingProject?existingProject.id:'workspace-'+id;
+          const nextProjects: ProjectItem[] = existingProject
+            ? projects
+            : [...projects,{id:projectId,name:target.name,code:id,description:'Phạm vi triển khai chính',environment:'Staging',apiKey:'',quota:{used:0,total:0,resetDate:''},status:'Inactive',createdAt:new Date().toISOString()}];
+          const nextEnterprises: Enterprise[] = enterprises.map(e=>{
+            if(e.id!==id)return e;
+            const updated:Enterprise={...e,projectIds:[projectId]};
+            if(updated.specification){
+              const readiness=evaluateSetupReadiness(updated.specification,language==='vi',updated);
+              updated.specification={
+                ...updated.specification,
+                confirmedAt:readiness.ready?updated.specification.confirmedAt||updated.specification.enterpriseConfirmation?.confirmedAt||new Date().toISOString():undefined,
+                confirmedBy:readiness.ready?updated.specification.enterpriseConfirmation?.confirmedBy||updated.specification.confirmedBy||currentUser.name:undefined,
+              };
+            }
+            return updated;
+          });
+          if (typeof localStorage !== 'undefined') {
+            try {
+              localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises: nextEnterprises, legacyUnassigned, projects: nextProjects, transactions, auditLogs }));
+              setStorageError(false);
+            } catch {
+              setStorageError(true);
+              return false;
+            }
+          }
+          if(!existingProject) setProjects(nextProjects);
+          setEnterprises(nextEnterprises);
+          recordAudit('PROJECT_UPDATED',id,'Khởi tạo phạm vi workspace: '+projectId,id);return true;
+        }} onSave={(id,specification,auditDetail)=>{
+          const owner=enterprises.find(e=>e.id===id);
+          const check=validateOnboardingSave(owner,currentUser,specification,language==='vi');
+          if(!check.ok||!check.specification)return false;
+          const spec=check.specification;
+          const nextEnterprises=enterprises.map(e=>e.id===id?{...e,specification:spec}:e);
+          const nextRuleSets=ruleSets.map(set=>set.enterpriseId===id&&set.draft?{...set,draft:{...set.draft,test:undefined}}:set);
+          if(typeof localStorage!=='undefined'){
+            try{
+              localStorage.setItem('fraudguard-demo-workspace-v3',JSON.stringify({rules,ruleSets:nextRuleSets,enterprises:nextEnterprises,legacyUnassigned,projects,transactions,auditLogs}));
+              setStorageError(false);
+            }catch{
+              setStorageError(true);
+              return false;
+            }
+          }
+          setEnterprises(nextEnterprises);
+          setRuleSets(nextRuleSets);
+          recordAudit('PROJECT_UPDATED',id,auditDetail||(spec.confirmedAt?'Xác nhận đặc tả':'Cập nhật hồ sơ đặc tả'));return true;
         }} onOpenRules={id=>{setDeploymentEnterpriseId(id);setActiveNavItem('rule-sets');}} />;
       case "rule-sets":
         return <RuleSetsView initialEnterpriseId={deploymentEnterpriseId} key={currentUser.id + deploymentEnterpriseId} sets={ruleSets} rules={rules} projects={projects} enterprises={enterprises} currentUser={currentUser} reviewer={currentUser.name} onOpenLibrary={id => { setDeploymentEnterpriseId(id); setActiveNavItem('rule-templates'); }} onAssign={(enterpriseId, staffId) => { if (currentUser.role !== 'Platform Admin' || !DEMO_USERS.some(u => u.id === staffId && u.role === 'Implementation Staff')) return; setEnterprises(prev => prev.map(e => e.id === enterpriseId ? { ...e, deploymentStaffId: staffId } : e)); recordAudit('PROJECT_UPDATED', enterpriseId, 'Phân công triển khai: ' + staffId); }} onChange={(next, event) => { if (!canChangeEnterpriseSets(ruleSets, next, currentUser, enterprises)) return; setRuleSets(next); for (const changed of next.filter(set => JSON.stringify(ruleSets.find(old => old.id === set.id)) !== JSON.stringify(set))) recordAudit('RULE_UPDATED', changed.id, event, changed.enterpriseId); }} />;
