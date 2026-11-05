@@ -12,7 +12,24 @@ function load(relative, imports = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   const exports = {};
-  vm.runInNewContext(output, { exports, structuredClone, require: (name) => name in imports ? imports[name] : /^@\/(utils|data|config|routes)\//.test(name) ? load(`src/${name.slice(2)}.ts`) : name === './transaction-origin' ? load('src/utils/transaction-origin.ts') : require(name) }, { filename });
+  vm.runInNewContext(output, {
+    exports,
+    structuredClone,
+    require: (name) => {
+      if (name in imports) return imports[name];
+      if (/^@\/(utils|data|config|routes|hooks)\//.test(name)) {
+        const sub = `src/${name.slice(2)}`;
+        return load(fs.existsSync(path.join(root, `${sub}.ts`)) ? `${sub}.ts` : `${sub}.tsx`, imports);
+      }
+      if (name === './transaction-origin') return load('src/utils/transaction-origin.ts', imports);
+      if (name.startsWith('./')) {
+        const base = path.relative(root, path.resolve(path.dirname(filename), name)).replace(/\\/g, '/');
+        if (fs.existsSync(path.join(root, `${base}.tsx`))) return load(`${base}.tsx`, imports);
+        if (fs.existsSync(path.join(root, `${base}.ts`))) return load(`${base}.ts`, imports);
+      }
+      return require(name);
+    },
+  }, { filename });
   return exports;
 }
 
@@ -933,6 +950,572 @@ test('saved draft results remain visible after reopening and stale results are h
  assert.match(render({}),/Khớp kỳ vọng/);assert.doesNotMatch(render({}),/Chờ chạy/);
  assert.match(render({initialSamples:[{...samples[0],fields:{amount:5}}]}),/Chờ chạy/);
  assert.match(render({rules:[{...targetRules[0],conditionGroup:group('AND',[condition('amount','>',30)])}]}),/Chờ chạy/);
+});
+
+function onboardingHarness(staffId = 'usr-deployment', customEnterprises) {
+ const states = [], effectDeps = [], openedRules = [], audits = [];
+ let cursor = 0, effects = [], dirty = false, tree;
+ const react = {
+  useState(initial) {
+   const slot = cursor++;
+   if (!(slot in states)) states[slot] = typeof initial === 'function' ? initial() : initial;
+   return [states[slot], (value) => { const next = typeof value === 'function' ? value(states[slot]) : value; if (!Object.is(next, states[slot])) { states[slot] = next; dirty = true; } }];
+  },
+  useEffect(effect, deps) {
+   const slot = cursor++;
+   if (!effectDeps[slot] || deps.some((d, i) => !Object.is(d, effectDeps[slot][i]))) { effectDeps[slot] = deps; effects.push(effect); }
+  },
+ };
+ const lucideStub = new Proxy({}, { get: () => () => null });
+ const enterpriseUtils = loadEnterprises();
+ const { OnboardingView } = load('src/components/fraudguard-dashboard/OnboardingView.tsx', {
+  react,
+  'lucide-react': lucideStub,
+  '@/utils/enterprise': enterpriseUtils,
+  '@/utils/ingestion-validation': load('src/utils/ingestion-validation.ts'),
+  '@/utils/transaction-file': load('src/utils/transaction-file.ts'),
+  '@/hooks/useDialogFocus': { useDialogFocus: () => null },
+  '@/context/LanguageContext': { useLanguage: () => ({ language: 'vi' }) },
+  './SecurityDashboard.module.css': { default: {} },
+ });
+ const defaultEnterprises = structuredClone(enterpriseUtils.demoEnterprises);
+ const props = {
+  enterprises: customEnterprises || defaultEnterprises,
+  users: loadRoles().DEMO_USERS,
+  currentUser: { id: staffId, name: 'Nhân sự triển khai', email: 'deployment@fraudguard.vn', role: 'Implementation Staff' },
+  sets: [],
+  onCreate: () => true,
+  onProvisionWorkspace(enterpriseId) {
+   const target = props.enterprises.find((e) => e.id === enterpriseId);
+   if (props.currentUser.role !== 'Platform Admin' || !target || target.projectIds.length > 0) return false;
+   const projectId = 'workspace-' + enterpriseId;
+   props.enterprises = props.enterprises.map((e) => {
+    if (e.id !== enterpriseId) return e;
+    const updated = { ...e, projectIds: [projectId] };
+    if (updated.specification) {
+     const readiness = enterpriseUtils.evaluateSetupReadiness(updated.specification, true, updated);
+     updated.specification = {
+      ...updated.specification,
+      confirmedAt: readiness.ready
+       ? updated.specification.confirmedAt || updated.specification.enterpriseConfirmation?.confirmedAt || new Date().toISOString()
+       : undefined,
+      confirmedBy: readiness.ready
+       ? updated.specification.enterpriseConfirmation?.confirmedBy || updated.specification.confirmedBy || props.currentUser.name
+       : undefined,
+     };
+    }
+    return updated;
+   });
+   audits.push({ enterpriseId, auditDetail: 'Khởi tạo phạm vi workspace: ' + projectId });
+   dirty = true;
+   return true;
+  },
+  onSave(enterpriseId, specification, auditDetail) {
+   const owner = props.enterprises.find((e) => e.id === enterpriseId);
+   const check = enterpriseUtils.validateOnboardingSave(owner, props.currentUser, specification, true);
+   if (!check.ok || !check.specification) return false;
+   audits.push({ enterpriseId, auditDetail });
+   props.enterprises = props.enterprises.map((e) => e.id === enterpriseId ? { ...e, specification: check.specification } : e);
+   dirty = true;
+   return true;
+  },
+  onOpenRules(enterpriseId) { openedRules.push(enterpriseId); },
+ };
+ function expandTree(n) {
+  if (Array.isArray(n)) return n.map(expandTree);
+  if (!n || typeof n !== 'object') return n;
+  if (typeof n.type === 'function') return expandTree(n.type(n.props || {}));
+  if (n.props && 'children' in n.props) return { ...n, props: { ...n.props, children: expandTree(n.props.children) } };
+  return n;
+ }
+ function render() {
+  for (let i = 0; i < 10; i++) { cursor = 0; effects = []; dirty = false; tree = expandTree(OnboardingView(props)); effects.forEach((e) => e()); if (!dirty) return; }
+  throw Error('OnboardingView render did not settle');
+ }
+ function nodes() {
+  const result = [];
+  function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n && typeof n === 'object' && n.props) { result.push(n); walk(n.props.children); } }
+  walk(tree);
+  return result;
+ }
+ function textOf(node) {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(textOf).join('');
+  if (node && typeof node === 'object' && nOrProps(node)) return textOf(node.props.children);
+  return '';
+ }
+ function nOrProps(node) { return Boolean(node && node.props); }
+ function button(labelSubstring) {
+  return nodes().find((n) => n.type === 'button' && textOf(n).includes(labelSubstring));
+ }
+ function click(labelSubstring) {
+  const b = button(labelSubstring);
+  assert.ok(b, `Expected button containing "${labelSubstring}"`);
+  assert.ok(!b.props.disabled, `Expected button "${labelSubstring}" to be enabled`);
+  b.props.onClick();
+  render();
+ }
+ render();
+ return { props, nodes, textOf, button, click, render, openedRules, audits };
+}
+
+test('Part A & B: supplement request closes modal into supplement_pending and received supplement returns to intake without jumping to confirmation', () => {
+ const { resolveOnboardingStage } = loadEnterprises();
+ const ui = onboardingHarness('usr-deployment');
+ // Select FastRetail (tenant-fastretail, initial stage: intake)
+ const fastRetailRow = ui.nodes().find((n) => n.type === 'tr' && ui.textOf(n).includes('FastRetail'));
+ assert.ok(fastRetailRow);
+ const openProfileBtn = [];
+ (function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n?.props) { if (n.type === 'button') openProfileBtn.push(n); walk(n.props.children); } })(fastRetailRow);
+ openProfileBtn[0].props.onClick();
+ ui.render();
+
+ let fastRetail = ui.props.enterprises.find((e) => e.id === 'tenant-fastretail');
+ assert.equal(resolveOnboardingStage(fastRetail), 'intake');
+
+ // Open supplement request modal
+ ui.click('Yêu cầu bổ sung thông tin');
+ // Submit supplement request
+ ui.click('Ghi nhận yêu cầu bổ sung');
+ fastRetail = ui.props.enterprises.find((e) => e.id === 'tenant-fastretail');
+ assert.equal(fastRetail.specification.stage, 'supplement_pending');
+ assert.equal(resolveOnboardingStage(fastRetail), 'supplement_pending');
+ assert.equal(fastRetail.specification.supplementRequests[0].guidanceFileName, undefined);
+ assert.equal(fastRetail.specification.confirmedAt, undefined);
+
+ // Record received supplement info -> returns to intake so Staff can continue reviewing
+ ui.click('Ghi nhận đã nhận thông tin bổ sung');
+ const noteTextarea = ui.nodes().find((n) => n.type === 'textarea');
+ noteTextarea.props.onChange({ target: { value: 'Doanh nghiệp đã gửi bổ sung bảng mã kho và quy định hoàn tiền.' } });
+ ui.render();
+ // Click modal confirm button (the second button with that label inside the modal footer)
+ const receiveBtns = ui.nodes().filter((n) => n.type === 'button' && ui.textOf(n).includes('Ghi nhận đã nhận thông tin bổ sung'));
+ receiveBtns.at(-1).props.onClick();
+ ui.render();
+
+ fastRetail = ui.props.enterprises.find((e) => e.id === 'tenant-fastretail');
+ assert.equal(fastRetail.specification.stage, 'intake');
+ assert.equal(resolveOnboardingStage(fastRetail), 'intake');
+ assert.match(fastRetail.specification.supplementRequests[0].receivedNote, /bảng mã kho/);
+});
+
+test('Part C: draft save, cancel restore, dynamic version increment, and snapshot isolation work per enterprise', () => {
+ const ui = onboardingHarness('usr-deployment-2');
+ // Open TechPay (tenant-techpay, initial stage: clarifying, assigned to usr-deployment-2)
+ const techPayRow = ui.nodes().find((n) => n.type === 'tr' && ui.textOf(n).includes('TechPay'));
+ const rowBtns = [];
+ (function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n?.props) { if (n.type === 'button') rowBtns.push(n); walk(n.props.children); } })(techPayRow);
+ rowBtns[0].props.onClick();
+ ui.render();
+
+ // Save initial draft
+ ui.click('Lưu bản nháp');
+ let techPay = ui.props.enterprises.find((e) => e.id === 'tenant-techpay');
+ const savedCondCount = techPay.specification.savedDraft.conditionsList.length;
+ assert.equal(savedCondCount, 1);
+
+ // Add a second condition in working state without saving, then cancel changes -> restores savedDraft
+ ui.click('Thêm điều kiện');
+ const condNameInput = ui.nodes().find((n) => n.type === 'input' && n.props.placeholder?.includes('Giao dịch vượt hạn mức'));
+ condNameInput.props.onChange({ target: { value: 'Điều kiện nháp tạm thời' } });
+ const condCriteriaInput = ui.nodes().find((n) => n.type === 'input' && n.props.placeholder?.includes('amount > 15000000'));
+ condCriteriaInput.props.onChange({ target: { value: 'amount > 99999999' } });
+ ui.render();
+ ui.click('Lưu điều kiện');
+ assert.ok(ui.textOf({ props: { children: ui.nodes() } }).includes('Điều kiện nháp tạm thời'));
+
+ // Cancel changes -> restores saved draft without the temporary condition
+ ui.click('Hủy thay đổi');
+ assert.ok(!ui.textOf({ props: { children: ui.nodes() } }).includes('Điều kiện nháp tạm thời'));
+
+ // Send draft -> creates immutable sentSnapshot v1.0 and moves to waiting_confirmation
+ ui.click('Ghi nhận đã gửi dự thảo');
+ techPay = ui.props.enterprises.find((e) => e.id === 'tenant-techpay');
+ assert.equal(techPay.specification.stage, 'waiting_confirmation');
+ assert.equal(techPay.specification.sentSnapshot.version, 'v1.0');
+ assert.equal(techPay.specification.sentSnapshot.conditionsList.length, 1);
+});
+
+test('Part D: waiting_reconfirmation (Screen 4B) provides two branches, preserves snapshot isolation, and readiness gate requires both confirmation and technical clarification', () => {
+ const { evaluateSetupReadiness, nextSpecificationVersion } = loadEnterprises();
+ assert.equal(nextSpecificationVersion(undefined), 'v1.0');
+ assert.equal(nextSpecificationVersion('v1.0'), 'v1.1');
+ assert.equal(nextSpecificationVersion('v2.3'), 'v2.4');
+
+ const ui = onboardingHarness('usr-deployment-2');
+ // Open EduLearn (tenant-edulearn, initial stage: waiting_reconfirmation, sent version v1.2, assigned to usr-deployment-2)
+ const eduRow = ui.nodes().find((n) => n.type === 'tr' && ui.textOf(n).includes('EduLearn'));
+ const rowBtns = [];
+ (function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n?.props) { if (n.type === 'button') rowBtns.push(n); walk(n.props.children); } })(eduRow);
+ rowBtns[0].props.onClick();
+ ui.render();
+
+ // Verify Screen 4B does NOT allow jumping directly to rule setup and exposes both branches
+ assert.equal(ui.button('Chuyển sang thiết lập quy tắc'), undefined);
+ assert.ok(ui.button('Ghi nhận phản hồi & Chuyển sang chỉnh sửa'));
+ assert.ok(ui.button('Mở hộp thoại ghi nhận doanh nghiệp đã xác nhận'));
+
+ // Branch 1: Record feedback -> transitions to revising
+ const feedbackArea = ui.nodes().find((n) => n.type === 'textarea');
+ feedbackArea.props.onChange({ target: { value: 'Đề nghị làm rõ thêm trường coupon_code trước khi chốt.' } });
+ ui.render();
+ ui.click('Ghi nhận phản hồi & Chuyển sang chỉnh sửa');
+ let edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.equal(edu.specification.stage, 'revising');
+ assert.equal(edu.specification.sentSnapshot.version, 'v1.2');
+
+ // Modify draft and save -> sentSnapshot v1.2 remains untouched
+ ui.click('Thêm điều kiện');
+ const condNameInput = ui.nodes().find((n) => n.type === 'input' && n.props.placeholder?.includes('Giao dịch vượt hạn mức'));
+ condNameInput.props.onChange({ target: { value: 'Lạm dụng mã giảm giá' } });
+ const condCriteriaInput = ui.nodes().find((n) => n.type === 'input' && n.props.placeholder?.includes('amount > 15000000'));
+ condCriteriaInput.props.onChange({ target: { value: 'coupon_reuse_count > 3' } });
+ ui.render();
+ ui.click('Lưu điều kiện');
+ ui.click('Lưu bản nháp');
+ edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.equal(edu.specification.sentSnapshot.conditionsList.length, 1);
+ assert.equal(edu.specification.savedDraft.conditionsList.length, 2);
+
+ // Send updated draft -> increments version dynamically from v1.2 to v1.3 and enters waiting_reconfirmation
+ ui.click('Ghi nhận đã gửi bản cập nhật');
+ edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.equal(edu.specification.stage, 'waiting_reconfirmation');
+ assert.equal(edu.specification.sentSnapshot.version, 'v1.3');
+
+ // Branch 2: Open confirmation modal and record confirmation while sampleJson is still "[]"
+ ui.click('Mở hộp thoại ghi nhận doanh nghiệp đã xác nhận');
+ const confirmNoteArea = ui.nodes().filter((n) => n.type === 'textarea').at(-1);
+ confirmNoteArea.props.onChange({ target: { value: 'Doanh nghiệp đồng ý các điều kiện phát hiện của bản v1.3.' } });
+ ui.render();
+ ui.click('Hoàn tất ghi nhận xác nhận');
+
+ // Enterprise business confirmation succeeds and is saved, while setup readiness remains blocked due to empty sampleJson
+ edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.equal(edu.specification.stage, 'confirmed');
+ assert.ok(edu.specification.enterpriseConfirmation.confirmedAt);
+ assert.equal(edu.specification.confirmedSnapshot.version, 'v1.3');
+ assert.equal(edu.specification.confirmedAt, undefined);
+ const missingSampleReadiness = evaluateSetupReadiness(edu.specification, true, edu);
+ assert.equal(missingSampleReadiness.enterpriseConfirmed, true);
+ assert.equal(missingSampleReadiness.ready, false);
+ assert.ok(missingSampleReadiness.missingItems.some((m) => m.includes('sampleJson')));
+ assert.equal(ui.button('Chuyển sang thiết lập quy tắc').props.disabled, true);
+
+ // Provide valid sampleJson matching schema & projectIds in Step 2 and save draft -> unlocks rule setup
+ ui.click('Soạn bản nháp cập nhật mới');
+ const sampleArea = ui.nodes().filter((n) => n.type === 'textarea').at(-1);
+ sampleArea.props.onChange({
+  target: {
+   value: JSON.stringify([
+    {
+     id: 'el-sample-1',
+     ref: 'EL-TX-01',
+     projectId: 'proj-edtech',
+     transactionType: 'refund',
+     fields: { amount: 12000000, user_hash: 'student_01', course_pack: 'COMBO_YEAR' },
+     expected: 'Abnormal',
+    },
+   ]),
+  },
+ });
+ ui.render();
+ ui.click('Lưu bản nháp');
+ ui.click('Phản hồi & Xác nhận đặc tả');
+
+ edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.ok(edu.specification.confirmedAt);
+ assert.equal(evaluateSetupReadiness(edu.specification, true, edu).ready, true);
+
+ // Uncheck technical readiness checkbox -> disables "Chuyển sang thiết lập quy tắc" and lists missingItems
+ const techCheckbox = ui.nodes().find((n) => n.type === 'input' && n.props.type === 'checkbox');
+ techCheckbox.props.onChange({ target: { checked: false } });
+ ui.render();
+ edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.equal(edu.specification.dataAndEvaluationClarified, false);
+ assert.equal(edu.specification.confirmedAt, undefined);
+ const incompleteReadiness = evaluateSetupReadiness(edu.specification, true, edu);
+ assert.equal(incompleteReadiness.ready, false);
+ assert.ok(incompleteReadiness.missingItems.length > 0);
+ assert.equal(ui.button('Chuyển sang thiết lập quy tắc').props.disabled, true);
+
+ // Re-check technical readiness checkbox -> enables "Chuyển sang thiết lập quy tắc"
+ const techCheckbox2 = ui.nodes().find((n) => n.type === 'input' && n.props.type === 'checkbox');
+ techCheckbox2.props.onChange({ target: { checked: true } });
+ ui.render();
+ edu = ui.props.enterprises.find((e) => e.id === 'tenant-edulearn');
+ assert.equal(edu.specification.dataAndEvaluationClarified, true);
+ assert.ok(edu.specification.confirmedAt);
+ assert.equal(evaluateSetupReadiness(edu.specification, true, edu).ready, true);
+ ui.click('Chuyển sang thiết lập quy tắc');
+ assert.deepEqual(ui.openedRules, ['tenant-edulearn']);
+});
+
+test('confirmation modal surfaces specific failure reason while preserving user input and separates business confirmation from sample/project readiness', () => {
+ const { demoEnterprises, evaluateSetupReadiness } = loadEnterprises();
+ // Simulate existing localStorage state where GreenMart has projectIds: [] while sampleJson has projectId: 'proj-market'
+ const custom = structuredClone(demoEnterprises).map((e) =>
+  e.id === 'tenant-greenmart' ? { ...e, projectIds: [] } : e
+ );
+ const ui = onboardingHarness('usr-deployment', custom);
+ const gmRow = ui.nodes().find((n) => n.type === 'tr' && ui.textOf(n).includes('GreenMart'));
+ const rowBtns = [];
+ (function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n?.props) { if (n.type === 'button') rowBtns.push(n); walk(n.props.children); } })(gmRow);
+ rowBtns[0].props.onClick();
+ ui.render();
+
+ // Open confirmation modal (Modal 5B)
+ ui.click('Mở hộp thoại ghi nhận doanh nghiệp đã xác nhận');
+
+ // 1. Failure case: empty confirmation note -> shows specific error inside modal and preserves representative input
+ const modalInputs = ui.nodes().filter((n) => n.type === 'input' && n.props.type === 'text');
+ const repInput = modalInputs.at(-2);
+ repInput.props.onChange({ target: { value: 'Nguyễn Văn Kiên (Giám đốc Chuỗi GreenMart)' } });
+ ui.render();
+ ui.click('Hoàn tất ghi nhận xác nhận');
+ const alertNodes1 = ui.nodes().filter((n) => n.props?.role === 'alert');
+ assert.ok(alertNodes1.some((n) => ui.textOf(n).includes('Ghi chú nội dung xác nhận')));
+ // User input must be preserved and modal must remain open
+ assert.equal(
+  ui.nodes().filter((n) => n.type === 'input' && n.props.type === 'text').at(-2).props.value,
+  'Nguyễn Văn Kiên (Giám đốc Chuỗi GreenMart)'
+ );
+
+ // 2. Failure case: real dashboard onSave rejects when schema in snapshot has duplicate field names -> shows specific schema reason inside modal & preserves input
+ const noteArea = ui.nodes().filter((n) => n.type === 'textarea').at(-1);
+ noteArea.props.onChange({ target: { value: 'Xác nhận qua email biên bản ngày 25/10/2026.' } });
+ const originalSentSchema = structuredClone(
+  ui.props.enterprises.find((e) => e.id === 'tenant-greenmart').specification.sentSnapshot.schema
+ );
+ ui.props.enterprises = ui.props.enterprises.map((e) =>
+  e.id === 'tenant-greenmart'
+   ? {
+      ...e,
+      specification: {
+       ...e.specification,
+       sentSnapshot: {
+        ...e.specification.sentSnapshot,
+        schema: [
+         ...originalSentSchema,
+         { name: originalSentSchema[0].name, type: 'string', required: true, description: 'Trùng tên trường' },
+        ],
+       },
+      },
+     }
+   : e
+ );
+ ui.render();
+ ui.click('Hoàn tất ghi nhận xác nhận');
+ const alertNodes2 = ui.nodes().filter((n) => n.props?.role === 'alert');
+ assert.ok(alertNodes2.some((n) => ui.textOf(n).includes('Danh mục trường dữ liệu (schema) không hợp lệ')));
+ // Both representative and note inputs must still be preserved inside the open modal
+ assert.equal(
+  ui.nodes().filter((n) => n.type === 'input' && n.props.type === 'text').at(-2).props.value,
+  'Nguyễn Văn Kiên (Giám đốc Chuỗi GreenMart)'
+ );
+ assert.equal(
+  ui.nodes().filter((n) => n.type === 'textarea').at(-1).props.value,
+  'Xác nhận qua email biên bản ngày 25/10/2026.'
+ );
+
+ // 3. Restore valid schema and submit -> saves enterpriseConfirmation even though projectIds is [], while blocking rule setup
+ ui.props.enterprises = ui.props.enterprises.map((e) =>
+  e.id === 'tenant-greenmart'
+   ? {
+      ...e,
+      specification: {
+       ...e.specification,
+       sentSnapshot: {
+        ...e.specification.sentSnapshot,
+        schema: originalSentSchema,
+       },
+      },
+     }
+   : e
+ );
+ ui.render();
+ ui.click('Hoàn tất ghi nhận xác nhận');
+ const gm = ui.props.enterprises.find((e) => e.id === 'tenant-greenmart');
+ assert.equal(gm.specification.stage, 'confirmed');
+ assert.equal(gm.specification.enterpriseConfirmation.confirmedBy, 'Nguyễn Văn Kiên (Giám đốc Chuỗi GreenMart)');
+ assert.equal(gm.specification.confirmedAt, undefined);
+ const readiness = evaluateSetupReadiness(gm.specification, true, gm);
+ assert.equal(readiness.enterpriseConfirmed, true);
+ assert.equal(readiness.ready, false);
+ assert.ok(readiness.missingItems.some((m) => m.includes('projectIds')));
+ assert.equal(ui.button('Chuyển sang thiết lập quy tắc').props.disabled, true);
+});
+
+test('reconcileEnterpriseProjects restores true enterprise project links without cross-tenant attachment and Platform Admin workspace provisioning preserves saved specs', () => {
+ const { demoEnterprises, reconcileEnterpriseProjects, evaluateSetupReadiness } = loadEnterprises();
+ const { initialProjects } = load('src/data/fraudguard-projects.ts');
+ const initialRuleSets = [
+  { enterpriseId: 'tenant-techpay', rules: [{ projectId: 'proj-checkout' }, { projectId: 'proj-wallet' }] },
+ ];
+
+ // Simulate stale localStorage where:
+ // - FastRetail had guessed projectIds ['proj-pos'] or []
+ // - EduLearn had guessed projectIds ['proj-edu'] or []
+ // - GreenMart had foreign projectIds ['proj-market'] (which belongs to FastRetail) or [] and a saved confirmation/draft
+ const staleSaved = structuredClone(demoEnterprises).map((e) => {
+  if (e.id === 'tenant-fastretail') return { ...e, projectIds: ['proj-pos'] };
+  if (e.id === 'tenant-edulearn') return { ...e, projectIds: [] };
+  if (e.id === 'tenant-greenmart') {
+   return {
+    ...e,
+    projectIds: ['proj-market'],
+    specification: {
+     ...e.specification,
+     stage: 'confirmed',
+     confirmedSnapshot: structuredClone(e.specification.sentSnapshot),
+     enterpriseConfirmation: {
+      confirmedAt: '03/11/2026, 17:00:00',
+      confirmedBy: 'Lê Thanh Tùng (Quản lý Vận hành Chuỗi)',
+      channel: 'Email xác nhận',
+      note: 'Đã xác nhận đặc tả GreenMart v1.0.',
+      version: 'v1.0',
+     },
+    },
+   };
+  }
+  return e;
+ });
+
+ const reconciled = reconcileEnterpriseProjects(staleSaved, demoEnterprises, initialProjects, initialRuleSets);
+ const fastRetail = reconciled.find((e) => e.id === 'tenant-fastretail');
+ const eduLearn = reconciled.find((e) => e.id === 'tenant-edulearn');
+ const greenMart = reconciled.find((e) => e.id === 'tenant-greenmart');
+
+ // FastRetail and EduLearn recover their true canonical projectIds from initialProjects
+ assert.deepEqual(Array.from(fastRetail.projectIds), ['proj-market']);
+ assert.deepEqual(Array.from(eduLearn.projectIds), ['proj-edtech']);
+ // GreenMart does NOT attach FastRetail's proj-market and keeps its saved specification/confirmation intact
+ assert.deepEqual(Array.from(greenMart.projectIds), []);
+ assert.equal(greenMart.specification.stage, 'confirmed');
+ assert.equal(greenMart.specification.enterpriseConfirmation.confirmedBy, 'Lê Thanh Tùng (Quản lý Vận hành Chuỗi)');
+ assert.equal(greenMart.specification.confirmedAt, undefined);
+
+ // Open GreenMart in OnboardingView: verify Platform Admin guidance is shown when projectIds is empty
+ const ui = onboardingHarness('usr-deployment', reconciled);
+ const gmRow = ui.nodes().find((n) => n.type === 'tr' && ui.textOf(n).includes('GreenMart'));
+ const rowBtns = [];
+ (function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n?.props) { if (n.type === 'button') rowBtns.push(n); walk(n.props.children); } })(gmRow);
+ rowBtns[0].props.onClick();
+ ui.render();
+
+ const screenText = ui.textOf({ props: { children: ui.nodes() } });
+ assert.ok(screenText.includes('Platform Admin'));
+ assert.ok(screenText.includes('workspace-tenant-greenmart'));
+ assert.equal(ui.button('Chuyển sang thiết lập quy tắc').props.disabled, true);
+
+ // Switch to Platform Admin and click "Khởi tạo workspace triển khai" -> links workspace-tenant-greenmart while preserving saved spec
+ ui.props.currentUser = { id: 'usr-admin', name: 'Lê Hoàng Phúc', email: 'admin@fraudguard.vn', role: 'Platform Admin' };
+ ui.render();
+ ui.click('Khởi tạo workspace triển khai (workspace-tenant-greenmart)');
+
+ const provisionedGm = ui.props.enterprises.find((e) => e.id === 'tenant-greenmart');
+ assert.deepEqual(Array.from(provisionedGm.projectIds), ['workspace-tenant-greenmart']);
+ assert.equal(provisionedGm.specification.enterpriseConfirmation.confirmedBy, 'Lê Thanh Tùng (Quản lý Vận hành Chuỗi)');
+ assert.equal(provisionedGm.specification.confirmedSnapshot.version, 'v1.0');
+
+ // Reload simulation with provisioned workspace project in projects list -> workspace-tenant-greenmart stays linked
+ const projectsAfterProvision = [
+  ...initialProjects,
+  {
+   id: 'workspace-tenant-greenmart',
+   name: provisionedGm.name,
+   code: 'tenant-greenmart',
+   description: 'Phạm vi triển khai chính',
+   environment: 'Staging',
+   apiKey: '',
+   quota: { used: 0, total: 0, resetDate: '' },
+   status: 'Inactive',
+   createdAt: new Date().toISOString(),
+  },
+ ];
+ const reloaded = reconcileEnterpriseProjects(ui.props.enterprises, demoEnterprises, projectsAfterProvision, initialRuleSets);
+ const reloadedGm = reloaded.find((e) => e.id === 'tenant-greenmart');
+ assert.deepEqual(Array.from(reloadedGm.projectIds), ['workspace-tenant-greenmart']);
+ assert.equal(reloadedGm.specification.enterpriseConfirmation.confirmedBy, 'Lê Thanh Tùng (Quản lý Vận hành Chuỗi)');
+ assert.equal( evaluateSetupReadiness(reloadedGm.specification, true, reloadedGm).enterpriseConfirmed, true );
+});
+
+test('document handling accepts .docx/.xlsx without file.text(), preserves exact binary bytes for download, shows honest preview notice, and surfaces storage failures', async () => {
+ const {
+  readOnboardingAttachment,
+  resolveDocumentDownloadBytes,
+  isDocumentPreviewSupported,
+ } = loadEnterprises();
+
+ // 1. Build a real OpenXML (.docx) binary payload (starts with PK\x03\x04) and make file.text() throw if called
+ const docxBytes = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x06, 0x00, 0x08, 0x00, 0xde, 0xad, 0xbe, 0xef]);
+ const docxFile = {
+  name: 'Mo_ta_nghiep_vu_doanh_nghiep.docx',
+  size: docxBytes.byteLength,
+  arrayBuffer: async () => docxBytes.buffer.slice(docxBytes.byteOffset, docxBytes.byteOffset + docxBytes.byteLength),
+  text: async () => { throw new Error('file.text() must NEVER be called on .docx or .xlsx'); },
+ };
+
+ const parsedDocx = await readOnboardingAttachment(docxFile, true);
+ assert.equal(parsedDocx.format, 'DOCX');
+ assert.equal(parsedDocx.previewSupported, false);
+ assert.equal(parsedDocx.content, '');
+ assert.ok(parsedDocx.dataUrl.startsWith('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,'));
+ assert.equal(isDocumentPreviewSupported(parsedDocx), false);
+
+ // Round-trip download payload must match original bytes 100%
+ const downloadPayload = resolveDocumentDownloadBytes(parsedDocx);
+ assert.ok(downloadPayload);
+ assert.equal(downloadPayload.filename, 'Mo_ta_nghiep_vu_doanh_nghiep.docx');
+ assert.deepEqual(Array.from(downloadPayload.bytes), Array.from(docxBytes));
+
+ // 2. Corrupted/fake text renamed to .docx or .xlsx must be rejected
+ const fakeDocx = {
+  name: 'fake.docx',
+  size: 12,
+  arrayBuffer: async () => new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]).buffer,
+ };
+ await assert.rejects(readOnboardingAttachment(fakeDocx, true), /OpenXML/);
+
+ // 3. Upload .docx into FastRetail profile via OnboardingView, open preview modal -> shows unsupported preview notice (not fake text)
+ const ui = onboardingHarness('usr-deployment');
+ const fastRetailRow = ui.nodes().find((n) => n.type === 'tr' && ui.textOf(n).includes('FastRetail'));
+ const openBtns = [];
+ (function walk(n) { if (Array.isArray(n)) n.forEach(walk); else if (n?.props) { if (n.type === 'button') openBtns.push(n); walk(n.props.children); } })(fastRetailRow);
+ openBtns[0].props.onClick();
+ ui.render();
+
+ const fileInput = ui.nodes().find((n) => n.type === 'input' && n.props.type === 'file' && n.props.accept.includes('.docx'));
+ assert.ok(fileInput, 'Intake file input must accept .docx');
+ await fileInput.props.onChange({ target: { files: [docxFile], value: 'Mo_ta_nghiep_vu_doanh_nghiep.docx' } });
+ ui.render();
+
+ const fr = ui.props.enterprises.find((e) => e.id === 'tenant-fastretail');
+ const savedDocx = fr.specification.intakeDocuments.find((d) => d.name === 'Mo_ta_nghiep_vu_doanh_nghiep.docx');
+ assert.ok(savedDocx);
+ assert.equal(savedDocx.previewSupported, false);
+ assert.equal(savedDocx.content, '');
+
+ // Click "Xem nội dung" on the .docx row -> modal explicitly explains inline preview is not supported and offers download
+ const viewButtons = ui.nodes().filter((n) => n.type === 'button' && ui.textOf(n).includes('Xem nội dung'));
+ viewButtons.at(-1).props.onClick();
+ ui.render();
+ const dialogText = ui.textOf({ props: { children: ui.nodes() } });
+ assert.ok(dialogText.includes('Định dạng .DOCX hiện chưa hỗ trợ xem trước trực tiếp trên trình duyệt'));
+ assert.ok(dialogText.includes('không tạo nội dung xem trước giả'));
+ ui.click('Đóng');
+
+ // 4. Simulate storage failure (QuotaExceededError -> onSave returns false) when saving draft -> shows error and never reports success
+ ui.click('Bắt đầu làm rõ đặc tả');
+ const origOnSave = ui.props.onSave;
+ ui.props.onSave = () => false;
+ ui.render();
+ ui.click('Lưu bản nháp');
+ const alerts = ui.nodes().filter((n) => n.props?.role === 'alert');
+ assert.ok(alerts.some((n) => ui.textOf(n).includes('localStorage')));
+ const statuses = ui.nodes().filter((n) => n.props?.role === 'status');
+ assert.ok(!statuses.some((n) => ui.textOf(n).includes('Đã lưu bản nháp')));
+ ui.props.onSave = origOnSave;
 });
 
 // Compose fixtures and helpers for existing regression scenarios after the module split.
