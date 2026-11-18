@@ -135,10 +135,10 @@ export function OnboardingIntakeScreen({
                 {spec.representativeRole ? ` (${spec.representativeRole})` : ""}
               </dd>
               <dt>{vi ? "Email liên hệ" : "Contact email"}</dt>
-              <dd>{spec.representativeEmail ?? spec.smeAdminEmail ?? "—"}</dd>
+              <dd>{spec.representativeEmail ?? spec.smeAdminEmail ?? "-"}</dd>
               <dt>{vi ? "Tài khoản SME Admin" : "SME Admin account"}</dt>
               <dd>
-                {spec.smeAdminName ?? spec.representativeName ?? "—"}
+                {spec.smeAdminName ?? spec.representativeName ?? "-"}
                 {spec.smeAdminEmail ? ` · ${spec.smeAdminEmail}` : ""}
               </dd>
               <dt>{vi ? "Dự án / Workspace" : "Projects / Workspaces"}</dt>
@@ -287,7 +287,7 @@ export function OnboardingIntakeScreen({
                               <button
                                 type="button"
                                 className={styles.onboardingBtnSecondary}
-                                style={{ marginLeft: "8px", padding: "2px 8px", fontSize: "11px" }}
+                                style={{ marginLeft: "8px", padding: "6px 12px", minHeight: "34px", fontSize: "12px" }}
                                 onClick={() =>
                                   onDownloadDoc({
                                     name: req.guidanceFileName!,

@@ -44,7 +44,7 @@ export function parseRuleSetSamples(input: string): RuleSetSample[] {
 }
 export function detectionTransaction(sample: RuleSetSample, evaluation: RuleSetEvaluation, projectName: string, id: string): TransactionRisk {
   return { id, transactionReference: sample.ref, projectId: sample.projectId, projectName, transactionType: sample.transactionType,
-    entityReference: String(sample.fields.user_hash ?? '—'), amount: typeof sample.fields.amount === 'number' ? sample.fields.amount : undefined,
+    entityReference: String(sample.fields.user_hash ?? '-'), amount: typeof sample.fields.amount === 'number' ? sample.fields.amount : undefined,
     currency: typeof sample.fields.currency === 'string' ? sample.fields.currency : undefined,
     riskLevel: evaluation.result, scoringSource: 'RULE', triggeredRules: evaluation.rules.filter(r => r.outcome === 'Matched').map(r => r.name),
     ruleEvaluation: evaluation, alertId: evaluation.matched ? 'ALT-' + id : undefined, processedAt: evaluation.evaluatedAt,

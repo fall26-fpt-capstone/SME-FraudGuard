@@ -308,7 +308,7 @@ export function OnboardingClarifyScreen({
                   {vi
                     ? "Dữ liệu giao dịch mẫu (JSON phục vụ kiểm thử bộ quy tắc)"
                     : "Sample transactions (JSON for rule testing)"}{" "}
-                  <code style={{ fontSize: "11px" }}>
+                  <code style={{ fontSize: "12px" }}>
                     (projectId:{" "}
                     {selectedEnterprise.projectIds.join(", ") ||
                       (vi ? "chưa gắn workspace" : "no workspace")}

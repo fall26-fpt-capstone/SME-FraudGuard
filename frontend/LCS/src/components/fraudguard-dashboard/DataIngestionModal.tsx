@@ -203,7 +203,7 @@ export function DataIngestionModal({
                         {rows.slice(0, 50).map((r) => (
                           <tr key={r.row}>
                             <td>{r.row}</td>
-                            <td>{r.ref || "—"}</td>
+                            <td>{r.ref || "-"}</td>
                             <td>
                               {r.error
                                 ? vi
@@ -219,7 +219,7 @@ export function DataIngestionModal({
                             </td>
                             <td>
                               {!r.transaction
-                                ? "—"
+                                ? "-"
                                 : r.transaction.scoringSource ===
                                     "RULE_FALLBACK"
                                   ? vi
@@ -232,7 +232,7 @@ export function DataIngestionModal({
                                       : "Rules"}
                             </td>
                             <td>
-                              {r.error || r.transaction?.explanation || "—"}
+                              {r.error || r.transaction?.explanation || "-"}
                             </td>
                           </tr>
                         ))}

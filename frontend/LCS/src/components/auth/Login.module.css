@@ -74,9 +74,10 @@
 /* Top Bar (Logo + Theme Toggle + Lang + Sign up) */
 .topBar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px 16px;
   margin-bottom: 36px;
 }
 
@@ -93,10 +94,9 @@
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #71b9f4 0%, #ad8af3 100%);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(173, 138, 243, 0.35);
 }
 
 .brandTitle {
@@ -107,8 +107,9 @@
 
 .topBarActions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px 10px;
 }
 
 .themeToggleBtn,
@@ -242,9 +243,9 @@
   gap: 14px;
   margin: 20px 0;
   color: var(--login-text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
 }
 
 .dividerLine {
@@ -409,7 +410,7 @@
 }
 
 .demoText {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--login-text-secondary);
   line-height: 1.4;
 }
@@ -418,9 +419,9 @@
   background: var(--login-btn-primary);
   border: none;
   color: #fff;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 11px;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -447,7 +448,7 @@
 /* Left Panel Footer */
 .leftFooter {
   margin-top: 32px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--login-text-muted);
   line-height: 1.6;
 }
@@ -623,8 +624,8 @@
 }
 
 .heroMetricItem span {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 /* Spinner */

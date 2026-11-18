@@ -11,8 +11,18 @@ import type {
   InvestigationReport,
   RolePermissions,
   TransactionRisk,
+  UserProfile,
   UserRole,
 } from "@/types/fraudguard";
+import type {
+  InvestigationCase,
+  InvestigationCaseStatus,
+} from "@/types/investigation-case";
+import {
+  canActorViewLegacyArchiveEntry,
+  type LegacyCaseArchiveEntry,
+} from "@/utils/case-migration";
+import { evaluateInvestigationCaseReadAccess } from "@/utils/investigation-case";
 import { RuleEvaluationDetails } from "./RuleEvaluationDetails";
 import { transactionLabel } from "./ReadableConditions";
 import { RiskLevelBadge } from "./RiskLevelBadge";
@@ -39,12 +49,46 @@ interface AlertCaseDrawerProps {
   investigators?: string[];
   open: boolean;
   onClose: () => void;
-  onUpdateTransaction: (updated: TransactionRisk) => void;
+  onUpdateTransaction?: (updated: TransactionRisk) => void;
   permissions?: RolePermissions;
   currentRole?: UserRole;
   currentUserName?: string;
   currentUserId?: string;
+  investigationCases?: readonly InvestigationCase[];
+  legacyCaseArchive?: readonly LegacyCaseArchiveEntry[];
+  users?: readonly UserProfile[];
+  currentUser?: UserProfile;
+  onOpenInvestigationCase?: (caseId: string) => void;
+  wf04Managed?: boolean;
+}
 
+function getWf04CaseStatusBadgeClass(status: InvestigationCaseStatus): string {
+  switch (status) {
+    case "Open":
+      return styles.caseStatusBadgeOpen;
+    case "Investigating":
+      return styles.caseStatusBadgeInvestigating;
+    case "Pending Review":
+      return styles.caseStatusBadgePendingReview;
+    case "Closed":
+      return styles.caseStatusBadgeClosed;
+  }
+}
+
+function getWf04CaseStatusLabel(
+  status: InvestigationCaseStatus,
+  t: TranslationKey,
+): string {
+  switch (status) {
+    case "Open":
+      return t.wf04Phase2a.caseQueue.statuses.open;
+    case "Investigating":
+      return t.wf04Phase2a.caseQueue.statuses.investigating;
+    case "Pending Review":
+      return t.wf04Phase2a.caseQueue.statuses.pendingReview;
+    case "Closed":
+      return t.wf04Phase2a.caseQueue.statuses.closed;
+  }
 }
 
 
@@ -131,7 +175,12 @@ export function AlertCaseDrawer({
   currentRole = "Operator",
   currentUserName = "Trần Mai Anh",
   currentUserId,
-
+  investigationCases,
+  legacyCaseArchive,
+  users,
+  currentUser,
+  onOpenInvestigationCase,
+  wf04Managed = false,
 }: AlertCaseDrawerProps) {
   const { t, language } = useLanguage();
   const { toast } = useToast();
@@ -172,25 +221,89 @@ export function AlertCaseDrawer({
   if (!open || !transaction) return null;
 
   const numLocale = language === "vi" ? "vi-VN" : "en-US";
+  const isWf04Locked =
+    wf04Managed === true ||
+    investigationCases !== undefined ||
+    legacyCaseArchive !== undefined ||
+    onOpenInvestigationCase !== undefined;
+
+  const effectiveUser: UserProfile | undefined =
+    currentUser ??
+    (currentUserId && users ? users.find((u) => u.id === currentUserId) : undefined) ??
+    (currentRole
+      ? {
+          id: currentUserId ?? "",
+          name: currentUserName ?? "",
+          email: "",
+          role: currentRole,
+          title: "",
+          avatarLetter: "",
+          avatarBg: "",
+          description: "",
+        }
+      : undefined);
+
+  const txAlertId = transaction.alertId;
+  const linkedCase =
+    isWf04Locked && investigationCases
+      ? investigationCases.find(
+          (c) =>
+            c.alerts.some(
+              (a) =>
+                a.transactionId === transaction.id ||
+                (txAlertId ? a.alertId === txAlertId : false),
+            ) || (Boolean(transaction.caseId) && c.caseId === transaction.caseId),
+        )
+      : undefined;
+
+  const linkedLegacyEntry =
+    isWf04Locked && !linkedCase && legacyCaseArchive
+      ? legacyCaseArchive.find(
+          (entry) =>
+            entry.transactionIds.includes(transaction.id) ||
+            (txAlertId ? entry.alertIds.includes(txAlertId) : false) ||
+            (Boolean(transaction.caseId) && entry.legacyCaseId === transaction.caseId),
+        )
+      : undefined;
+
+  const linkedCaseAccess =
+    linkedCase && effectiveUser
+      ? evaluateInvestigationCaseReadAccess(linkedCase, effectiveUser)
+      : null;
+  const canViewLinkedCase = Boolean(
+    linkedCaseAccess &&
+      (linkedCaseAccess.canViewInternalCase || linkedCaseAccess.canViewConfirmedReport),
+  );
+  const canViewLegacyArchive = Boolean(
+    linkedLegacyEntry &&
+      effectiveUser &&
+      canActorViewLegacyArchiveEntry(linkedLegacyEntry, effectiveUser),
+  );
+
+  const resolveCaseActorName = (actorRef?: { actorId: string; name?: string }): string => {
+    if (!actorRef) return t.wf04Phase2a.caseQueue.unassignedLabel;
+    const matched = users?.find((u) => u.id === actorRef.actorId);
+    return matched?.name || actorRef.name || actorRef.actorId;
+  };
 
   // Role permissions
   const isPlatformAdmin = currentRole === "Platform Admin";
   const isAIAlert = transaction.scoringSource === "AI" && transaction.riskLevel === "Abnormal";
-  const isOperation = isAIAlert && currentRole === "Operator" && permissions?.canManageCases !== false;
+  const isOperation = !isWf04Locked && isAIAlert && currentRole === "Operator" && permissions?.canManageCases !== false;
   const isInvestigator = currentRole === "Investigator";
-  const canWorkOnCase = isAIAlert && (isInvestigator || currentRole === "Operator") && isCaseAssignee(transaction, { id: currentUserId, name: currentUserName });
-  const canSelfInvestigate = isAIAlert && currentRole === "Operator" && (!transaction.caseId || transaction.caseStatus === "Open");
+  const canWorkOnCase = !isWf04Locked && isAIAlert && (isInvestigator || currentRole === "Operator") && isCaseAssignee(transaction, { id: currentUserId, name: currentUserName });
+  const canSelfInvestigate = !isWf04Locked && isAIAlert && currentRole === "Operator" && (!transaction.caseId || transaction.caseStatus === "Open");
   const isViewer = currentRole === "Viewer" || currentRole === "SME Admin" || isPlatformAdmin || permissions?.isReadOnly;
 
   const currentStep = getWorkflowStepIndex(transaction.caseStatus);
 
-  // Handlers
+  // Handlers (legacy fallback only when WF-04 lock is inactive)
   const handleSelfInvestigate = () => {
-    if (!canSelfInvestigate || !currentUserName) return;
+    if (isWf04Locked || !onUpdateTransaction || !canSelfInvestigate || !currentUserName) return;
     onUpdateTransaction({ ...transaction, caseId: transaction.caseId || 'CASE-' + crypto.randomUUID(), caseStatus: 'Investigating', assignedInvestigator: currentUserName, assignedAt: new Date().toISOString(), investigationNotes: [...(transaction.investigationNotes || []), { text: language === 'vi' ? 'Nhân viên vận hành bắt đầu tự điều tra.' : 'Operator started investigating.', author: currentUserName, time: new Date().toISOString() }] });
   };
   const handleCreateCase = () => {
-    if (!isOperation || transaction.caseId || transaction.riskLevel !== "Abnormal") return;
+    if (isWf04Locked || !onUpdateTransaction || !isOperation || transaction.caseId || transaction.riskLevel !== "Abnormal") return;
     setIsMutating(true);
     {
       const updated: TransactionRisk = {
@@ -210,7 +323,7 @@ export function AlertCaseDrawer({
   };
 
   const handleAssignInvestigator = () => {
-    if (!isOperation || !selectedInvestigator || ["Confirmed Fraud", "False Alarm", "Resolved"].includes(transaction.caseStatus || "")) return;
+    if (isWf04Locked || !onUpdateTransaction || !isOperation || !selectedInvestigator || ["Confirmed Fraud", "False Alarm", "Resolved"].includes(transaction.caseStatus || "")) return;
     setIsMutating(true);
     {
       const updated: TransactionRisk = {
@@ -233,7 +346,7 @@ export function AlertCaseDrawer({
 
   // Investigator: Accept case & start field investigation
   const handleStartInvestigating = () => {
-    if (!canWorkOnCase || transaction.caseStatus !== "Assigned") return;
+    if (isWf04Locked || !onUpdateTransaction || !canWorkOnCase || transaction.caseStatus !== "Assigned") return;
     setIsMutating(true);
     {
       const startNote: CaseNote = {
@@ -262,7 +375,7 @@ export function AlertCaseDrawer({
 
   // Add field notes
   const handleAddInvestigatorNote = () => {
-    if (!investigatorNote.trim() || !canWorkOnCase || transaction.caseStatus !== "Investigating") return;
+    if (isWf04Locked || !onUpdateTransaction || !investigatorNote.trim() || !canWorkOnCase || transaction.caseStatus !== "Investigating") return;
     const newNote: CaseNote = {
       text: investigatorNote.trim(),
       time: new Date().toISOString(),
@@ -288,6 +401,7 @@ export function AlertCaseDrawer({
 
   // Investigator: Submit official investigation report
   const handleSubmitInvestigationReport = () => {
+    if (isWf04Locked || !onUpdateTransaction) return;
     if (!canWorkOnCase || transaction.caseStatus !== "Investigating" || !reportNote.trim()) {
       toast("error", language === "vi" ? "Hãy nhập kết quả điều tra cho hồ sơ được giao." : "Enter findings for your assigned case."); return;
     }
@@ -329,6 +443,7 @@ export function AlertCaseDrawer({
   const handleOperationDecision = (
     newStatus: "Confirmed Fraud" | "False Alarm" | "Resolved" | "Investigating",
   ) => {
+    if (isWf04Locked || !onUpdateTransaction) return;
     if (!isOperation || !transaction.caseId || !operationFeedback.trim()) { toast("error", language === "vi" ? "Nhập lý do trước khi quyết định." : "Enter a reason before deciding."); return; }
     setIsMutating(true);
     {
@@ -425,39 +540,58 @@ export function AlertCaseDrawer({
 
   return (
     <>
-      <div className={styles.drawerOverlay} onClick={onClose} aria-hidden="true" />
+      <div className={`${styles.drawerOverlay} ${styles.alertInspectionOverlay}`} onClick={onClose} aria-hidden="true" />
       <div
         ref={drawerRef}
-        className={styles.drawer}
+        className={`${styles.drawer} ${styles.alertInspectionDrawer}`}
         role="dialog"
         aria-modal="true"
         aria-label={`${t.drawer.title}: ${transaction.transactionReference}`}
         tabIndex={-1}
-        style={{ width: "min(680px, 100vw)" }}
       >
         {/* Header */}
         <div className={styles.drawerHeader}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
               <h2 className={styles.drawerTitle}>{t.drawer.title}</h2>
-              {isAIAlert && transaction.caseStatus && (
-                <span
-                  className={styles.badge}
-                  style={{
-                    background: statusStyle.bg,
-                    color: statusStyle.text,
-                    borderColor: statusStyle.border,
-                    fontSize: 10,
-                    fontWeight: 700,
-                  }}
-                >
-                  {getStatusDisplayLabel(transaction.caseStatus).toUpperCase()}
-                </span>
+              {isWf04Locked ? (
+                canViewLinkedCase && linkedCase ? (
+                  <span
+                    className={`${styles.badge} ${getWf04CaseStatusBadgeClass(linkedCase.status)}`}
+                    style={{ fontSize: 12, fontWeight: 700 }}
+                  >
+                    {getWf04CaseStatusLabel(linkedCase.status, t)}
+                  </span>
+                ) : null
+              ) : (
+                isAIAlert &&
+                transaction.caseStatus && (
+                  <span
+                    className={styles.badge}
+                    style={{
+                      background: statusStyle.bg,
+                      color: statusStyle.text,
+                      borderColor: statusStyle.border,
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {getStatusDisplayLabel(transaction.caseStatus)}
+                  </span>
+                )
               )}
             </div>
-            <span style={{ fontSize: 11, color: "var(--security-muted)" }}>
+            <span style={{ fontSize: 12, color: "var(--security-muted)" }}>
               {transaction.transactionReference}{" "}
-              {isAIAlert && transaction.caseId ? `· Case ID: ${transaction.caseId}` : ""}
+              {isWf04Locked
+                ? canViewLinkedCase && linkedCase
+                  ? `· Case ID: ${linkedCase.caseId}`
+                  : canViewLegacyArchive && linkedLegacyEntry
+                    ? `· Case ID: ${linkedLegacyEntry.legacyCaseId}`
+                    : ""
+                : isAIAlert && transaction.caseId
+                  ? `· Case ID: ${transaction.caseId}`
+                  : ""}
             </span>
           </div>
           <button
@@ -471,8 +605,8 @@ export function AlertCaseDrawer({
         </div>
 
         <div className={styles.drawerBody}>
-          {/* Workflow Stepper */}
-          {isAIAlert && transaction.caseId && (
+          {/* Workflow Stepper (legacy standalone mode only) */}
+          {!isWf04Locked && isAIAlert && transaction.caseId && (
             <div className={styles.stepperContainer} aria-label="Workflow progress">
               {WORKFLOW_STEP_KEYS.map((step, idx) => {
                 const isCompleted = idx < currentStep;
@@ -615,8 +749,9 @@ export function AlertCaseDrawer({
                 style={{
                   marginTop: 12,
                   padding: "10px 12px",
-                  borderRadius: 4,
-                  background: "rgba(0,0,0,0.2)",
+                  borderRadius: 6,
+                  background: "var(--security-surface-subtle)",
+                  border: "1px solid var(--security-border)",
                 }}
               >
                 <span className={styles.drawerLabel} style={{ display: "block", marginBottom: 4 }}>
@@ -638,11 +773,100 @@ export function AlertCaseDrawer({
             )}
           </div>
 
-          {/* ───────────────────────────────────────────────────────────── */}
-          {/* CASE CREATION (If alert has no case yet)                      */}
-          {/* ───────────────────────────────────────────────────────────── */}
-          {canSelfInvestigate && <div className={styles.drawerSection}><button type="button" className={styles.drawerPrimaryBtn} onClick={handleSelfInvestigate}>{language === 'vi' ? 'Tự điều tra' : 'Investigate myself'}</button><p className={styles.muted}>{language === 'vi' ? 'Tự ghi nhận kết quả hoặc tạo hồ sơ bên dưới để phân công điều tra.' : 'Record your own findings, or create a case below to assign an investigator.'}</p></div>}
-          {!isAIAlert ? <div className={styles.drawerSection}><p className={styles.muted}>{language === 'vi' ? 'Xem kết quả và lý do phát hiện ở trên. Quy trình điều tra chỉ dành cho giao dịch có cảnh báo AI bất thường.' : 'Rule results support monitoring and detection history. Investigation is available for AI alerts.'}</p></div> : !transaction.caseId ? (
+          {isWf04Locked ? (
+            <div className={styles.drawerSection}>
+              <h3 className={styles.drawerSectionTitle}>
+                {t.wf04Phase2a.caseQueue.caseSummarySectionTitle}
+              </h3>
+              {linkedCase ? (
+                canViewLinkedCase ? (
+                  <>
+                    <div className={styles.drawerReadOnlyNotice} style={{ marginBottom: 12 }}>
+                      {t.wf04Phase2a.alertQueue.linkedCaseDrawerNotice}
+                    </div>
+                    <div className={styles.drawerRow}>
+                      <span className={styles.drawerLabel}>
+                        {t.wf04Phase2a.caseQueue.caseCodeLabel}
+                      </span>
+                      <span className={styles.ruleTag}>
+                        {t.wf04Phase2a.alertQueue.linkedCaseBadge.replace(
+                          "{code}",
+                          linkedCase.caseId,
+                        )}
+                      </span>
+                    </div>
+                    <div className={styles.drawerRow}>
+                      <span className={styles.drawerLabel}>
+                        {t.wf04Phase2a.caseQueue.statusLabel}
+                      </span>
+                      <span
+                        className={`${styles.badge} ${getWf04CaseStatusBadgeClass(linkedCase.status)}`}
+                      >
+                        {getWf04CaseStatusLabel(linkedCase.status, t)}
+                      </span>
+                    </div>
+                    {linkedCaseAccess?.canViewInternalCase && (
+                      <div className={styles.drawerRow}>
+                        <span className={styles.drawerLabel}>
+                          {t.wf04Phase2a.caseQueue.assigneeLabel}
+                        </span>
+                        <strong>{resolveCaseActorName(linkedCase.assignee)}</strong>
+                      </div>
+                    )}
+                    {onOpenInvestigationCase && (
+                      <div style={{ marginTop: 12 }}>
+                        <button
+                          type="button"
+                          className={styles.drawerPrimaryBtn}
+                          onClick={() => onOpenInvestigationCase(linkedCase.caseId)}
+                        >
+                          {t.wf04Phase2a.alertQueue.viewCaseBtn}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={styles.drawerReadOnlyNotice}>
+                    {currentRole === "Platform Admin" ||
+                    currentRole === "Implementation Staff" ||
+                    currentRole === "Viewer"
+                      ? t.wf04Phase2a.caseQueue.noInternalAccessDesc
+                      : t.wf04Phase2a.caseQueue.readOnlyPermissionNotice}
+                  </div>
+                )
+              ) : linkedLegacyEntry ? (
+                <div className={styles.drawerReadOnlyNotice}>
+                  {canViewLegacyArchive ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span className={styles.ruleTag}>
+                          {t.wf04Phase2a.legacy.legacyAlertBadge}
+                        </span>
+                        <strong>{linkedLegacyEntry.legacyCaseId}</strong>
+                      </div>
+                      <p style={{ margin: "0 0 6px" }}>{linkedLegacyEntry.reason}</p>
+                      <p style={{ margin: 0 }}>{t.wf04Phase2a.legacy.legacyCannotEditNotice}</p>
+                    </>
+                  ) : (
+                    <span>{t.wf04Phase2a.legacy.legacyCannotEditNotice}</span>
+                  )}
+                </div>
+              ) : !isAIAlert ? (
+                <p className={styles.muted}>
+                  {language === "vi"
+                    ? "Xem kết quả và lý do phát hiện ở trên. Quy trình điều tra chỉ dành cho giao dịch có cảnh báo AI bất thường."
+                    : "Rule results support monitoring and detection history. Investigation is available for AI alerts."}
+                </p>
+              ) : (
+                <div className={styles.drawerReadOnlyNotice}>
+                  {t.wf04Phase2a.alertQueue.unlinkedAiDrawerNotice}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {canSelfInvestigate && <div className={styles.drawerSection}><button type="button" className={styles.drawerPrimaryBtn} onClick={handleSelfInvestigate}>{language === 'vi' ? 'Tự điều tra' : 'Investigate myself'}</button><p className={styles.muted}>{language === 'vi' ? 'Tự ghi nhận kết quả hoặc tạo hồ sơ bên dưới để phân công điều tra.' : 'Record your own findings, or create a case below to assign an investigator.'}</p></div>}
+              {!isAIAlert ? <div className={styles.drawerSection}><p className={styles.muted}>{language === 'vi' ? 'Xem kết quả và lý do phát hiện ở trên. Quy trình điều tra chỉ dành cho giao dịch có cảnh báo AI bất thường.' : 'Rule results support monitoring and detection history. Investigation is available for AI alerts.'}</p></div> : !transaction.caseId ? (
             <div className={styles.drawerSection}>
               <h3 className={styles.drawerSectionTitle}>{t.drawer.createCaseTitle}</h3>
               <p style={{ fontSize: 12, color: "var(--security-muted)", marginBottom: 12 }}>
@@ -688,7 +912,7 @@ export function AlertCaseDrawer({
                       >
                         {currentRole === 'Operator' ? (language === 'vi' ? 'Điều tra của tôi' : 'My investigation') : t.drawer.investigatorWorkbench}
                       </h3>
-                      <span style={{ fontSize: 11, color: "var(--security-muted)" }}>
+                      <span style={{ fontSize: 12, color: "var(--security-muted)" }}>
                         {t.drawer.assignedTo}:{" "}
                         <strong>{transaction.assignedInvestigator || currentUserName}</strong>
                       </span>
@@ -696,9 +920,9 @@ export function AlertCaseDrawer({
                     <span
                       className={styles.badge}
                       style={{
-                        background: "rgba(113, 185, 244, 0.15)",
-                        color: "var(--security-blue)",
-                        borderColor: "#2d5a7b",
+                        background: "var(--security-tab-active-bg)",
+                        color: "var(--security-tab-active-text)",
+                        borderColor: "var(--security-tab-active-border)",
                       }}
                     >
                       {currentRole === 'Operator' ? 'Operator' : t.drawer.investigatorRoleBadge}
@@ -772,9 +996,9 @@ export function AlertCaseDrawer({
                                 key={i}
                                 style={{
                                   padding: "7px 10px",
-                                  borderRadius: 4,
+                                  borderRadius: 6,
                                   background: "var(--security-control)",
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 }}
                               >
                                 <div
@@ -800,7 +1024,7 @@ export function AlertCaseDrawer({
                           <p
                             style={{
                               margin: "4px 0 8px",
-                              fontSize: 11,
+                              fontSize: 12,
                               color: "var(--security-muted)",
                             }}
                           >
@@ -899,7 +1123,7 @@ export function AlertCaseDrawer({
                                   </div>
                                   <div
                                     style={{
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       color: "var(--security-subtle)",
                                       marginTop: 2,
                                     }}
@@ -927,7 +1151,7 @@ export function AlertCaseDrawer({
                           placeholder={t.drawer.reportNotePlaceholder}
                           value={reportNote}
                           onChange={(e) => setReportNote(e.target.value)}
-                          style={{ width: "100%", minHeight: 32, fontSize: 12 }}
+                          style={{ width: "100%", fontSize: 12 }}
                         />
                       </div>
 
@@ -958,7 +1182,7 @@ export function AlertCaseDrawer({
                       <div
                         style={{
                           padding: "10px 14px",
-                          borderRadius: 5,
+                          borderRadius: 6,
                           background: "var(--high-bg)",
                           border: "1px solid var(--high-border)",
                           marginBottom: 14,
@@ -979,7 +1203,7 @@ export function AlertCaseDrawer({
                         </div>
                         <div
                           style={{
-                            fontSize: 11,
+                            fontSize: 12,
                             color: "var(--security-text-secondary)",
                             marginTop: 4,
                           }}
@@ -1023,11 +1247,11 @@ export function AlertCaseDrawer({
                                   background: info.bg,
                                   color: info.text,
                                   borderColor: info.border,
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   fontWeight: 700,
                                 }}
                               >
-                                {t.drawer.dossierFindingLabel}: {info.label.toUpperCase()}
+                                {t.drawer.dossierFindingLabel}: {info.label}
                               </span>
                             );
                           })()}
@@ -1086,11 +1310,12 @@ export function AlertCaseDrawer({
                         {transaction.caseDecision?.directive && (
                           <div
                             style={{
-                              fontSize: 11,
+                              fontSize: 12,
                               color: "var(--security-muted)",
-                              background: "rgba(255, 255, 255, 0.03)",
+                              background: "var(--security-surface-subtle)",
+                              border: "1px solid var(--security-border)",
                               padding: "8px 10px",
-                              borderRadius: 4,
+                              borderRadius: 6,
                             }}
                           >
                             <strong>{t.drawer.directive}:</strong>{" "}
@@ -1103,17 +1328,14 @@ export function AlertCaseDrawer({
                 </div>
               )}
 
-              {/* ───────────────────────────────────────────────────────────── */}
-              {/* BRANCH 2: OPERATION / ADMIN VIEW (Dispatch & Final Decision)  */}
-              {/* ───────────────────────────────────────────────────────────── */}
               {isOperation && (
                 <div
                   className={styles.drawerSection}
                   style={{
-                    border: "1px solid #483d66",
+                    border: "1px solid var(--medium-border)",
                     borderRadius: 6,
                     padding: 16,
-                    background: "rgba(173, 138, 243, 0.03)",
+                    background: "var(--security-surface-subtle)",
                     marginTop: 8,
                   }}
                 >
@@ -1132,7 +1354,7 @@ export function AlertCaseDrawer({
                       >
                         {t.drawer.operationDeck}
                       </h3>
-                      <span style={{ fontSize: 11, color: "var(--security-muted)" }}>
+                      <span style={{ fontSize: 12, color: "var(--security-muted)" }}>
                         {t.drawer.authority}:{" "}
                         <strong>
                           {currentUserName || "Trần Mai Anh"} (
@@ -1143,9 +1365,9 @@ export function AlertCaseDrawer({
                     <span
                       className={styles.badge}
                       style={{
-                        background: "rgba(173, 138, 243, 0.15)",
-                        color: "var(--security-purple)",
-                        borderColor: "#483d66",
+                        background: "var(--medium-bg)",
+                        color: "var(--medium-text)",
+                        borderColor: "var(--medium-border)",
                       }}
                     >
                       {t.drawer.opsRoleBadge}
@@ -1158,8 +1380,8 @@ export function AlertCaseDrawer({
                       style={{
                         marginBottom: 14,
                         padding: "10px 12px",
-                        borderRadius: 5,
-                        background: "rgba(0, 0, 0, 0.2)",
+                        borderRadius: 6,
+                        background: "var(--security-surface-subtle)",
                         border: "1px solid var(--security-border)",
                       }}
                     >
@@ -1175,7 +1397,7 @@ export function AlertCaseDrawer({
                           className={styles.control}
                           value={selectedInvestigator}
                           onChange={(e) => setSelectedInvestigator(e.target.value)}
-                          style={{ flex: 1, minHeight: 32 }}
+                          style={{ flex: 1, minHeight: 38 }}
                         >
                           {investigators.map((inv) => (
                             <option key={inv} value={inv}>
@@ -1188,7 +1410,7 @@ export function AlertCaseDrawer({
                           onClick={handleAssignInvestigator}
                           disabled={isMutating}
                           type="button"
-                          style={{ minHeight: 32 }}
+                          style={{ minHeight: 38 }}
                         >
                           <UserCheck size={14} style={{ marginRight: 4 }} />
                           {transaction.assignedInvestigator ? t.actions.reassign : t.actions.assign}
@@ -1210,11 +1432,11 @@ export function AlertCaseDrawer({
                       <div
                         style={{
                           padding: "12px 14px",
-                          borderRadius: 5,
-                          background: "rgba(237, 167, 101, 0.08)",
-                          border: "1px solid #715139",
-                          fontSize: 11,
-                          color: "var(--security-orange)",
+                          borderRadius: 6,
+                          background: "var(--high-bg)",
+                          border: "1px solid var(--high-border)",
+                          fontSize: 12,
+                          color: "var(--high-text)",
                         }}
                       >
                         {t.drawer.waitingForAssign}
@@ -1226,11 +1448,11 @@ export function AlertCaseDrawer({
                       <div
                         style={{
                           padding: "12px 14px",
-                          borderRadius: 5,
-                          background: "rgba(113, 185, 244, 0.08)",
-                          border: "1px solid #2d5a7b",
-                          fontSize: 11,
-                          color: "var(--security-blue)",
+                          borderRadius: 6,
+                          background: "var(--security-tab-active-bg)",
+                          border: "1px solid var(--security-tab-active-border)",
+                          fontSize: 12,
+                          color: "var(--security-tab-active-text)",
                         }}
                       >
                         <div>
@@ -1308,11 +1530,11 @@ export function AlertCaseDrawer({
                                       background: info.bg,
                                       color: info.text,
                                       borderColor: info.border,
-                                      fontSize: 10,
+                                      fontSize: 12,
                                       fontWeight: 700,
                                     }}
                                   >
-                                    {t.drawer.dossierFindingLabel}: {info.label.toUpperCase()}
+                                    {t.drawer.dossierFindingLabel}: {info.label}
                                   </span>
                                 );
                               })()}
@@ -1351,10 +1573,9 @@ export function AlertCaseDrawer({
                               >
                                 <span
                                   style={{
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     color: "var(--security-subtle)",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.05em",
+                                    fontWeight: 600,
                                     display: "block",
                                     marginBottom: 6,
                                   }}
@@ -1365,7 +1586,7 @@ export function AlertCaseDrawer({
                                   {transaction.investigationNotes.map((n, i) => (
                                     <div
                                       key={i}
-                                      style={{ fontSize: 11, color: "var(--security-muted)" }}
+                                      style={{ fontSize: 12, color: "var(--security-muted)" }}
                                     >
                                       <span style={{ color: "var(--security-subtle)" }}>
                                         [{n.time}]
@@ -1390,7 +1611,7 @@ export function AlertCaseDrawer({
                         <h4 className={styles.operationDecisionTitle}>
                           {t.drawer.finalAuthorityTitle}
                         </h4>
-                        <span style={{ fontSize: 11, color: "var(--security-muted)" }}>
+                        <span style={{ fontSize: 12, color: "var(--security-muted)" }}>
                           {t.drawer.finalAuthoritySubtitle}
                         </span>
                       </div>
@@ -1487,11 +1708,12 @@ export function AlertCaseDrawer({
                       {transaction.caseDecision?.directive && (
                         <div
                           style={{
-                            fontSize: 11,
+                            fontSize: 12,
                             color: "var(--security-muted)",
-                            background: "rgba(255, 255, 255, 0.03)",
+                            background: "var(--security-surface-subtle)",
+                            border: "1px solid var(--security-border)",
                             padding: "8px 10px",
-                            borderRadius: 4,
+                            borderRadius: 6,
                           }}
                         >
                           <strong>{t.drawer.directiveIssuedLabel}</strong>{" "}
@@ -1520,6 +1742,8 @@ export function AlertCaseDrawer({
                   </div>
                 </div>
               )}
+            </>
+          )}
             </>
           )}
         </div>

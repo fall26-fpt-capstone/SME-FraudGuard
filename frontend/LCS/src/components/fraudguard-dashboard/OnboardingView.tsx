@@ -7,6 +7,7 @@ import {
 } from "@/hooks/useOnboardingWorkflow";
 import { useLanguage } from "@/context/LanguageContext";
 import { OnboardingEnterpriseListScreen } from "./OnboardingEnterpriseListScreen";
+import { OnboardingPlatformAdminScreen } from "./OnboardingPlatformAdminScreen";
 import { OnboardingIntakeScreen } from "./OnboardingIntakeScreen";
 import { OnboardingClarifyScreen } from "./OnboardingClarifyScreen";
 import { OnboardingConfirmationScreen } from "./OnboardingConfirmationScreen";
@@ -54,6 +55,80 @@ export function OnboardingView(props: OnboardingViewProps) {
   }
 
   const { selectedEnterprise, spec, currentStage, canEdit, readiness } = wf;
+
+  if (props.currentUser.role === "Platform Admin") {
+    return (
+      <>
+        <OnboardingPlatformAdminScreen
+          vi={vi}
+          selectedEnterprise={selectedEnterprise}
+          spec={spec}
+          currentStage={currentStage}
+          stageLabels={wf.stageLabels}
+          assignedStaff={props.users.find((u) => u.id === selectedEnterprise.deploymentStaffId)}
+          smeAdminUser={props.users.find((u) => u.enterpriseId === selectedEnterprise.id && u.role === "SME Admin")}
+          readiness={readiness}
+          intakeDocs={wf.intakeDocs}
+          supplementRequests={wf.supplementRequests}
+          feedbackList={wf.feedbackList}
+          activeSentSnapshot={wf.activeSentSnapshot}
+          activeConfirmedSnapshot={wf.activeConfirmedSnapshot}
+          onProvisionWorkspace={props.onProvisionWorkspace}
+          onProvisionClick={wf.handleProvisionWorkspace}
+          onOpenRules={props.onOpenRules}
+          onPreviewDoc={wf.setPreviewDoc}
+          onDownloadDoc={wf.handleDownloadDocument}
+          onOpenSentSnapshotModal={wf.setSnapshotModalData}
+          onBack={() => wf.setSelectedEnterpriseId("")}
+        />
+        <OnboardingModals
+          vi={vi}
+          selectedEnterprise={selectedEnterprise}
+          spec={spec}
+          activeSentSnapshot={wf.activeSentSnapshot}
+          previewDoc={wf.previewDoc}
+          onClosePreviewDoc={() => wf.setPreviewDoc(null)}
+          onDownloadDoc={wf.handleDownloadDocument}
+          snapshotModalData={wf.snapshotModalData}
+          onCloseSnapshotModal={() => wf.setSnapshotModalData(null)}
+          supplementModalOpen={false}
+          onCloseSupplementModal={() => {}}
+          selectedSupplementItems={[]}
+          onSelectedSupplementItemsChange={() => {}}
+          customSupplementItem=""
+          onCustomSupplementItemChange={() => {}}
+          supplementNote=""
+          onSupplementNoteChange={() => {}}
+          guidanceFileName=""
+          onClearGuidanceAttachment={() => {}}
+          onSelectGuidanceFile={async () => {}}
+          supplementFormError=""
+          onRecordSupplementRequest={() => {}}
+          receiveModalOpen={false}
+          onCloseReceiveModal={() => {}}
+          receivedNote=""
+          onReceivedNoteChange={() => {}}
+          receivedDocName=""
+          onClearReceivedSupplementAttachment={() => {}}
+          onSelectReceivedSupplementFile={async () => {}}
+          receiveError=""
+          onRecordSupplementReceived={() => {}}
+          confirmModalOpen={false}
+          onCloseConfirmModal={() => {}}
+          confirmBy=""
+          onConfirmByChange={() => {}}
+          confirmTime=""
+          onConfirmTimeChange={() => {}}
+          confirmChannel=""
+          onConfirmChannelChange={() => {}}
+          confirmNote=""
+          onConfirmNoteChange={() => {}}
+          confirmError=""
+          onRecordEnterpriseConfirmation={() => {}}
+        />
+      </>
+    );
+  }
 
   return (
     <div className={styles.onboardingContainer}>
@@ -200,11 +275,11 @@ export function OnboardingView(props: OnboardingViewProps) {
               </strong>
               <p style={{ margin: "6px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
                 {vi
-                  ? `Không gắn dự án của doanh nghiệp khác hoặc tự đoán mã dự án. Thao tác thiết lập tương ứng: Quản trị Nền tảng (Platform Admin — Lê Hoàng Phúc) chọn "Khởi tạo workspace triển khai" ngay tại hồ sơ này để cấp mã phạm vi chính thức (workspace-${selectedEnterprise.id}) mà vẫn giữ nguyên toàn bộ đặc tả, bản nháp, xác nhận và tài liệu đã lưu.`
+                  ? `Không gắn dự án của doanh nghiệp khác hoặc tự đoán mã dự án. Thao tác thiết lập tương ứng: Quản trị Nền tảng (Platform Admin: Lê Hoàng Phúc) chọn "Khởi tạo workspace triển khai" ngay tại hồ sơ này để cấp mã phạm vi chính thức (workspace-${selectedEnterprise.id}) mà vẫn giữ nguyên toàn bộ đặc tả, bản nháp, xác nhận và tài liệu đã lưu.`
                   : `Do not attach another enterprise's project or guess project codes. Corresponding setup action: Platform Admin clicks "Provision deployment workspace" on this profile to assign the official scope (workspace-${selectedEnterprise.id}) while preserving all saved specifications, drafts, confirmations, and documents.`}
               </p>
             </div>
-            {props.currentUser.role === "Platform Admin" && props.onProvisionWorkspace && (
+            {(props.currentUser.role as string) === "Platform Admin" && props.onProvisionWorkspace && (
               <div className={styles.onboardingActionButtons}>
                 <button
                   type="button"

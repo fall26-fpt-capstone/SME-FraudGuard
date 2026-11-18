@@ -9,7 +9,8 @@ import {
   Globe,
   Plus,
   RefreshCw,
-   Check,
+  Search,
+  Check,
 } from "lucide-react";
 import type { ProjectItem, RolePermissions, TransactionRisk } from "@/types/fraudguard";
 import { useToast } from "@/context/ToastProvider";
@@ -265,24 +266,37 @@ export function ProjectsView({
       {/* Toolbar Filters */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarGroup}>
-          <input
-            className={styles.searchInput}
-            type="search"
-            placeholder={t.projectsView.searchPlaceholder}
-            aria-label={t.projectsView.searchPlaceholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select
-            className={styles.control}
-            aria-label="Environment"
-            value={filterEnv}
-            onChange={(e) => setFilterEnv(e.target.value)}
-          >
-            <option value="all">{t.projectsView.filterAllEnv}</option>
-            <option value="Production">{t.projectsView.filterProd}</option>
-            <option value="Staging">{t.projectsView.filterStaging}</option>
-          </select>
+          <div className={styles.filterField}>
+            <span className={styles.filterLabel}>
+              {language === "vi" ? "Tìm dự án" : "Find project"}
+            </span>
+            <div className={styles.searchFieldWrap}>
+              <Search size={15} className={styles.searchFieldIcon} aria-hidden="true" />
+              <input
+                className={styles.searchInput}
+                type="search"
+                placeholder={t.projectsView.searchPlaceholder}
+                aria-label={t.projectsView.searchPlaceholder}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>
+              {language === "vi" ? "Môi trường" : "Environment"}
+            </span>
+            <select
+              className={styles.control}
+              aria-label="Environment"
+              value={filterEnv}
+              onChange={(e) => setFilterEnv(e.target.value)}
+            >
+              <option value="all">{t.projectsView.filterAllEnv}</option>
+              <option value="Production">{t.projectsView.filterProd}</option>
+              <option value="Staging">{t.projectsView.filterStaging}</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -327,24 +341,23 @@ export function ProjectsView({
                   >
                     <span
                       style={{
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: 600,
                         color: "var(--security-text-secondary)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
+                        letterSpacing: "0.02em",
                       }}
                     >
                       {t.projectsView.card.apiKey}
                     </span>
                     <button
                       className={`${styles.button} ${!canManage ? styles.actionDisabledTooltip : ""}`}
-                      style={{ minHeight: 34, padding: "4px 8px", fontSize: 11 }}
+                      style={{ minHeight: 36, padding: "5px 10px", fontSize: 12 }}
                       onClick={() => canManage && handleRegenerateKey(project)}
                       disabled={!canManage}
                       type="button"
                       title={t.projectsView.card.btnRegenerate}
                     >
-                      <RefreshCw size={11} style={{ marginRight: 4 }} />
+                      <RefreshCw size={12} style={{ marginRight: 4 }} />
                       {t.projectsView.card.btnRegenerate}
                     </button>
                   </div>
@@ -394,18 +407,17 @@ export function ProjectsView({
                   >
                     <span
                       style={{
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: 600,
                         color: "var(--security-text-secondary)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
+                        letterSpacing: "0.02em",
                       }}
                     >
                       {language === 'vi' ? 'Địa chỉ nhận cảnh báo' : 'Alert notification destination'}
                     </span>
                     <button
                       className={`${styles.button} ${!canManage ? styles.actionDisabledTooltip : ""}`}
-                      style={{ minHeight: 34, padding: "4px 8px", fontSize: 11 }}
+                      style={{ minHeight: 36, padding: "5px 10px", fontSize: 12 }}
                       onClick={() => canManage && handleOpenWebhookModal(project)}
                       disabled={!canManage}
                       type="button"

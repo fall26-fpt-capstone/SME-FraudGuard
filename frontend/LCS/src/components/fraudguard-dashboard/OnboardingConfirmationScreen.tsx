@@ -101,11 +101,11 @@ export function OnboardingConfirmationScreen({
                   <FileText size={16} aria-hidden="true" />
                   {currentStage === "waiting_reconfirmation"
                     ? vi
-                      ? `Bản cập nhật đặc tả đã gửi (${activeSentSnapshot?.version ?? "v1.0"}) — Đang chờ doanh nghiệp xác nhận lại`
-                      : `Updated Specification Sent (${activeSentSnapshot?.version ?? "v1.0"}) — Awaiting Re-confirmation`
+                      ? `Bản cập nhật đặc tả đã gửi (${activeSentSnapshot?.version ?? "v1.0"}) · Đang chờ doanh nghiệp xác nhận lại`
+                      : `Updated Specification Sent (${activeSentSnapshot?.version ?? "v1.0"}) · Awaiting Re-confirmation`
                     : vi
-                    ? `Bản dự thảo đặc tả đã gửi (${activeSentSnapshot?.version ?? "v1.0"}) — Đang chờ doanh nghiệp xác nhận`
-                    : `Draft Specification Sent (${activeSentSnapshot?.version ?? "v1.0"}) — Awaiting Confirmation`}
+                    ? `Bản dự thảo đặc tả đã gửi (${activeSentSnapshot?.version ?? "v1.0"}) · Đang chờ doanh nghiệp xác nhận`
+                    : `Draft Specification Sent (${activeSentSnapshot?.version ?? "v1.0"}) · Awaiting Confirmation`}
                 </h2>
                 <p className={styles.onboardingCardSub}>
                   {activeSentSnapshot?.sentAt
@@ -366,13 +366,13 @@ export function OnboardingConfirmationScreen({
                     {spec.enterpriseConfirmation?.version ?? activeConfirmedSnapshot.version}
                   </dd>
                   <dt>{vi ? "Đại diện xác nhận" : "Confirmed by"}</dt>
-                  <dd>{spec.enterpriseConfirmation?.confirmedBy ?? spec.confirmedBy ?? "—"}</dd>
+                  <dd>{spec.enterpriseConfirmation?.confirmedBy ?? spec.confirmedBy ?? "-"}</dd>
                   <dt>{vi ? "Thời điểm xác nhận" : "Confirmed at"}</dt>
-                  <dd>{spec.enterpriseConfirmation?.confirmedAt ?? spec.confirmedAt ?? "—"}</dd>
+                  <dd>{spec.enterpriseConfirmation?.confirmedAt ?? spec.confirmedAt ?? "-"}</dd>
                   <dt>{vi ? "Hình thức xác nhận" : "Channel"}</dt>
                   <dd>{spec.enterpriseConfirmation?.channel ?? "Biên bản / Email"}</dd>
                   <dt>{vi ? "Ghi chú xác nhận" : "Note"}</dt>
-                  <dd>{spec.enterpriseConfirmation?.note ?? "—"}</dd>
+                  <dd>{spec.enterpriseConfirmation?.note ?? "-"}</dd>
                 </dl>
               </div>
             </section>

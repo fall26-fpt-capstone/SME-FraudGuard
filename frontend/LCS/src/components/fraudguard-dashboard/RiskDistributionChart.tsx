@@ -71,10 +71,10 @@ export function RiskDistributionChart({
           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
         >
           <CartesianGrid stroke="var(--security-border)" strokeDasharray="3 3" />
-          <XAxis dataKey="level" stroke="var(--security-muted)" fontSize={11} />
+          <XAxis dataKey="level" stroke="var(--security-muted)" fontSize={12} />
           <YAxis
             stroke="var(--security-muted)"
-            fontSize={10}
+            fontSize={12}
             allowDecimals={false}
           />
           <Tooltip

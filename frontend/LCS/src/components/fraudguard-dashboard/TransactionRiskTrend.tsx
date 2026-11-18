@@ -84,8 +84,8 @@ export function TransactionRiskTrend({
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid stroke="var(--security-border)" strokeDasharray="3 3" />
-          <XAxis dataKey="date" stroke="var(--security-muted)" fontSize={10} />
-          <YAxis stroke="var(--security-muted)" fontSize={10} allowDecimals={false} />
+          <XAxis dataKey="date" stroke="var(--security-muted)" fontSize={12} />
+          <YAxis stroke="var(--security-muted)" fontSize={12} allowDecimals={false} />
           <Tooltip
             contentStyle={{
               background: "var(--security-panel)",

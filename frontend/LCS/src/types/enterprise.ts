@@ -1,4 +1,5 @@
 import type { DataField } from '@/utils/ingestion-validation';
+import type { EnterpriseLifecycle } from './enterprise-lifecycle';
 
 export type OnboardingStage =
   | 'intake'
@@ -122,4 +123,5 @@ export interface Enterprise {
   projectIds: string[];
   deploymentStaffId: string;
   specification?: DeploymentSpecification;
+  lifecycle?: EnterpriseLifecycle;
 }

@@ -1,13 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { AuditAction, AuditLogEntry } from "@/types/fraudguard";
+import { Search } from "lucide-react";
+import type {
+  AuditLogEntry,
+  ExtendedAuditAction,
+} from "@/types/fraudguard";
 import { useLanguage } from "@/context/LanguageContext";
 import type { TranslationKey } from "@/config/translations";
 import styles from "./SecurityDashboard.module.css";
 
+type AuditTrailEntry = Omit<AuditLogEntry, "action"> & {
+  action: ExtendedAuditAction;
+};
+
 interface AuditTrailViewProps {
-  initialLogs: AuditLogEntry[];
+  initialLogs: readonly AuditTrailEntry[];
 }
 
 function formatAuditTime(iso: string, locale: string): string {
@@ -15,7 +23,25 @@ function formatAuditTime(iso: string, locale: string): string {
   return `${d.toLocaleTimeString(locale)} · ${d.toLocaleDateString(locale)}`;
 }
 
-const ACTION_CLASSES: Record<AuditAction, string> = {
+const CASE_AUDIT_ACTIONS: readonly ExtendedAuditAction[] = [
+  "CASE_CREATED",
+  "INVESTIGATOR_ASSIGNED",
+  "OPERATOR_SELF_ASSIGNED",
+  "REPORT_SUBMITTED",
+  "REVISION_REQUESTED",
+  "REPORT_CONFIRMED_AND_CLOSED",
+  "REPORT_FEEDBACK_SENT",
+  "CASE_STATUS_UPDATED",
+];
+
+const ACTION_CLASSES: Record<ExtendedAuditAction, string> = {
+  CASE_CREATED: styles.auditActionCreate,
+  INVESTIGATOR_ASSIGNED: styles.auditActionUpdate,
+  OPERATOR_SELF_ASSIGNED: styles.auditActionUpdate,
+  REPORT_SUBMITTED: styles.auditActionCreate,
+  REVISION_REQUESTED: styles.auditActionSecurity,
+  REPORT_CONFIRMED_AND_CLOSED: styles.auditActionCreate,
+  REPORT_FEEDBACK_SENT: styles.auditActionCreate,
   CASE_STATUS_UPDATED: styles.auditActionUpdate,
   RULE_CREATED: styles.auditActionCreate,
   RULE_UPDATED: styles.auditActionUpdate,
@@ -29,9 +55,16 @@ const ACTION_CLASSES: Record<AuditAction, string> = {
 };
 
 const ACTION_KEY_MAP: Record<
-  AuditAction,
+  ExtendedAuditAction,
   keyof TranslationKey["auditTrailView"]["actions"]
 > = {
+  CASE_CREATED: "caseStatusUpdated",
+  INVESTIGATOR_ASSIGNED: "caseStatusUpdated",
+  OPERATOR_SELF_ASSIGNED: "caseStatusUpdated",
+  REPORT_SUBMITTED: "caseStatusUpdated",
+  REVISION_REQUESTED: "caseStatusUpdated",
+  REPORT_CONFIRMED_AND_CLOSED: "caseStatusUpdated",
+  REPORT_FEEDBACK_SENT: "caseStatusUpdated",
   CASE_STATUS_UPDATED: "caseStatusUpdated",
   RULE_CREATED: "ruleCreated",
   RULE_UPDATED: "ruleUpdated",
@@ -42,6 +75,29 @@ const ACTION_KEY_MAP: Record<
   WEBHOOK_UPDATED: "webhookUpdated",
   ALERT_REVIEWED: "alertReviewed",
   EXPORT_GENERATED: "exportGenerated",
+};
+
+const WF04_ACTION_KEY_MAP: Partial<
+  Record<ExtendedAuditAction, keyof TranslationKey["wf04Phase2a"]["auditActions"]>
+> = {
+  CASE_CREATED: "caseCreated",
+  INVESTIGATOR_ASSIGNED: "investigatorAssigned",
+  OPERATOR_SELF_ASSIGNED: "operatorSelfAssigned",
+  CASE_STATUS_UPDATED: "caseStatusUpdated",
+};
+
+const WF04_PHASE2B_ACTION_KEY_MAP: Partial<
+  Record<ExtendedAuditAction, keyof TranslationKey["wf04Phase2b"]["auditActions"]>
+> = {
+  REPORT_SUBMITTED: "reportSubmitted",
+  REVISION_REQUESTED: "revisionRequested",
+  REPORT_CONFIRMED_AND_CLOSED: "reportConfirmedClosed",
+};
+
+const WF04_PHASE2C_ACTION_KEY_MAP: Partial<
+  Record<ExtendedAuditAction, keyof TranslationKey["wf04Phase2c"]["auditActions"]>
+> = {
+  REPORT_FEEDBACK_SENT: "reportFeedbackSent",
 };
 
 export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
@@ -57,7 +113,7 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
   const filtered = useMemo(() => {
     return logs.filter((log) => {
       // Category filter
-      if (actionCategory === "cases" && log.action !== "CASE_STATUS_UPDATED") {
+      if (actionCategory === "cases" && !CASE_AUDIT_ACTIONS.includes(log.action)) {
         return false;
       }
       if (
@@ -99,7 +155,7 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
   const stats = useMemo(() => {
     return {
       total: logs.length,
-      cases: logs.filter((l) => l.action === "CASE_STATUS_UPDATED").length,
+      cases: logs.filter((l) => CASE_AUDIT_ACTIONS.includes(l.action)).length,
       rules: logs.filter((l) =>
         ["RULE_CREATED", "RULE_UPDATED", "RULE_TOGGLED", "RULE_DELETED"].includes(l.action),
       ).length,
@@ -159,31 +215,45 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
 
       {/* Toolbar Filters */}
       <div className={styles.toolbar}>
-        <div className={styles.toolbarGroup}>
-          <input
-            className={styles.searchInput}
-            type="search"
-            placeholder={t.auditTrailView.searchPlaceholder}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-          />
-          <select
-            className={styles.control}
-            aria-label={t.auditTrailView.filterCategory}
-            value={actionCategory}
-            onChange={(e) => {
-              setActionCategory(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="all">{t.auditTrailView.categories.all}</option>
-            <option value="cases">{t.auditTrailView.categories.cases}</option>
-            <option value="rules">{t.auditTrailView.categories.rules}</option>
-            <option value="security">{t.auditTrailView.categories.security}</option>
-          </select>
+        <div className={styles.toolbarGroup} style={{ alignItems: "flex-end" }}>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>
+              {language === "vi" ? "Tìm kiếm" : "Search"}
+            </span>
+            <div className={styles.searchFieldWrap}>
+              <Search size={15} className={styles.searchFieldIcon} aria-hidden="true" />
+              <input
+                className={styles.searchInput}
+                type="search"
+                aria-label={t.auditTrailView.searchPlaceholder}
+                placeholder={t.auditTrailView.searchPlaceholder}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+          </label>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>
+              {t.auditTrailView.filterCategory}
+            </span>
+            <select
+              className={styles.control}
+              aria-label={t.auditTrailView.filterCategory}
+              value={actionCategory}
+              onChange={(e) => {
+                setActionCategory(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="all">{t.auditTrailView.categories.all}</option>
+              <option value="cases">{t.auditTrailView.categories.cases}</option>
+              <option value="rules">{t.auditTrailView.categories.rules}</option>
+              <option value="security">{t.auditTrailView.categories.security}</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -221,14 +291,23 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
               ) : (
                 pageLogs.map((log) => {
                   const actionClass = ACTION_CLASSES[log.action] || styles.auditActionUpdate;
+                  const wf04Phase2cKey = WF04_PHASE2C_ACTION_KEY_MAP[log.action];
+                  const wf04Phase2bKey = WF04_PHASE2B_ACTION_KEY_MAP[log.action];
+                  const wf04Key = WF04_ACTION_KEY_MAP[log.action];
                   const actionKey = ACTION_KEY_MAP[log.action];
                   const actionLabel =
-                    actionKey && t.auditTrailView.actions
-                      ? t.auditTrailView.actions[actionKey]
-                      : log.action;
+                    wf04Phase2cKey && t.wf04Phase2c?.auditActions
+                      ? t.wf04Phase2c.auditActions[wf04Phase2cKey]
+                      : wf04Phase2bKey && t.wf04Phase2b?.auditActions
+                        ? t.wf04Phase2b.auditActions[wf04Phase2bKey]
+                        : wf04Key && t.wf04Phase2a?.auditActions
+                          ? t.wf04Phase2a.auditActions[wf04Key]
+                          : actionKey && t.auditTrailView.actions
+                            ? t.auditTrailView.actions[actionKey]
+                            : log.action;
                   return (
                     <tr key={log.id}>
-                      <td style={{ fontSize: 11, color: "var(--security-muted)" }}>
+                      <td style={{ fontSize: 12, color: "var(--security-muted)" }}>
                         {formatAuditTime(log.timestamp, dateLocale)}
                       </td>
                       <td>
@@ -236,13 +315,21 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
                           <div
                             className={styles.avatar}
                             style={{
-                              width: 26,
-                              height: 26,
-                              fontSize: 10,
+                              width: 28,
+                              height: 28,
+                              fontSize: 12,
                               background:
                                 log.actor.role === "SME Admin"
-                                  ? "var(--security-purple)"
-                                  : "var(--security-blue)",
+                                  ? "var(--medium-bg)"
+                                  : "var(--security-tab-active-bg)",
+                              color:
+                                log.actor.role === "SME Admin"
+                                  ? "var(--medium-text)"
+                                  : "var(--security-tab-active-text)",
+                              border:
+                                log.actor.role === "SME Admin"
+                                  ? "1px solid var(--medium-border)"
+                                  : "1px solid var(--security-tab-active-border)",
                             }}
                           >
                             {log.actor.name.charAt(0)}
@@ -261,7 +348,7 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
                             <span
                               style={{
                                 display: "block",
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: "var(--security-muted)",
                               }}
                             >
@@ -285,13 +372,13 @@ export function AuditTrailView({ initialLogs }: AuditTrailViewProps) {
                           maxWidth: 380,
                           whiteSpace: "normal",
                           lineHeight: 1.4,
-                          fontSize: 11,
+                          fontSize: 12,
                           color: "var(--security-text-secondary)",
                         }}
                       >
                         {log.details}
                       </td>
-                      <td style={{ fontFamily: "monospace", fontSize: 11 }}>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>
                         {log.ipAddress}
                       </td>
                     </tr>
