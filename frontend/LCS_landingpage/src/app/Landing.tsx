@@ -667,7 +667,7 @@ export default function Landing() {
                   </p>
                   <ul className={s.planFeatures}>
                     <li><Check /> Kiểm tra theo bộ quy tắc do bạn đặt ra</li>
-                    <li><Check /> Phân loại Bình thường / Bất thường / Chưa rõ</li>
+                    <li><Check /> Phân loại Bình thường / Bất thường</li>
                     <li><Check /> Chỉ rõ các điều kiện vi phạm trong giao dịch</li>
                     <li><Check /> Quản lý theo từng hồ sơ doanh nghiệp riêng biệt</li>
                     <li><Check /> Quy trình phối hợp xử lý hồ sơ 2 bước</li>
@@ -692,7 +692,6 @@ export default function Landing() {
                   <ul className={s.planFeatures}>
                     <li><Check /> Toàn bộ tính năng có trong gói Cơ bản</li>
                     <li><Check /> Mô hình AI phân tích hành vi gian lận chuyên sâu</li>
-                    <li><Check /> Báo cáo độ tin cậy AI &amp; giải trình căn cứ chi tiết</li>
                     <li><Check /> Tự động chuyển đổi quy tắc dự phòng khi AI gián đoạn</li>
                     <li><Check /> Đội ngũ kỹ thuật hỗ trợ thiết lập &amp; đồng hành 1-1</li>
                   </ul>
