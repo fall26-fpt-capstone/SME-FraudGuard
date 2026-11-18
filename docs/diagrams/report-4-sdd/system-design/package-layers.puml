@@ -1,0 +1,47 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 14
+skinparam packageStyle folder
+skinparam packageBackgroundColor white
+skinparam packageBorderColor #333333
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam linetype ortho
+skinparam nodesep 28
+skinparam ranksep 32
+skinparam padding 8
+top to bottom direction
+package "Business module (e.g. investigation)" as module {
+  package "controller" as controller {}
+  package "service" as service {
+    package "impl" as impl {}
+  }
+  package "repository" as repository {}
+  package "entity" as entity {}
+  package "mapper" as mapper {}
+  package "dto" as dto {
+    package "request" as request {}
+    package "response" as response {}
+    request -[hidden]down-> response
+  }
+  controller -[hidden]right-> dto
+  controller ..> service
+  controller ..> dto
+  service ..> dto
+  impl ..> dto
+  impl ..> repository
+  impl ..> mapper
+  repository ..> entity
+  mapper ..> entity
+  mapper ..> dto
+  repository -[hidden]right-> mapper
+}
+legend bottom
+  Dashed arrows: permitted design dependencies.
+  Implementation classes and runtime calls are not yet present.
+  service contains public interfaces; impl contains their implementations.
+endlegend
+@enduml

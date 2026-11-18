@@ -1,0 +1,69 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "TransactionIngestedEvent / Fallback" as User
+participant "TransactionIngestedListener" as C
+participant "RuleEvaluationService" as S
+participant "ConfigurationQueryPort" as P
+participant "AlertCommandPort" as A
+participant "DetectionAttemptRepository" as R
+participant "Database" as DB
+User -> C ++: evaluateTransaction(request)
+C -> C: resolveExecutionContext()
+C -> S ++: evaluateTransaction(request, context)
+S -> P ++: findEnabledRules(req)
+P --> S --: selectedVersion + enabledRules
+
+loop eachEnabledRule
+  S -> S: evaluateTypedConditions(req)
+end
+alt invalidConfigurationOrEvaluationError
+S -> R ++: saveFailedAttempt(req)
+R -> DB ++: INSERT failed attempt + safe diagnostic reference; COMMIT
+DB --> R --: rows / committed result
+R --> S --: failedAttempt
+
+else completedEvaluation
+S -> R ++: saveAttemptAndAllMatches(req)
+R -> DB ++: INSERT attempt + every matched-rule reference; COMMIT
+DB --> R --: rows / committed result
+R --> S --: completedAttempt
+
+  opt matchedRulesNotEmpty
+S -> A ++: createRuleAlertOnce(req)
+A --> S --: oneAggregatedRuleAlert / recoverableFailure
+
+  end
+end
+S --> C --: RuleEvaluationResult / controlled error
+C --> User --: processing result / acknowledgment
+@enduml

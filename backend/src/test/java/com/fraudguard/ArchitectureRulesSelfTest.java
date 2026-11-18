@@ -1,5 +1,12 @@
 package com.fraudguard;
 
+import com.archfixture.consumer.controller.BadController;
+import com.archfixture.consumer.service.impl.BadConsumer;
+import com.archfixture.consumer.service.impl.GoodConsumer;
+import com.archfixture.provider.entity.ProviderEntity;
+import com.archfixture.provider.repository.ProviderRepository;
+import com.archfixture.provider.service.LeakingService;
+import com.archfixture.provider.service.ProviderService;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import org.junit.jupiter.api.Test;
@@ -7,35 +14,35 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Proves the rules in {@link ArchitectureRules} really catch violations, using fixture classes under
- * {@code com.archfixture} (outside {@code com.fraudguard}, so they never affect {@link ArchitectureTest}).
- */
 class ArchitectureRulesSelfTest {
 
-    private static final String FIXTURE_ROOT = "com.archfixture";
-    private final JavaClasses fixtures = new ClassFileImporter().importPackages(FIXTURE_ROOT);
+    private static final String ROOT = "com.archfixture";
 
     @Test
-    void importingAnotherModulesInternalIsDetected() {
-        // com.archfixture.beta.internal.BetaViolator imports com.archfixture.alpha.internal.AlphaSecret
-        assertThatThrownBy(() -> ArchitectureRules.internalIsPrivateToModule(FIXTURE_ROOT, "alpha").check(fixtures))
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("BetaViolator");
+    void anotherModulesEntityIsRejected() {
+        JavaClasses fixture = new ClassFileImporter().importClasses(BadConsumer.class, ProviderEntity.class);
+        assertThatThrownBy(() -> ArchitectureRules.moduleImplementationIsPrivate(ROOT, "provider").check(fixture))
+                .isInstanceOf(AssertionError.class).hasMessageContaining("BadConsumer");
     }
 
     @Test
-    void apiLeakingInternalsIsDetected() {
-        // com.archfixture.alpha.api.AlphaLeak exposes com.archfixture.alpha.internal.AlphaSecret
-        assertThatThrownBy(() -> ArchitectureRules.apiDoesNotExposeInternals(FIXTURE_ROOT, "alpha").check(fixtures))
-                .isInstanceOf(AssertionError.class)
-                .hasMessageContaining("AlphaLeak");
-    }
-
-    @Test
-    void usingOnlyTheApiIsAllowed() {
-        // beta's good class only talks to alpha.api, and beta.internal is not touched by anyone
-        assertThatCode(() -> ArchitectureRules.internalIsPrivateToModule(FIXTURE_ROOT, "beta").check(fixtures))
+    void anotherModulesServiceInterfaceIsAllowed() {
+        JavaClasses fixture = new ClassFileImporter().importClasses(GoodConsumer.class, ProviderService.class);
+        assertThatCode(() -> ArchitectureRules.moduleImplementationIsPrivate(ROOT, "provider").check(fixture))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void controllerBypassingServiceIsRejected() {
+        JavaClasses fixture = new ClassFileImporter().importClasses(BadController.class, ProviderRepository.class);
+        assertThatThrownBy(() -> ArchitectureRules.controllersUseServices(ROOT).check(fixture))
+                .isInstanceOf(AssertionError.class).hasMessageContaining("BadController");
+    }
+
+    @Test
+    void publicServiceLeakingEntityIsRejected() {
+        JavaClasses fixture = new ClassFileImporter().importClasses(LeakingService.class, ProviderEntity.class);
+        assertThatThrownBy(() -> ArchitectureRules.contractsDoNotExposePersistence(ROOT).check(fixture))
+                .isInstanceOf(AssertionError.class).hasMessageContaining("LeakingService");
     }
 }

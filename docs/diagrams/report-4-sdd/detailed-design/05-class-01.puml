@@ -1,0 +1,109 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class Account <<entity>> {
+- id: UUID
+- workspaceId: UUID
+- loginName: String
+- role: EnterpriseRole
+- status: String
+- mustChangePassword: Boolean
+}
+class FieldViewPermission <<entity>> {
+- workspaceId: UUID
+- memberId: UUID
+- fieldId: UUID
+- allowed: Boolean
+}
+interface MemberRepository <<repository>> {
+
++ findAuthorizedMembers(req: MemberRequest, ctx: AccessContext): Page<Account>
++ findMemberAndFieldScope(req: FieldPermissionRequest, ctx: AccessContext): FieldGrantContext
++ saveFieldGrantIfCurrent(req: FieldPermissionRequest, ctx: AccessContext): MutationResult
++ saveMemberIfCurrent(req: MemberRequest, ctx: AccessContext): MutationResult
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class MemberController <<controller>> {
+- service: IMemberService
+--
++ manageMember(request: MemberRequest): MemberResponse
++ setFieldPermission(request: FieldPermissionRequest): MemberResponse
+- resolveExecutionContext(): AccessContext
+}
+class MemberService <<service>> {
+
++ manageMember(request: MemberRequest, context: AccessContext): MemberResponse
++ setFieldPermission(request: FieldPermissionRequest, context: AccessContext): MemberResponse
+- checkContinuityAndCaseResponsibility(req: MemberRequest): boolean
+- requireOperatorOrInvestigatorTarget(req: FieldPermissionRequest): void
+- requireOwnWorkspaceAdmin(ctx: AccessContext): void
+- validateEnterpriseRoleAndLogin(req: MemberRequest): void
+}
+interface IMemberService <<service>> {
+
++ manageMember(request: MemberRequest, context: AccessContext): MemberResponse
++ setFieldPermission(request: FieldPermissionRequest, context: AccessContext): MemberResponse
+}
+class MemberRequest <<DTO>> {
+- memberId: UUID
+- loginName: String
+- contactEmail: String
+- enterpriseRole: EnterpriseRole
+- action: MemberAction
+- expectedVersion: long
+}
+class MemberResponse <<DTO>> {
+- memberId: UUID
+- role: EnterpriseRole
+- fieldGrants: Set<UUID>
+- version: long
+}
+class FieldPermissionRequest <<DTO>> {
+- memberId: UUID
+- fieldIds: Set<UUID>
+- grant: boolean
+- expectedVersion: long
+}
+IMemberService -[hidden]down-> MemberService
+Account -[hidden]down-> FieldViewPermission
+MemberController -[hidden]right-> IMemberService
+IMemberService -[hidden]right-> MemberRepository
+MemberRepository -[hidden]right-> Account
+MemberController -[hidden]down-> MemberRequest
+MemberRequest -[hidden]right-> MemberResponse
+MemberResponse -[hidden]right-> FieldPermissionRequest
+MemberRequest -[hidden]down-> AccessContext
+Account "1" -[norank]- "0..*" FieldViewPermission
+MemberController -[norank]-> IMemberService
+MemberController -[dashed,norank]-> FieldPermissionRequest
+MemberController -[dashed,norank]-> MemberRequest
+MemberController -[dashed,norank]-> MemberResponse
+MemberRepository -[norank]-> Account
+MemberService -[norank]-> MemberRepository
+MemberService -[dashed,norank]-> AccessContext
+MemberService -[dashed,norank]-|> IMemberService
+@enduml

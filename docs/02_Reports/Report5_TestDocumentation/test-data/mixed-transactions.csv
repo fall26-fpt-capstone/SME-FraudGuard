@@ -1,0 +1,8 @@
+"ref","total","paid_at","currency","customer_ref","device","is_remote","note"
+"FG-MIXED-001","150000.25","2026-11-02T19:00:00.000Z","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"FG-MIXED-002","150000.25","2026-11-02T19:00:00.000Z","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"FG-BASE-001","150000.25","2026-11-02T19:00:00.000Z","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"FG-BASE-001","250000.25","2026-11-02T19:00:00.000Z","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"FG-INVALID-AMOUNT","not-a-number","2026-11-02T19:00:00.000Z","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"FG-MISSING-DATE","150000.25","","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"","150000.25","2026-11-02T19:00:00.000Z","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"

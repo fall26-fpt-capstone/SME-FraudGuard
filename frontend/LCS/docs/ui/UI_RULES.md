@@ -1,71 +1,71 @@
-# FraudGuard: quy tắc UI hiện hành
+# FraudGuard: current UI rules
 
-Tài liệu dành cho thành viên nhóm và AI hỗ trợ code. Đọc cùng `AGENTS.md` và `README.md`. Proposal được nhóm phê duyệt quyết định nghiệp vụ; tài liệu này hướng dẫn cách thể hiện UI. Các tài liệu UI cũ chỉ là tham khảo lịch sử, không được dùng để khôi phục tính năng đã bỏ.
+This document is for team members and AI coding assistants. Read it with `AGENTS.md` and `README.md`. The team-approved proposal governs business scope; this document guides its UI presentation. Older UI documents are historical references only and must not be used to restore removed features.
 
-## 1. Nguyên tắc nghiệp vụ
+## 1. Business principles
 
-- Kết quả giao dịch: Bình thường, Bất thường, Chưa thể kết luận. Trạng thái xử lý/lỗi và nhãn kỳ vọng kiểm thử là thông tin riêng.
-- Không hiển thị/tính risk score, risk point hoặc ngưỡng điểm. Ngưỡng nghiệp vụ như số tiền, số giao dịch vẫn hợp lệ khi có trong đặc tả.
-- Free dùng Rule Engine. Subscription ưu tiên AI và dùng Rule Engine khi AI không khả dụng. Hiển thị đúng nguồn AI, Rule hoặc Fallback; không tự tạo confidence cho kết quả rule.
-- Rule Alert phục vụ theo dõi và lý do phát hiện. Luồng điều tra sâu gắn với AI Alert; Operator tự điều tra hoặc phân công Investigator.
-- Con người quyết định kết luận/xử lý; không tự khóa tài khoản, hủy giao dịch hoặc khẳng định giao dịch bất thường là gian lận đã xác nhận.
-- Mỗi doanh nghiệp có một tập cấu hình phát hiện chính. Khi hiển thị dự án trong demo, luôn giới hạn trong doanh nghiệp được phép truy cập.
-- Bản nháp, kết quả kiểm thử, phiên bản phát hành và phiên bản bàn giao phải phân biệt rõ. Không để chỉnh draft làm thay đổi cấu hình đang chạy.
-- Không thêm quota cho Rule Engine. Không tự suy diễn cơ chế tính phí AI ngoài yêu cầu được duyệt.
+- Transaction outcomes: Normal, Abnormal, Undetermined. Processing/error states and expected test labels are separate information.
+- Do not display/calculate risk scores, risk points or score thresholds. Business thresholds such as amounts and transaction counts remain valid when specified.
+- Free uses the Rule Engine. Subscription prioritizes AI and uses the Rule Engine when AI is unavailable. Show the correct source: AI, Rule or Fallback; do not invent confidence for rule results.
+- Rule Alerts support monitoring and detection reasons. In-depth investigation is tied to AI Alerts; the Operator investigates directly or assigns an Investigator.
+- Humans decide conclusions/actions; do not automatically block accounts, cancel transactions or assert that abnormal transactions are confirmed fraud.
+- Each enterprise has one main detection configuration. When displaying projects in the demo, always limit them to the enterprise the user may access.
+- Clearly distinguish drafts, test results, released versions and handed-over versions. Editing a draft must not change the active configuration.
+- Do not add Rule Engine quotas. Do not infer AI billing mechanisms beyond approved requirements.
 
-## 2. Vai trò và phạm vi
+## 2. Roles and scope
 
-| Vai trò | Cách thể hiện UI |
+| Role | UI presentation |
 | --- | --- |
-| Platform Admin | Quản trị nền tảng, doanh nghiệp, phân công và theo dõi tiến độ |
-| Implementation Staff | Review đặc tả, cấu hình, kiểm thử, phát hành và bàn giao trong phạm vi được giao |
-| SME Admin | Quản lý doanh nghiệp, thành viên/quyền và thông tin tích hợp được cho phép |
-| Operator | Theo dõi cảnh báo AI, điều tra/phân công và xem xét kết quả |
-| Investigator | Điều tra hồ sơ được giao và gửi báo cáo |
+| Platform Admin | Administer the platform, enterprises and assignments, and track progress |
+| Implementation Staff | Review specifications, configure, test, release and hand over within the assigned scope |
+| SME Admin | Manage the enterprise, members/permissions and permitted integration information |
+| Operator | Monitor AI alerts, investigate/assign and review results |
+| Investigator | Investigate assigned cases and submit reports |
 
-Không tạo thêm Viewer/Auditor hay đổi lại tên Deployment Staff/Operation. Reuse các hàm phân quyền trong `src/utils/permissions.ts` và phạm vi doanh nghiệp trong `src/utils/enterprise.ts`; kiểm tra cả thao tác lẫn dữ liệu, không chỉ ẩn nút. Dashboard, bảng, chi tiết, báo cáo và export phải dùng cùng phạm vi doanh nghiệp.
+Do not add Viewer/Auditor or revert to the names Deployment Staff/Operation. Reuse permission helpers in `src/utils/permissions.ts` and enterprise scope helpers in `src/utils/enterprise.ts`; check both actions and data, rather than only hiding buttons. Dashboards, tables, details, reports and exports must use the same enterprise scope.
 
-## 3. Ngôn ngữ cho doanh nghiệp
+## 3. Language for enterprise users
 
-- Nhãn ưu tiên tiếng Việt dễ hiểu: “Doanh nghiệp”, “Tập quy tắc”, “Lý do phát hiện”, “Chưa có dữ liệu”. Hạn chế tenant, payload, schema, snapshot trong luồng SME.
-- Không đưa JSON/ID nội bộ lên phần tổng quan; thông tin kỹ thuật chỉ mở khi cần trong phần tích hợp/chi tiết được phép.
-- Nút dùng động từ rõ: “Lưu thay đổi”, “Xem chi tiết”, “Chạy kiểm thử”. Nút bị khóa phải có lý do và hướng dẫn bước tiếp theo.
-- Không hiển thị thành công khi thao tác chưa được thực hiện. Không thêm banner “demo/chưa backend” lặp lại trên mọi trang; giới hạn kỹ thuật ghi trong tài liệu, giải thích tại thao tác khi cần.
-- Chỉnh nhãn phải cập nhật cả `vi` và `en` trong `src/config/translations.ts`. Giữ nguyên tên do người dùng đặt.
+- Prefer clear Vietnamese labels, with meanings such as “Enterprise”, “Rule set”, “Detection reason” and “No data yet”. Limit terms such as tenant, payload, schema and snapshot in SME workflows.
+- Do not expose JSON/internal IDs in overviews; technical information should only be expanded when needed in permitted integration/detail sections.
+- Use clear action verbs on buttons: “Save changes”, “View details”, “Run tests”. Disabled buttons must explain why and guide users to the next step.
+- Do not show success before an action has actually been performed. Do not repeat “demo/no backend yet” banners on every page; document technical limits and explain them at the relevant action when needed.
+- Label changes must update both `vi` and `en` in `src/config/translations.ts`. Preserve user-defined names.
 
-## 4. Thiết kế và CSS
+## 4. Design and CSS
 
-Đọc [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) để biết font, cỡ chữ, kích thước, bảng token hai theme, trạng thái component và các ngoại lệ CSS hiện có. Đây là quy chuẩn thiết kế frontend hiện hành đi cùng tài liệu này.
+Read [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for fonts, text sizes, dimensions, the two-theme token table, component states and existing CSS exceptions. It is the current frontend design standard used alongside this document.
 
-- Dùng CSS Modules và token hiện có trong `src/app/globals.css`; không thêm UI framework hay bộ màu mới chỉ cho một trang.
-- Tái sử dụng `Panel`, `StatCard`, bảng, badge và nút hiện có. Shared dashboard CSS ở `src/components/fraudguard-dashboard/SecurityDashboard.module.css`; login có CSS Module riêng.
-- Màu hành động: `--action-bg: #2563eb`, chữ `--action-text: #ffffff`. Nền/chữ/viền dùng `--security-*` theo theme. Không lấy màu link làm nền CTA nếu thiếu tương phản.
-- Sidebar dùng `--sidebar-width` (240px), header `--product-header-height` (60px), panel radius 5px; control khoảng 4px, badge khoảng 3px. Khoảng cách theo 4/8/12/16/20/24/28/32px.
-- Control thường tối thiểu 40px, vùng chạm mobile tối thiểu 44px. Text metadata tối thiểu 11px và phải đọc được trong cả light/dark.
-- Bố cục trang: tiêu đề và mô tả ngắn → hành động chính → filter/tóm tắt → nội dung → phân trang hoặc hướng dẫn tiếp theo. Một hành động chính nổi bật cho từng tác vụ.
-- Bảng có header dễ đọc, trạng thái bằng cả chữ và màu. Không dùng màu làm tín hiệu duy nhất. Nội dung dài phải wrap/truncate có cách xem đầy đủ.
-- Tránh inline style cho grid/breakpoint dùng chung. Chart phải giải thích đơn vị, nguồn dữ liệu và trạng thái rỗng; tỷ lệ nguồn phát hiện không phải độ chính xác AI.
+- Use CSS Modules and existing tokens in `src/app/globals.css`; do not add a UI framework or a new palette for a single page.
+- Reuse existing `Panel`, `StatCard`, tables, badges and buttons. Shared dashboard CSS is in `src/components/fraudguard-dashboard/SecurityDashboard.module.css`; login has its own CSS Module.
+- Action colors: `--action-bg: #2563eb`, text `--action-text: #ffffff`. Background/text/borders use theme-specific `--security-*` tokens. Do not use a link color as a CTA background if contrast is insufficient.
+- Sidebar uses `--sidebar-width` (240px), header `--product-header-height` (60px), panel radius 5px; controls around 4px, badges around 3px. Spacing follows 4/8/12/16/20/24/28/32px.
+- Standard controls are at least 40px; mobile touch targets at least 44px. Metadata text is at least 11px and must be readable in both light/dark themes.
+- Page layout: title and short description → primary action → filters/summary → content → pagination or next-step guidance. One prominent primary action per task.
+- Tables have readable headers and states expressed in both text and color. Do not use color as the only signal. Long content must wrap/truncate with a way to view it in full.
+- Avoid inline styles for shared grids/breakpoints. Charts must explain units, data sources and empty states; detection-source proportions are not AI accuracy.
 
-## 5. Responsive và khả năng truy cập
+## 5. Responsive behavior and accessibility
 
-- Dưới 900px có menu mobile thay cho sidebar. Menu cùng quyền với desktop và đóng sau điều hướng.
-- Kiểm tra màn hình 375px, 768px và desktop. Không che logo/nhãn role/nút; bảng rộng có vùng cuộn ngang riêng.
-- Modal/drawer dùng `src/hooks/useDialogFocus.ts`, accessible title, focus ban đầu, trap Tab, Escape và trả focus về nút mở. Dữ liệu chưa lưu phải được giữ hoặc có xác nhận bỏ khi phù hợp.
-- Input có label, lỗi gắn với trường, nút icon có tên truy cập. Dropdown có chiều cao tối đa, cuộn nội bộ và không tràn viewport.
-- Có empty/loading/error/retry khi tác vụ cần. Không thêm loading giả cho cập nhật local đồng bộ. Giữ focus-visible và tôn trọng reduced motion.
+- Below 900px, provide a mobile menu instead of the sidebar. The menu uses the same permissions as desktop and closes after navigation.
+- Check at 375px, 768px and desktop. Do not obscure the logo/role labels/buttons; wide tables have their own horizontal scroll region.
+- Modals/drawers use `src/hooks/useDialogFocus.ts`, an accessible title, initial focus, Tab trapping, Escape and focus restoration to the opener. Preserve unsaved data or confirm discarding it where appropriate.
+- Inputs have labels, errors are associated with fields, and icon buttons have accessible names. Dropdowns have a maximum height, internal scrolling and stay within the viewport.
+- Provide empty/loading/error/retry states when the task requires them. Do not add fake loading for synchronous local updates. Preserve focus-visible and respect reduced motion.
 
-## 6. API và package
+## 6. API and packages
 
-- Hiện tại chưa có backend. `src/services` giữ trống bằng `.gitkeep`; không dựng API giả để lấp thư mục.
-- Chỉ thêm service khi nhóm xác nhận contract, authentication, lỗi và dữ liệu trả về. Dữ liệu mẫu ở `src/data`; helper xử lý ở `src/utils`.
-- Dùng package đang có: Next.js/React/TypeScript, CSS Modules, lucide-react, recharts và exceljs. Thêm dependency cần có nhu cầu cụ thể; commit package-lock cùng package.json.
-- `src/app` là nơi đăng ký URL của Next.js; không tạo `src/pages`. Menu desktop/mobile dùng chung `src/routes/navigation.ts`, trang đầu theo vai trò dùng `src/routes/role-home.ts`. Các mục dashboard vẫn chuyển trong `/fraud-monitoring`, không phải URL riêng.
-- Sidebar và ProductHeader trong `src/layouts` vẫn dùng CSS chung của dashboard; không sao chép CSS để làm chúng độc lập chỉ vì khác thư mục.
+- No backend is currently available. Keep `src/services` empty with `.gitkeep`; do not create fake APIs to fill the directory.
+- Add services only after the team confirms the contract, authentication, errors and returned data. Sample data belongs in `src/data`; processing helpers belong in `src/utils`.
+- Use existing packages: Next.js/React/TypeScript, CSS Modules, lucide-react, recharts and exceljs. New dependencies require a concrete need; commit package-lock with package.json.
+- `src/app` registers Next.js URLs; do not create `src/pages`. Desktop/mobile menus share `src/routes/navigation.ts`; role home views use `src/routes/role-home.ts`. Dashboard sections still switch within `/fraud-monitoring`, rather than having separate URLs.
+- Sidebar and ProductHeader in `src/layouts` still use shared dashboard CSS; do not copy CSS to make them independent simply because they are in a different directory.
 
-## 7. Trước khi bàn giao
+## 7. Before handoff
 
-1. Chạy `npm run check` và `npm run build`.
-2. Với thay đổi UI, xem light/dark, mobile/desktop và role bị ảnh hưởng.
-3. Kiểm tra empty/error, nút chính, bàn phím, dropdown/modal và nhãn vi/en.
-4. Kiểm tra SME không thấy dữ liệu doanh nghiệp khác hoặc draft nội bộ; điều tra tuân thủ phân quyền.
-5. Ghi rõ phạm vi và kết quả kiểm tra trong PR. Leader review/merge; không tự merge.
+1. Run `npm run check` and `npm run build`.
+2. For UI changes, inspect light/dark themes, mobile/desktop and affected roles.
+3. Check empty/error states, primary buttons, keyboard use, dropdowns/modals and vi/en labels.
+4. Verify that SMEs cannot see another enterprise's data or internal drafts; investigation must respect permissions.
+5. State the scope and validation results in the PR. The leader reviews/merges; do not merge on your own.

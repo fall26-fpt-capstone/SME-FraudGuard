@@ -1,99 +1,99 @@
 # FraudGuard Dashboard UI System Specification
 
-> HISTORICAL REFERENCE — Quy chuẩn hiện hành là [UI_RULES.md](UI_RULES.md). Các role, risk score, quota và luồng trong tài liệu này có phần đã lỗi thời. Không dùng tài liệu này để quyết định nghiệp vụ hoặc ghi đè UI_RULES.md.
+> HISTORICAL REFERENCE — The current standard is [UI_RULES.md](UI_RULES.md). Some roles, risk scores, quotas and flows in this document are outdated. Do not use it to decide business scope or override UI_RULES.md.
 
-> Quy chuẩn font, kích thước và component hiện hành: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+> Current font, dimension and component standards: [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
-**Phiên bản:** 1.1 — cập nhật 16/10/2026  
-**Phạm vi:** SaaS đa tenant phát hiện giao dịch bất thường cho SME  
-**Tech stack mục tiêu:** React, Next.js App Router, TypeScript, CSS Modules  
-**Tài liệu liên quan:** `FRAUDGUARD_DASHBOARD_UI_GUIDE_NEXTJS.md`, proposal `FraudGuard-as-a-Service`
+**Version:** 1.1 — updated 16/10/2026\
+**Scope:** Multi-tenant SaaS detecting abnormal transactions for SMEs\
+**Target tech stack:** React, Next.js App Router, TypeScript, CSS Modules\
+**Related documents:** `FRAUDGUARD_DASHBOARD_UI_GUIDE_NEXTJS.md`, `FraudGuard-as-a-Service` proposal
 
-## Quy chuẩn hiện hành 1.1 (ưu tiên khi có mâu thuẫn với baseline 1.0)
+## Current standard 1.1 (takes precedence over conflicting baseline 1.0 content)
 
-### Nghiệp vụ và phạm vi dữ liệu
+### Business rules and data scope
 
-- Không hiển thị hoặc tính risk score/risk point/threshold điểm. Kết quả là Bình thường, Bất thường, Chưa thể kết luận; lỗi đánh giá là trạng thái xử lý riêng.
-- Chỉ cần một quy tắc áp dụng khớp là Bất thường. Hiển thị số rule khớp/đã đánh giá và bằng chứng; không tự khóa tài khoản hay hủy giao dịch.
-- Mỗi doanh nghiệp có một tập rule với nhiều phiên bản và phạm vi nhiều project. Luồng: bản nháp → kiểm thử → review → phát hành → kích hoạt → bàn giao. SME chỉ xem phiên bản bàn giao; không thấy draft và ghi chú review nội bộ.
-- Platform Admin quản trị nền tảng, xem tiến độ và phân công. Deployment Staff cấu hình/kiểm thử/phát hành doanh nghiệp được giao. SME Admin quản lý phía doanh nghiệp; Operation xử lý hồ sơ; Investigator làm hồ sơ được giao; Viewer chỉ xem.
-- Dashboard, cảnh báo, hồ sơ, báo cáo, filter, drawer và export phải dùng cùng phạm vi doanh nghiệp. Không lấy toàn bộ giao dịch để tính KPI của SME. Backend thật vẫn phải kiểm tra quyền độc lập.
-- Bộ chọn người dùng trong demo mang tên “Chuyển tài khoản demo”, gồm tên, role và doanh nghiệp/phạm vi. Hai tài khoản cùng role không phải hai role khác nhau.
+- Do not display or calculate risk scores/risk points/score thresholds. Outcomes are Normal, Abnormal, Undetermined; evaluation errors are separate processing states.
+- One matching applicable rule is enough for Abnormal. Display matched/evaluated rule counts and evidence; do not automatically block accounts or cancel transactions.
+- Each enterprise has one rule set with multiple versions and a scope spanning multiple projects. Flow: draft → test → review → release → activate → hand over. SMEs see only the handed-over version, not drafts or internal review notes.
+- Platform Admin administers the platform, tracks progress and assigns work. Deployment Staff configure/test/release for assigned enterprises. SME Admin manages the enterprise side; Operation handles cases; Investigator works on assigned cases; Viewer only views.
+- Dashboards, alerts, cases, reports, filters, drawers and exports must use the same enterprise scope. Do not use all transactions to calculate SME KPIs. The real backend must still check permissions independently.
+- The demo user selector is named “Switch demo account” and includes the name, role and enterprise/scope. Two accounts with the same role are not two different roles.
 
-### Layout và thành phần
+### Layout and components
 
-- Desktop dùng sidebar hợp nhất của LCS; dưới 900px thay bằng nút mở menu mobile, không chỉ ẩn sidebar. Menu dùng cùng danh sách quyền với desktop, có trang hiện tại và đóng sau điều hướng.
-- Control mặc định 40px; mobile tối thiểu 44px. Control compact 34px chỉ dùng khi có lý do về mật độ và vẫn tăng vùng chạm trên mobile. Checkbox 18px trong label tương tác đủ lớn; không kéo giãn hình checkbox theo chiều cao button.
-- Panel radius 5px; control 4px; badge 3px. Spacing ưu tiên 4/8/12/16/20/24/28/32px. Gap 14px trong các ví dụ baseline là ngoại lệ lịch sử, không dùng làm chuẩn mới.
-- KPI dùng grid responsive; tránh inline số cột làm vô hiệu breakpoint. Cases có thể dùng auto-fit 180px, mobile 2 cột và dưới 420px 1 cột.
-- CTA dùng `--action-bg: #2563eb` và `--action-text: #ffffff`; không dùng chữ trắng trên màu link xanh sáng của dark theme.
-- Trạng thái dùng semantic token text/bg/border theo theme. Không hard-code vàng #ffd700 cho chữ trên nền sáng. Metadata cần đọc tối thiểu 11px; light subtle text dùng #64748b.
-- Modal/drawer: accessible title, aria-modal, focus ban đầu, trap Tab/Shift+Tab, Escape và restore focus về nút mở. Dùng `useDialogFocus` chung. Với dữ liệu chưa lưu cần chủ động giữ hoặc xác nhận bỏ dữ liệu tùy luồng.
-- Có route loading/error/retry, empty state rõ, và feedback thao tác. Không tạo loading giả cho việc đồng bộ local.
-- Chart “Phân bố nguồn phát hiện” thể hiện lượng/tỷ trọng AI/Rule/Fallback; không gọi tỷ trọng là độ tin cậy hoặc độ chính xác.
-- SME dùng nhãn nghiệp vụ trước, thông tin kỹ thuật ở chi tiết tích hợp/evidence. Không dịch sai hoặc thay tên rule do người dùng tự đặt.
-- Login được phép có bố cục riêng nhưng màu hành động dùng token chung. Tính năng chưa có backend phải ghi rõ demo/chưa hỗ trợ, không để link không hoạt động giả làm tính năng đã có.
+- Desktop uses the unified LCS sidebar; below 900px, replace it with a mobile-menu button rather than simply hiding it. The menu uses the same permission list as desktop, indicates the current page and closes after navigation.
+- Default controls are 40px; mobile minimum is 44px. Compact 34px controls require a density-related reason and still need larger mobile touch targets. An 18px checkbox sits within a sufficiently large interactive label; do not stretch the checkbox graphic to button height.
+- Panel radius 5px; controls 4px; badges 3px. Prefer spacing 4/8/12/16/20/24/28/32px. The 14px gap in baseline examples is a historical exception, not a new standard.
+- KPIs use responsive grids; avoid inline column counts that disable breakpoints. Cases may use auto-fit 180px, 2 columns on mobile and 1 below 420px.
+- CTAs use `--action-bg: #2563eb` and `--action-text: #ffffff`; do not use white text on the bright blue link color in the dark theme.
+- States use theme-specific semantic text/bg/border tokens. Do not hard-code yellow #ffd700 for text on light backgrounds. Metadata must be readable at a minimum of 11px; light subtle text uses #64748b.
+- Modals/drawers: accessible title, aria-modal, initial focus, Tab/Shift+Tab trapping, Escape and focus restoration to the opener. Use the shared `useDialogFocus`. Explicitly preserve unsaved data or confirm discarding it according to the flow.
+- Provide route loading/error/retry, clear empty states and action feedback. Do not create fake loading for synchronous local work.
+- The “Detection source distribution” chart shows AI/Rule/Fallback counts/proportions; do not call proportions confidence or accuracy.
+- SMEs see business labels first, with technical information in integration/evidence details. Do not mistranslate or rename user-defined rules.
+- Login may have its own layout, but action colors use shared tokens. Features without a backend must be clearly marked demo/unsupported; nonfunctional links must not pretend a feature exists.
 
-### Trạng thái của nội dung baseline bên dưới
+### Status of the baseline content below
 
-Các chương 1–19 bên dưới được giữ để tra cứu cấu trúc và ví dụ thiết kế 1.0. **Các nội dung risk score, threshold, quyền SME sửa rule, Platform Admin triển khai rule, và rail/subnav cũ đã bị thay thế bởi mục 1.1 ở trên.** Không dùng các ví dụ nghiệp vụ/code đó làm yêu cầu triển khai hiện hành. Các quy tắc accessibility, dữ liệu, typography còn phù hợp tiếp tục áp dụng.
+Chapters 1–19 below are retained as references for structure and 1.0 design examples. **Risk scores, thresholds, SME rule-editing rights, Platform Admin rule implementation and old rail/subnav content have been superseded by section 1.1 above.** Do not use those business/code examples as current implementation requirements. Accessibility, data and typography rules that remain appropriate still apply.
 
 ---
 
-## 1. Mục tiêu hệ thống giao diện
+## 1. UI system goals
 
-Tài liệu này là nguồn quy chuẩn chung cho designer và frontend developer khi xây dựng FraudGuard. Giao diện phục vụ bốn nhóm người dùng: Platform Admin, SME Admin, Risk/Operation Staff và Viewer/Auditor.
+This document is the shared standard for designers and frontend developers building FraudGuard. The interface serves four user groups: Platform Admin, SME Admin, Risk/Operation Staff and Viewer/Auditor.
 
-- Hệ thống màu, chữ, khoảng cách, kích thước và trạng thái.
-- Cấu trúc tổng thể của dashboard.
-- Đặc tả từng component và contract giữa các component.
-- Quy tắc hiển thị dữ liệu, bảng và biểu đồ.
-- Hành vi responsive, loading, error và empty state.
-- Quy tắc accessibility và tiêu chí nghiệm thu.
+- Color, typography, spacing, dimensions and states.
+- Overall dashboard structure.
+- Specifications for each component and contracts between components.
+- Data, table and chart presentation rules.
+- Responsive, loading, error and empty-state behavior.
+- Accessibility rules and acceptance criteria.
 
-Mục tiêu trải nghiệm:
+Experience goals:
 
-1. Người dùng nhận ra transaction rủi ro cao, alert và case cần xử lý trong vài giây.
-2. Người dùng đi từ tổng quan tới transaction, evidence và case trong tối đa ba thao tác.
-3. Filter và trạng thái điều hướng luôn dễ nhận biết.
-4. Mật độ dữ liệu cao nhưng không làm mất phân cấp thị giác.
-5. Giao diện hoạt động ổn định từ mobile tới màn hình desktop lớn.
-6. Mỗi kết quả hiển thị rõ nguồn chấm điểm `AI`, `RULE` hoặc `RULE_FALLBACK`.
-7. UI duy trì human oversight: không tự động hủy giao dịch hoặc khóa tài khoản.
+1. Users identify high-risk transactions, alerts and cases requiring action within seconds.
+2. Users move from overview to transactions, evidence and cases in at most three actions.
+3. Filters and navigation states are always easy to recognize.
+4. High data density does not obscure visual hierarchy.
+5. The interface works reliably from mobile to large desktop screens.
+6. Each result clearly displays scoring source `AI`, `RULE` or `RULE_FALLBACK`.
+7. The UI maintains human oversight: no automatic transaction cancellation or account blocking.
 
-### Phạm vi nghiệp vụ chuẩn
+### Standard business scope
 
-| Miền | Nội dung UI |
+| Domain | UI content |
 |---|---|
-| Multi-tenancy | Workspace, project, member, role, plan, quota và tenant isolation |
-| Onboarding | Trạng thái Draft, Reviewing, Confirmed, Active; đặc tả và custom field đã xác nhận |
-| Ingestion | REST API, CSV/Excel, validation result, idempotency và processing status |
+| Multi-tenancy | Workspace, project, member, role, plan, quota and tenant isolation |
+| Onboarding | Draft, Reviewing, Confirmed, Active states; confirmed specifications and custom fields |
+| Ingestion | REST API, CSV/Excel, validation result, idempotency and processing status |
 | Scoring | Risk score 0–100, risk level, confidence, scoring source, explanation |
 | Rule Engine | Conditions, AND/OR groups, risk point, threshold, enable/disable, history |
-| Alert & Case | Alert vượt ngưỡng, assignment, notes, timeline và kết luận của con người |
-| Reporting | Dashboard, filter, CSV/PDF export và audit trail |
-| Platform health | Backend, AI Service, queue, database, error và fallback usage |
+| Alert & Case | Alerts exceeding thresholds, assignment, notes, timeline and human conclusions |
+| Reporting | Dashboard, filters, CSV/PDF export and audit trail |
+| Platform health | Backend, AI Service, queue, database, errors and fallback usage |
 
 ---
 
-## 2. Nguyên tắc thiết kế
+## 2. Design principles
 
-| Mã | Nguyên tắc | Quy tắc áp dụng |
+| ID | Principle | Application rule |
 |---|---|---|
-| DG-01 | Ưu tiên dữ liệu | KPI, rủi ro và phát hiện bảo mật xuất hiện trước nội dung giải thích dài. |
-| DG-02 | Màu có ý nghĩa | Đỏ chỉ dùng cho Critical/error, cam cho High/warning, xanh lá cho success/healthy, xanh dương cho action/navigation. |
-| DG-03 | Phân cấp bằng độ sáng | Nền tổng thể tối nhất, panel sáng hơn một cấp, control sáng hơn panel khi tương tác. |
-| DG-04 | Mật độ có kiểm soát | Bảng và chart được phép dày thông tin; khoảng cách và đường viền phải giúp phân nhóm rõ. |
-| DG-05 | Trạng thái minh bạch | Mọi filter, tab, loading, empty và error state phải được thể hiện rõ. |
-| DG-06 | Progressive disclosure | Dashboard hiển thị tổng quan trước; chi tiết mở qua drawer, modal hoặc trang riêng. |
-| DG-07 | Responsive theo tác vụ | Trên mobile, giữ lại thao tác quan trọng; ẩn hoặc gom navigation thứ cấp. |
-| DG-08 | Accessible by default | Không dùng màu làm tín hiệu duy nhất; mọi control dùng được bằng bàn phím. |
-| DG-09 | Nhất quán hơn trang trí | Dùng token, component chung và pattern có sẵn thay vì tạo style riêng cho từng màn hình. |
-| DG-10 | Phản hồi nhanh | Tương tác local phản hồi ngay; thao tác server có loading và success/error feedback. |
+| DG-01 | Data first | KPIs, risks and security findings appear before lengthy explanations. |
+| DG-02 | Meaningful color | Red only for Critical/error, orange for High/warning, green for success/healthy, blue for action/navigation. |
+| DG-03 | Hierarchy through brightness | The overall background is darkest, panels one level brighter, and controls brighter than panels during interaction. |
+| DG-04 | Controlled density | Tables and charts may be information-dense; spacing and borders must clearly group content. |
+| DG-05 | Transparent states | Every filter, tab, loading, empty and error state must be clearly expressed. |
+| DG-06 | Progressive disclosure | Dashboards show the overview first; details open through drawers, modals or separate pages. |
+| DG-07 | Task-based responsive behavior | On mobile, retain important actions; hide or group secondary navigation. |
+| DG-08 | Accessible by default | Do not use color as the only signal; every control works with a keyboard. |
+| DG-09 | Consistency over decoration | Use tokens, shared components and existing patterns instead of unique styles per screen. |
+| DG-10 | Fast feedback | Local interactions respond immediately; server actions have loading and success/error feedback. |
 
 ---
 
-## 3. Kiến trúc UI
+## 3. UI architecture
 
 ```mermaid
 flowchart TD
@@ -120,7 +120,7 @@ flowchart TD
     Table --> Detail[AlertCaseDrawer]
 ```
 
-Luồng dữ liệu:
+Data flow:
 
 ```mermaid
 flowchart LR
@@ -138,117 +138,117 @@ flowchart LR
 
 ---
 
-## 3.1 Information architecture của FraudGuard
+## 3.1 FraudGuard information architecture
 
-| Navigation | Route đề xuất | Nội dung | Actor |
+| Navigation | Proposed route | Content | Actor |
 |---|---|---|---|
 | Overview | `/fraud-monitoring` | KPI, risk distribution, trend, scoring source, open alert/case | SME Admin, Risk Staff, Viewer |
-| Transactions | `/transactions` | Danh sách transaction, validation status và scoring result | SME Admin, Risk Staff, Viewer |
-| Alerts | `/alerts` | Alert vượt threshold và evidence | SME Admin, Risk Staff, Viewer |
-| Cases | `/cases` | Assignment, notes, timeline và kết luận | SME Admin, Risk Staff, Viewer read-only |
+| Transactions | `/transactions` | Transaction list, validation status and scoring result | SME Admin, Risk Staff, Viewer |
+| Alerts | `/alerts` | Alerts exceeding thresholds and evidence | SME Admin, Risk Staff, Viewer |
+| Cases | `/cases` | Assignment, notes, timeline and conclusions | SME Admin, Risk Staff, Viewer read-only |
 | Rules | `/rules` | Rule template, conditions, point, threshold, publish history | SME Admin, Platform/Technical Staff |
 | Projects | `/projects` | Project, specification, custom field, API key, quota | SME Admin |
-| Reports | `/reports` | CSV/PDF export theo phạm vi quyền | SME Admin, Risk Staff, Viewer |
-| Platform | `/platform` | SME account, plan, usage, health và global audit | Platform Admin |
+| Reports | `/reports` | CSV/PDF export within permission scope | SME Admin, Risk Staff, Viewer |
+| Platform | `/platform` | SME account, plan, usage, health and global audit | Platform Admin |
 
-### Permission matrix tối thiểu
+### Minimum permission matrix
 
-| Khả năng | Platform Admin | SME Admin | Risk Staff | Viewer/Auditor |
+| Capability | Platform Admin | SME Admin | Risk Staff | Viewer/Auditor |
 |---|:---:|:---:|:---:|:---:|
-| Xem dashboard của tenant được cấp | Theo support scope | Có | Có | Có |
-| Quản lý workspace/project/member | Hỗ trợ | Có | Không | Không |
-| Tạo/regenerate/revoke API key | Theo support scope | Có | Không | Không |
-| Điều chỉnh rule parameter được cho phép | Tạo/cấu hình ban đầu | Có | Không | Không |
-| Xem transaction, score, explanation | Theo support scope | Có | Có | Có |
-| Tạo và phân công case | Theo support scope | Có | Có | Không |
-| Cập nhật case status và note | Không mặc định | Theo quyền | Có | Không |
-| Xem audit log | Toàn hệ thống | Trong tenant | Theo quyền | Read-only |
-| Quản lý plan/quota/platform health | Có | Chỉ xem usage/plan | Không | Không |
+| View the assigned tenant's dashboard | Within support scope | Yes | Yes | Yes |
+| Manage workspace/project/member | Support | Yes | No | No |
+| Create/regenerate/revoke API keys | Within support scope | Yes | No | No |
+| Adjust permitted rule parameters | Create/initial configuration | Yes | No | No |
+| View transactions, scores, explanations | Within support scope | Yes | Yes | Yes |
+| Create and assign cases | Within support scope | Yes | Yes | No |
+| Update case status and notes | Not by default | As permitted | Yes | No |
+| View audit logs | System-wide | Within tenant | As permitted | Read-only |
+| Manage plans/quotas/platform health | Yes | View usage/plan only | No | No |
 
-Backend vẫn là nguồn kiểm soát quyền cuối cùng. Việc ẩn button trên frontend chỉ phục vụ trải nghiệm, không thay thế authorization phía server.
+The backend remains the final authority for access control. Hiding frontend buttons serves user experience only and does not replace server-side authorization.
 
-### Contract hiển thị kết quả scoring
+### Scoring result display contract
 
-Mỗi transaction detail phải hiển thị:
+Each transaction detail must display:
 
-| Field | Yêu cầu UI |
+| Field | UI requirement |
 |---|---|
-| Risk score | Giá trị 0–100, nổi bật nhưng không dùng như kết luận fraud |
-| Risk level | Low, Medium, High hoặc Critical với badge semantic |
-| Scoring source | AI, RULE hoặc RULE_FALLBACK; fallback phải được nhấn rõ |
-| Confidence | Chỉ hiển thị khi AI trả về; không giả lập cho rule result |
-| Evidence | Triggered rules nếu rule-based; explanation/evidence nếu AI-based |
-| Model/service version | Hiển thị trong metadata khi source là AI |
-| Decision time | Timestamp và timezone |
-| Alert/case | Link tới alert/case nếu được tạo |
-| Human conclusion | Confirmed Fraud, False Alarm hoặc Resolved do Risk Staff cập nhật |
+| Risk score | Value 0–100, prominent but not used as a fraud conclusion |
+| Risk level | Low, Medium, High or Critical with a semantic badge |
+| Scoring source | AI, RULE or RULE_FALLBACK; fallback must be emphasized |
+| Confidence | Display only when returned by AI; do not simulate it for rule results |
+| Evidence | Triggered rules if rule-based; explanation/evidence if AI-based |
+| Model/service version | Display in metadata when source is AI |
+| Decision time | Timestamp and timezone |
+| Alert/case | Link to the alert/case if created |
+| Human conclusion | Confirmed Fraud, False Alarm or Resolved, updated by Risk Staff |
 
-### Free và Subscription plan
+### Free and Subscription plans
 
-| Nội dung | Free Plan | Subscription Plan |
+| Content | Free Plan | Subscription Plan |
 |---|---|---|
 | Primary scoring | Dynamic Rule Engine | AI Risk Scoring |
 | Evidence | Triggered rules | Confidence + explanation/evidence |
-| Khi AI unavailable | Không áp dụng | Dùng Rule Engine và gắn `RULE_FALLBACK` |
-| Risk Score Gateway | Có | Có |
-| Alert/case | Có | Có |
-| Human oversight | Bắt buộc | Bắt buộc |
+| When AI is unavailable | Not applicable | Use the Rule Engine and label `RULE_FALLBACK` |
+| Risk Score Gateway | Yes | Yes |
+| Alert/case | Yes | Yes |
+| Human oversight | Required | Required |
 
-UI không được làm cho kết quả fallback trông giống kết quả AI. Khi AI Service lỗi, dashboard Platform Admin cần hiển thị health warning và fallback count; SME Portal chỉ cần thông tin scoring source rõ ràng ở transaction/alert.
+The UI must not make fallback results look like AI results. When AI Service fails, the Platform Admin dashboard must display a health warning and fallback count; the SME Portal only needs clear scoring-source information on transactions/alerts.
 
-### Traceability với functional requirements
+### Traceability to functional requirements
 
-| UI capability | Proposal requirement | Thành phần frontend |
+| UI capability | Proposal requirement | Frontend components |
 |---|---|---|
 | Tenant/project-scoped navigation | FR-AUTH-04, FR-ORG-01, FR-ORG-02 | Workspace switcher, route guards, project filter |
-| Plan, quota và usage | FR-ORG-03, FR-ORG-04, FR-ORG-06 | Usage card, plan badge, quota progress |
+| Plan, quota and usage | FR-ORG-03, FR-ORG-04, FR-ORG-06 | Usage card, plan badge, quota progress |
 | API key management | FR-INT-01, FR-INT-02, FR-INT-03 | Masked key list, create/regenerate/revoke dialog |
-| Specification onboarding | FR-INT-04 đến FR-INT-08 | Onboarding stepper và status badge |
+| Specification onboarding | FR-INT-04 through FR-INT-08 | Onboarding stepper and status badge |
 | Transaction list/detail | FR-TXN-06, FR-TXN-08 | TransactionRiskTable, transaction drawer |
-| Rule configuration | FR-RULE-01 đến FR-RULE-09 | Rule list, rule editor, version/history view |
-| AI result và fallback | FR-AI-01 đến FR-AI-08 | ScoringSourceBadge, confidence, explanation, fallback callout |
-| Risk decision | FR-SCORE-01 đến FR-SCORE-06 | Score display, threshold marker, risk-level badge |
-| Alert/case investigation | FR-CASE-01 đến FR-CASE-05 | Alert list, case drawer, assignment, notes, timeline |
-| Dashboard filters | FR-DASH-01 đến FR-DASH-03 | DashboardToolbar, KPI, charts, evidence panel |
-| Export | FR-REPORT-01 | Export dialog và job status |
-| Notification settings | FR-NOTI-01 | Channel configuration và delivery status |
-| Audit trail | FR-AUDIT-01 | Audit table và entity timeline |
-| Platform monitoring | FR-MON-01 | Service health, queue status và error summary |
+| Rule configuration | FR-RULE-01 through FR-RULE-09 | Rule list, rule editor, version/history view |
+| AI result and fallback | FR-AI-01 through FR-AI-08 | ScoringSourceBadge, confidence, explanation, fallback callout |
+| Risk decision | FR-SCORE-01 through FR-SCORE-06 | Score display, threshold marker, risk-level badge |
+| Alert/case investigation | FR-CASE-01 through FR-CASE-05 | Alert list, case drawer, assignment, notes, timeline |
+| Dashboard filters | FR-DASH-01 through FR-DASH-03 | DashboardToolbar, KPI, charts, evidence panel |
+| Export | FR-REPORT-01 | Export dialog and job status |
+| Notification settings | FR-NOTI-01 | Channel configuration and delivery status |
+| Audit trail | FR-AUDIT-01 | Audit table and entity timeline |
+| Platform monitoring | FR-MON-01 | Service health, queue status and error summary |
 
 ---
 
 ## 4. Layout specification
 
-### 4.1 Các vùng layout
+### 4.1 Layout regions
 
-| Vùng | Vị trí | Desktop | Tablet | Mobile | Hành vi |
+| Region | Position | Desktop | Tablet | Mobile | Behavior |
 |---|---|---:|---:|---:|---|
-| App Rail | Cố định bên trái | 56 px | 56 px | 44 px | Luôn hiện; chỉ chứa icon và avatar. |
-| Product Header | Trên cùng workspace | 60 px | 60 px | Tối thiểu 60 px | Sticky; mobile có thể xuống hai hàng. |
-| Secondary Nav | Bên trái nội dung | 200 px | 175 px | Ẩn | Sticky theo viewport. |
-| Main Content | Bên phải subnav | Fluid | Fluid | Fluid | `min-width: 0`; tối đa 1900 px. |
-| Page Padding | Bao quanh nội dung | 28 px | 18 px | 14 px | Giảm theo breakpoint. |
-| Content Gap | Giữa các panel | 14 px | 12–14 px | 12 px | Không nhỏ hơn 8 px. |
+| App Rail | Fixed left | 56 px | 56 px | 44 px | Always visible; icons and avatar only. |
+| Product Header | Top of workspace | 60 px | 60 px | Minimum 60 px | Sticky; may wrap to two rows on mobile. |
+| Secondary Nav | Left of content | 200 px | 175 px | Hidden | Sticky relative to the viewport. |
+| Main Content | Right of subnav | Fluid | Fluid | Fluid | `min-width: 0`; maximum 1900 px. |
+| Page Padding | Around content | 28 px | 18 px | 14 px | Decreases at breakpoints. |
+| Content Gap | Between panels | 14 px | 12–14 px | 12 px | No smaller than 8 px. |
 
 ### 4.2 Grid
 
-| Khu vực | Desktop | Tablet | Mobile |
+| Area | Desktop | Tablet | Mobile |
 |---|---|---|---|
-| KPI cards | 4 cột bằng nhau | 4 cột hoặc 2×2 | 2 cột; 1 cột dưới 420 px |
-| Primary charts | `1.65fr / 1fr` | `1.3fr / 1fr` | 1 cột |
-| Secondary charts | `1.65fr / 1fr` | `1.3fr / 1fr` | 1 cột |
+| KPI cards | 4 equal columns | 4 columns or 2×2 | 2 columns; 1 column below 420 px |
+| Primary charts | `1.65fr / 1fr` | `1.3fr / 1fr` | 1 column |
+| Secondary charts | `1.65fr / 1fr` | `1.3fr / 1fr` | 1 column |
 | Transaction/alert detail | Drawer 420–520 px | Drawer 400 px | Full-screen sheet |
-| Table | Full width | Full width | Scroll ngang hoặc card list |
+| Table | Full width | Full width | Horizontal scrolling or card list |
 
 ### 4.3 Breakpoints
 
-| Token | Giá trị | Mục đích |
+| Token | Value | Purpose |
 |---|---:|---|
-| `--bp-wide` | 1550 px | Tăng chiều cao chart và khoảng thở. |
-| `--bp-desktop` | 1150 px | Thu gọn subnav và header gap. |
-| `--bp-tablet` | 900 px | Ẩn secondary navigation. |
-| `--bp-mobile` | 680 px | Chuyển chart về một cột và header xuống hàng. |
-| `--bp-small` | 420 px | KPI về một cột khi nội dung dài. |
+| `--bp-wide` | 1550 px | Increase chart height and breathing room. |
+| `--bp-desktop` | 1150 px | Compact subnav and header gap. |
+| `--bp-tablet` | 900 px | Hide secondary navigation. |
+| `--bp-mobile` | 680 px | Switch charts to one column and wrap the header. |
+| `--bp-small` | 420 px | KPIs become one column when content is long. |
 
 ---
 
@@ -256,259 +256,259 @@ UI không được làm cho kết quả fallback trông giống kết quả AI. 
 
 ### 5.1 Color tokens
 
-| Token | Giá trị | Vai trò | Không dùng cho |
+| Token | Value | Role | Do not use for |
 |---|---|---|---|
-| `--security-bg` | `#17181c` | Nền ứng dụng | Card hoặc input |
-| `--security-header` | `#1f2025` | Header | Trạng thái hover |
-| `--security-panel` | `#202126` | Panel, secondary nav | CTA chính |
-| `--security-panel-hover` | `#292c35` | Hover row/card | Background mặc định |
-| `--security-control` | `#292a32` | Input, select, button phụ | Panel lớn |
-| `--security-rail` | `#252130` | Icon rail | Nội dung chính |
-| `--security-border` | `#35363e` | Border mặc định | Focus ring |
-| `--security-text` | `#e5e5ec` | Text chính | Disabled text |
-| `--security-muted` | `#9799a7` | Mô tả, metadata | Heading chính |
-| `--security-blue` | `#71b9f4` | Navigation, link, focus | Risk level |
+| `--security-bg` | `#17181c` | Application background | Cards or inputs |
+| `--security-header` | `#1f2025` | Header | Hover states |
+| `--security-panel` | `#202126` | Panels, secondary nav | Primary CTAs |
+| `--security-panel-hover` | `#292c35` | Row/card hover | Default background |
+| `--security-control` | `#292a32` | Inputs, selects, secondary buttons | Large panels |
+| `--security-rail` | `#252130` | Icon rail | Main content |
+| `--security-border` | `#35363e` | Default borders | Focus rings |
+| `--security-text` | `#e5e5ec` | Primary text | Disabled text |
+| `--security-muted` | `#9799a7` | Descriptions, metadata | Main headings |
+| `--security-blue` | `#71b9f4` | Navigation, links, focus | Risk levels |
 | `--security-purple` | `#ad8af3` | Product accent, Medium | Success |
-| `--security-green` | `#78c9ac` | Healthy, resolved | Navigation chung |
-| `--security-orange` | `#eda765` | High, warning | CTA chính |
+| `--security-green` | `#78c9ac` | Healthy, resolved | General navigation |
+| `--security-orange` | `#eda765` | High, warning | Primary CTAs |
 | `--security-red` | `#ed6775` | Critical, error | Decoration |
 
 ### 5.2 Risk-level tokens
 
-| Risk level | Text | Background | Border | Thứ tự ưu tiên |
+| Risk level | Text | Background | Border | Priority |
 |---|---|---|---|---:|
 | Critical | `#f68992` | `#512d35` | `#7b3d46` | 1 |
 | High | `#efb485` | `#443328` | `#715139` | 2 |
 | Medium | `#c5a7f9` | `#372e49` | `#5c4778` | 3 |
 | Low | `#8cd5bc` | `#263c36` | `#3f665a` | 4 |
 
-Risk level luôn hiển thị cả text. Không hiển thị một chấm màu đơn lẻ để đại diện cho mức rủi ro.
+Always display risk levels with text. Do not use a lone colored dot to represent risk levels.
 
 ### 5.3 Typography
 
-| Style | Font size | Line height | Weight | Dùng cho |
+| Style | Font size | Line height | Weight | Usage |
 |---|---:|---:|---:|---|
-| Display | 31 px | 1.1 | 600 | Giá trị KPI |
-| Page title | 26 px | 1.2 | 600 | Tiêu đề trang |
-| Section title | 16 px | 1.35 | 600 | Heading nhóm panel |
-| Panel title | 13 px | 1.4 | 600 | Heading trong card |
-| Body | 14 px | 1.5 | 400 | Nội dung cơ bản |
-| Control | 12 px | 1.4 | 400–500 | Input, tab, select |
-| Metadata | 11 px | 1.5 | 400 | Mô tả, timestamp |
-| Label | 10–11 px | 1.4 | 500–600 | Badge, table heading |
+| Display | 31 px | 1.1 | 600 | KPI values |
+| Page title | 26 px | 1.2 | 600 | Page headings |
+| Section title | 16 px | 1.35 | 600 | Panel-group headings |
+| Panel title | 13 px | 1.4 | 600 | In-card headings |
+| Body | 14 px | 1.5 | 400 | Basic content |
+| Control | 12 px | 1.4 | 400–500 | Inputs, tabs, selects |
+| Metadata | 11 px | 1.5 | 400 | Descriptions, timestamps |
+| Label | 10–11 px | 1.4 | 500–600 | Badges, table headings |
 
-Quy tắc typography:
+Typography rules:
 
-- Chỉ KPI được dùng cỡ 30 px trở lên.
-- Heading không viết toàn bộ chữ hoa.
-- Uppercase chỉ dùng cho section label, eyebrow và badge ngắn.
-- Metadata quan trọng không nhỏ hơn 11 px.
-- Số dùng `font-variant-numeric: tabular-nums` khi cần so sánh theo cột.
+- Only KPIs may use sizes of 30 px or larger.
+- Do not uppercase entire headings.
+- Uppercase is only for section labels, eyebrows and short badges.
+- Important metadata must not be smaller than 11 px.
+- Use `font-variant-numeric: tabular-nums` for numbers that need column comparison.
 
 ### 5.4 Spacing scale
 
-| Token | Giá trị | Trường hợp sử dụng |
+| Token | Value | Use case |
 |---|---:|---|
-| `space-1` | 4 px | Khoảng icon–label nhỏ |
-| `space-2` | 8 px | Gap giữa control |
-| `space-3` | 12 px | Gap giữa KPI card |
-| `space-4` | 16 px | Padding card nhỏ |
-| `space-5` | 20 px | Khoảng section nhỏ |
-| `space-6` | 24 px | Khoảng toolbar và section |
-| `space-7` | 28 px | Page padding desktop |
-| `space-8` | 32 px | Khoảng nhóm lớn |
-| `space-10` | 40 px | Tách vùng nội dung đặc biệt |
+| `space-1` | 4 px | Small icon–label gap |
+| `space-2` | 8 px | Gaps between controls |
+| `space-3` | 12 px | Gaps between KPI cards |
+| `space-4` | 16 px | Small-card padding |
+| `space-5` | 20 px | Small-section spacing |
+| `space-6` | 24 px | Toolbar and section spacing |
+| `space-7` | 28 px | Desktop page padding |
+| `space-8` | 32 px | Large-group spacing |
+| `space-10` | 40 px | Separation of special content areas |
 
-Chỉ dùng bội số 4 px, trừ kích thước kỹ thuật như border 1 px hoặc rail 56 px.
+Use only multiples of 4 px, except for technical dimensions such as 1 px borders or a 56 px rail.
 
-### 5.5 Border, radius và elevation
+### 5.5 Borders, radius and elevation
 
-| Thành phần | Border | Radius | Shadow |
+| Element | Border | Radius | Shadow |
 |---|---|---:|---|
-| Panel | `1px solid --security-border` | 5 px | Không dùng |
-| Control | `1px solid --security-border-strong` | 4 px | Không dùng |
-| Badge | Border theo risk level/source | 3 px | Không dùng |
+| Panel | `1px solid --security-border` | 5 px | None |
+| Control | `1px solid --security-border-strong` | 4 px | None |
+| Badge | Border based on risk level/source | 3 px | None |
 | Modal / Drawer | Border strong | 8 px | `0 24px 80px #0009` |
 | Tooltip | Border strong | 4 px | `0 8px 24px #0007` |
-| Active sidebar item | Không thêm border ngoài | 4 px | Inset 2 px accent |
+| Active sidebar item | No additional outer border | 4 px | Inset 2 px accent |
 
 ---
 
 ## 6. Component inventory
 
-| ID | Component | Vai trò | Input chính | State chính | Output / Event |
+| ID | Component | Role | Main inputs | Main states | Output / Event |
 |---|---|---|---|---|---|
-| C-01 | `FraudGuardDashboard` | Điều phối state và bố cục | `initialTransactions`, `initialSummary` | filters, activeView, selectedTransaction | Truyền props xuống component con |
-| C-02 | `AppRail` | Navigation cấp ứng dụng | items, activeItem, user | default, hover, active | `onNavigate` |
-| C-03 | `ProductHeader` | Tên module và tab cấp cao | title, tabs, activeTab | active, sticky | `onTabChange`, `onSettings` |
-| C-04 | `SecondaryNav` | Navigation trong module | sections, activeItem, status | default, active, hidden | `onItemChange` |
-| C-05 | `PageHeading` | Breadcrumb, title, description | breadcrumb, title, description, badge | static | Không có |
-| C-06 | `DashboardToolbar` | Filter, time range, export | project, type, risk, source, case status | idle, dirty, loading | `onFilterChange`, `onExport` |
-| C-07 | `StatCard` | Hiển thị KPI | label, value, description, tone, trend | loading, ready | Optional `onClick` |
-| C-08 | `Panel` | Container tiêu chuẩn | title, description, action, children | loading, error, ready | Không có |
-| C-09 | `ChartLegend` | Chú thích biểu đồ | items | default | Optional `onToggleSeries` |
-| C-10 | `RiskLevelBadge` | Biểu thị Low/Medium/High/Critical | riskLevel | default | Không có |
-| C-11 | `ScoringSourceBadge` | Phân biệt AI, RULE, RULE_FALLBACK | scoringSource | default, fallback | Không có |
-| C-12 | `SegmentedTabs` | Đổi nhóm dữ liệu | items, value | default, hover, active | `onValueChange` |
-| C-13 | `TransactionRiskTable` | Danh sách transaction đã chấm điểm | data, columns, sort, pagination | loading, ready, empty, error | sort, paginate, review |
-| C-14 | `AlertCaseDrawer` | Transaction, evidence, alert và case | transaction, alert, case, open | open, closed, mutating | create case, assign, update status |
-| C-15 | `SearchInput` | Tìm trong dataset | value, placeholder | default, focus, filled | `onChange`, `onClear` |
-| C-16 | `SelectControl` | Chọn filter đơn | value, options | default, open, disabled | `onChange` |
-| C-17 | `Toast` | Feedback ngắn | tone, message | entering, visible, leaving | auto close |
-| C-18 | `EmptyState` | Không có dữ liệu | title, description, action | static | Optional action |
-| C-19 | `ErrorState` | Lỗi tải dữ liệu | title, detail | static | `onRetry` |
-| C-20 | `Skeleton` | Trạng thái chờ | variant, dimensions | animated / reduced motion | Không có |
+| C-01 | `FraudGuardDashboard` | Coordinate state and layout | `initialTransactions`, `initialSummary` | filters, activeView, selectedTransaction | Pass props to child components |
+| C-02 | `AppRail` | Application-level navigation | items, activeItem, user | default, hover, active | `onNavigate` |
+| C-03 | `ProductHeader` | Module name and top-level tabs | title, tabs, activeTab | active, sticky | `onTabChange`, `onSettings` |
+| C-04 | `SecondaryNav` | In-module navigation | sections, activeItem, status | default, active, hidden | `onItemChange` |
+| C-05 | `PageHeading` | Breadcrumb, title, description | breadcrumb, title, description, badge | static | None |
+| C-06 | `DashboardToolbar` | Filters, time range, export | project, type, risk, source, case status | idle, dirty, loading | `onFilterChange`, `onExport` |
+| C-07 | `StatCard` | Display KPIs | label, value, description, tone, trend | loading, ready | Optional `onClick` |
+| C-08 | `Panel` | Standard container | title, description, action, children | loading, error, ready | None |
+| C-09 | `ChartLegend` | Chart legend | items | default | Optional `onToggleSeries` |
+| C-10 | `RiskLevelBadge` | Indicate Low/Medium/High/Critical | riskLevel | default | None |
+| C-11 | `ScoringSourceBadge` | Distinguish AI, RULE, RULE_FALLBACK | scoringSource | default, fallback | None |
+| C-12 | `SegmentedTabs` | Switch data groups | items, value | default, hover, active | `onValueChange` |
+| C-13 | `TransactionRiskTable` | List scored transactions | data, columns, sort, pagination | loading, ready, empty, error | sort, paginate, review |
+| C-14 | `AlertCaseDrawer` | Transaction, evidence, alert and case | transaction, alert, case, open | open, closed, mutating | create case, assign, update status |
+| C-15 | `SearchInput` | Search the dataset | value, placeholder | default, focus, filled | `onChange`, `onClear` |
+| C-16 | `SelectControl` | Select a single filter | value, options | default, open, disabled | `onChange` |
+| C-17 | `Toast` | Brief feedback | tone, message | entering, visible, leaving | auto close |
+| C-18 | `EmptyState` | No data | title, description, action | static | Optional action |
+| C-19 | `ErrorState` | Data loading error | title, detail | static | `onRetry` |
+| C-20 | `Skeleton` | Waiting state | variant, dimensions | animated / reduced motion | None |
 
 ---
 
-## 7. Đặc tả component
+## 7. Component specifications
 
 ### C-01 — FraudGuardDashboard
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Loại | Client Component |
-| Trách nhiệm | Giữ state tương tác, tính derived data, điều phối drawer và toast. |
-| Không chịu trách nhiệm | Fetch secret phía client, render chi tiết của từng chart, định nghĩa màu riêng. |
+| Type | Client Component |
+| Responsibilities | Hold interactive state, calculate derived data, coordinate drawers and toasts. |
+| Not responsible for | Fetching secrets client-side, rendering each chart's details, defining its own colors. |
 | State | `filters`, `activeView`, `selectedTransaction`, `drawerOpen`. |
-| Derived state | `visibleTransactions`, KPI, grouped data, chart series. |
-| Performance | Dùng `useMemo` cho aggregate; `useDeferredValue` hoặc debounce cho search. |
-| URL sync | Đồng bộ filter với search params nếu filter phía server. |
+| Derived state | `visibleTransactions`, KPIs, grouped data, chart series. |
+| Performance | Use `useMemo` for aggregation; `useDeferredValue` or debounce for search. |
+| URL sync | Synchronize filters with search params when filtering server-side. |
 
 ### C-02 — AppRail
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Kích thước | 56 px desktop; 44 px mobile. |
-| Vị trí | Fixed bên trái, `z-index` cao hơn header. |
-| Item | Icon button 38×38 px; vùng click tối thiểu 36×36 px. |
-| Active | Nền tím đậm, icon trắng. |
-| Tooltip | Bắt buộc khi rail chỉ hiển thị icon. |
-| Keyboard | Tab theo thứ tự từ trên xuống. |
-| Mobile | Giữ các route chính; item phụ chuyển vào menu overflow. |
+| Dimensions | 56 px desktop; 44 px mobile. |
+| Position | Fixed left, with `z-index` above the header. |
+| Item | Icon button 38×38 px; minimum click target 36×36 px. |
+| Active | Dark purple background, white icon. |
+| Tooltip | Required when the rail displays icons only. |
+| Keyboard | Tab in top-to-bottom order. |
+| Mobile | Retain main routes; move secondary items to an overflow menu. |
 
 ### C-03 — ProductHeader
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Chiều cao | 60 px desktop. |
+| Height | 60 px desktop. |
 | Position | Sticky top 0. |
-| Nội dung | Product name, primary tabs, settings/actions. |
-| Active tab | Text trắng và underline xanh 3 px. |
-| Mobile | Product name và action ở hàng đầu; tab ở hàng thứ hai. |
-| Overflow | Có scroll ngang cho tab nếu không đủ chỗ. |
+| Content | Product name, primary tabs, settings/actions. |
+| Active tab | White text and 3 px blue underline. |
+| Mobile | Product name and actions on the first row; tabs on the second. |
+| Overflow | Horizontal tab scrolling when space is insufficient. |
 
 ### C-04 — SecondaryNav
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Chiều rộng | 200 px desktop, 175 px tablet. |
-| Active item | Nền xanh đậm, text xanh nhạt, inset line 2 px. |
-| Nội dung phụ | Health status và đường dẫn tài liệu ở cuối. |
-| Tablet nhỏ | Ẩn dưới 900 px. |
-| Thay thế mobile | Sheet hoặc menu mở từ header. |
+| Width | 200 px desktop, 175 px tablet. |
+| Active item | Dark blue background, light blue text, 2 px inset line. |
+| Secondary content | Health status and documentation links at the bottom. |
+| Small tablet | Hidden below 900 px. |
+| Mobile replacement | Sheet or menu opened from the header. |
 
 ### C-06 — DashboardToolbar
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
 | Control | Project, transaction type, risk level, scoring source, case status, time range, search, refresh, export. |
-| Chiều cao | Tối thiểu 34 px desktop; 40–44 px trên mobile nếu chạm thường xuyên. |
-| Filter thay đổi | Cập nhật dữ liệu ngay hoặc debounce nếu gọi API. |
-| Refresh | Hiện loading indicator; không xoá dữ liệu hiện tại khi refetch. |
-| Export | Export đúng dataset sau filter; hiển thị trạng thái đang tạo file. |
-| Mobile | Wrap thành nhiều hàng; search có thể chiếm toàn bộ chiều rộng. |
+| Height | At least 34 px desktop; 40–44 px on mobile for frequent touch use. |
+| Filter changes | Update data immediately, or debounce when calling an API. |
+| Refresh | Show a loading indicator; do not clear current data during refetch. |
+| Export | Export the filtered dataset; show file-generation status. |
+| Mobile | Wrap into multiple rows; search may take the full width. |
 
 ### C-07 — StatCard
 
-| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Mô tả |
+| Property | Type | Required | Default | Description |
 |---|---|---:|---|---|
-| `label` | `string` | Có | — | Tên KPI. |
-| `value` | `number \| string` | Có | — | Giá trị chính. |
-| `description` | `string` | Có | — | Ngữ cảnh của giá trị. |
-| `tone` | `default \| critical \| warning \| success` | Không | `default` | Màu semantic. |
-| `trend` | `{ value: number; direction: "up" \| "down" }` | Không | — | So sánh với kỳ trước. |
-| `loading` | `boolean` | Không | `false` | Hiện skeleton. |
-| `onClick` | `() => void` | Không | — | Chỉ có khi card drill-down được. |
+| `label` | `string` | Yes | — | KPI name. |
+| `value` | `number \| string` | Yes | — | Main value. |
+| `description` | `string` | Yes | — | Context for the value. |
+| `tone` | `default \| critical \| warning \| success` | No | `default` | Semantic color. |
+| `trend` | `{ value: number; direction: "up" \| "down" }` | No | — | Comparison with the previous period. |
+| `loading` | `boolean` | No | `false` | Show a skeleton. |
+| `onClick` | `() => void` | No | — | Only when the card supports drill-down. |
 
-Quy tắc:
+Rules:
 
-- `value` luôn là vùng nổi bật nhất.
-- Không dùng đỏ cho xu hướng giảm nếu giảm là kết quả tích cực.
-- Trend phải kèm nội dung “so với kỳ trước”.
-- Nếu card có click, render bằng `<button>` hoặc `<a>`, không gắn click lên `<div>`.
+- `value` is always the most prominent area.
+- Do not use red for a downward trend when a decrease is positive.
+- Trends must include “compared with the previous period”.
+- If a card is clickable, render it as `<button>` or `<a>`, rather than attaching clicks to `<div>`.
 
 ### C-08 — Panel
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Header | Title bên trái; action hoặc info bên phải. |
-| Description | Tối đa hai dòng. |
+| Header | Title on the left; action or info on the right. |
+| Description | At most two lines. |
 | Padding | 16–18 px desktop; 14–16 px mobile. |
-| Min width | `0` để không làm vỡ CSS Grid. |
-| Loading | Giữ nguyên kích thước dự kiến để tránh layout shift. |
-| Error | Hiện lỗi trong panel, không thay bằng lỗi toàn trang nếu các panel khác vẫn dùng được. |
+| Min width | `0` to avoid breaking CSS Grid. |
+| Loading | Preserve expected dimensions to avoid layout shift. |
+| Error | Show the error within the panel, rather than a full-page error if other panels remain usable. |
 
 ### C-10 — RiskLevelBadge
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Nội dung | Tên risk level đầy đủ do Risk Score Gateway trả về. |
-| Cỡ chữ | 10–11 px, weight 600. |
-| Padding | 3 px dọc, 6 px ngang. |
+| Content | Full risk-level name returned by the Risk Score Gateway. |
+| Font size | 10–11 px, weight 600. |
+| Padding | 3 px vertically, 6 px horizontally. |
 | Radius | 3 px. |
 | Sorting | Critical → High → Medium → Low. |
-| Accessibility | Text bắt buộc; màu chỉ là tín hiệu bổ sung. |
+| Accessibility | Text is required; color is only a supplementary signal. |
 
 ### C-12 — SegmentedTabs
 
-| State | Mô tả |
+| State | Description |
 |---|---|
-| Default | Text muted, border bottom trong suốt. |
-| Hover | Text sáng hơn. |
-| Active | Text xanh, border bottom xanh 2 px. |
-| Focus | Focus ring xanh bên ngoài. |
-| Disabled | Opacity giảm; không nhận click. |
+| Default | Muted text, transparent bottom border. |
+| Hover | Brighter text. |
+| Active | Blue text, 2 px blue bottom border. |
+| Focus | Blue outer focus ring. |
+| Disabled | Reduced opacity; no clicks accepted. |
 
-Khi tab thay đổi nội dung trong cùng trang, dùng ARIA tabs. Khi chuyển route, dùng `Link` và active state theo pathname.
+Use ARIA tabs when tabs change content within the same page. For route changes, use `Link` and active state based on pathname.
 
 ### C-13 — TransactionRiskTable
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
-| Header | Sticky nếu bảng dài hơn viewport. |
-| Row height | 48–58 px mặc định; 36–44 px ở compact mode. |
-| Cell padding | 13 px dọc, 17 px ngang. |
-| Sorting | Cột sortable có icon và `aria-sort`. |
-| Pagination | Server pagination khi tổng dữ liệu lớn. |
-| Selection | Checkbox chỉ xuất hiện nếu có batch action. |
-| Row action | Button hoặc menu ở cột cuối. |
-| Empty | Một row `colSpan` toàn bảng. |
-| Mobile | Scroll ngang; cố định cột tên nếu cần. |
+| Header | Sticky if the table exceeds the viewport height. |
+| Row height | 48–58 px by default; 36–44 px in compact mode. |
+| Cell padding | 13 px vertically, 17 px horizontally. |
+| Sorting | Sortable columns have an icon and `aria-sort`. |
+| Pagination | Server pagination when total data is large. |
+| Selection | Checkboxes appear only if batch actions exist. |
+| Row action | Button or menu in the last column. |
+| Empty | One row with `colSpan` covering the entire table. |
+| Mobile | Horizontal scrolling; pin the name column if needed. |
 
-Thứ tự cột đề xuất:
+Proposed column order:
 
-| # | Cột | Nội dung | Có thể sort | Ưu tiên mobile |
+| # | Column | Content | Sortable | Mobile priority |
 |---:|---|---|---:|---:|
-| 1 | Risk | Risk level badge | Có | Cao |
-| 2 | Transaction | Reference + entity đã mask/hash | Có | Cao |
-| 3 | Project / Type | Project và transaction type | Có | Cao |
-| 4 | Score | Risk score 0–100 | Có | Cao |
-| 5 | Source | AI, RULE hoặc RULE_FALLBACK | Có | Cao |
-| 6 | Processed at | Timestamp | Có | Thấp |
-| 7 | Action | Review/menu | Không | Cao |
+| 1 | Risk | Risk level badge | Yes | High |
+| 2 | Transaction | Reference + masked/hashed entity | Yes | High |
+| 3 | Project / Type | Project and transaction type | Yes | High |
+| 4 | Score | Risk score 0–100 | Yes | High |
+| 5 | Source | AI, RULE or RULE_FALLBACK | Yes | High |
+| 6 | Processed at | Timestamp | Yes | Low |
+| 7 | Action | Review/menu | No | High |
 
 ### C-14 — AlertCaseDrawer
 
-| Thuộc tính | Đặc tả |
+| Property | Specification |
 |---|---|
 | Desktop width | 420–520 px. |
 | Mobile | Full-screen sheet. |
-| Nội dung | Transaction, risk score, level, source, confidence, triggered rules hoặc AI explanation, alert và case timeline. |
-| Primary action | Create case, assign, add note hoặc update case status. |
-| Focus | Focus trap; focus ban đầu vào heading hoặc nút đóng. |
-| Close | Nút đóng, Escape và click backdrop nếu không có dữ liệu chưa lưu. |
-| Mutation | Disable action và hiển thị loading trong lúc gửi request. Không cung cấp auto-block hoặc auto-cancel. |
+| Content | Transaction, risk score, level, source, confidence, triggered rules or AI explanation, alert and case timeline. |
+| Primary action | Create case, assign, add note or update case status. |
+| Focus | Focus trap; initial focus on the heading or close button. |
+| Close | Close button, Escape and backdrop click if there is no unsaved data. |
+| Mutation | Disable actions and show loading while sending the request. Do not provide auto-block or auto-cancel. |
 
 ---
 
@@ -516,79 +516,79 @@ Thứ tự cột đề xuất:
 
 ### 8.1 Navigation
 
-- Rail dùng cho module cấp cao của hệ thống.
-- Header tabs dùng cho view chính trong một module.
-- Secondary nav dùng cho subsection trong view hiện tại.
-- Breadcrumb chỉ hiển thị vị trí; không lặp toàn bộ navigation.
-- Tại mỗi cấp chỉ có một item active.
+- The rail is for top-level system modules.
+- Header tabs are for main views within a module.
+- Secondary nav is for subsections in the current view.
+- Breadcrumbs indicate location only; do not repeat all navigation.
+- Only one item is active at each level.
 
 ### 8.2 Filter
 
-- Filter áp dụng ngay khi chọn với local data.
-- Với API, debounce search `250–400ms`; select có thể gọi ngay.
-- Filter active phải được phản ánh trong URL nếu người dùng cần chia sẻ view.
-- Có nút “Clear filters” khi tồn tại ít nhất một filter khác mặc định.
-- Result count cập nhật cùng dataset, không dùng count cũ.
-- Khi đổi filter, pagination quay về trang đầu.
+- Apply filters immediately on selection for local data.
+- For APIs, debounce search `250–400ms`; selects may call immediately.
+- Active filters must be reflected in the URL when users need to share the view.
+- Provide a “Clear filters” button when at least one filter differs from its default.
+- Result counts update with the dataset; do not use stale counts.
+- Filter changes reset pagination to the first page.
 
 ### 8.3 Sorting
 
-- Lần click đầu dùng thứ tự có ích nhất với nghiệp vụ.
-- Risk level mặc định: Critical → High → Medium → Low.
-- Date mặc định: mới nhất trước.
-- Header sortable phải có indicator lên/xuống và `aria-sort`.
+- The first click uses the order most useful to the business.
+- Default risk-level order: Critical → High → Medium → Low.
+- Default date order: newest first.
+- Sortable headers must have an up/down indicator and `aria-sort`.
 
 ### 8.4 Feedback
 
-| Tác vụ | Feedback |
+| Task | Feedback |
 |---|---|
-| Đổi filter local | Cập nhật ngay, không toast. |
-| Refetch | Spinner nhỏ tại nút refresh; giữ dữ liệu cũ. |
-| Export | Button loading → toast có link/tên file khi xong. |
-| Update case status | Cập nhật sau khi server xác nhận; toast ghi rõ trạng thái mới. |
-| Lỗi mutation | Giữ drawer mở, hiển thị lỗi gần action. |
-| Copy value | Toast ngắn “Đã sao chép”. |
+| Change local filters | Immediate update, no toast. |
+| Refetch | Small spinner on the refresh button; retain old data. |
+| Export | Button loading → toast with file link/name on completion. |
+| Update case status | Update after server confirmation; toast states the new status. |
+| Mutation error | Keep the drawer open; show an error near the action. |
+| Copy value | Brief “Copied” toast. |
 
 ### 8.5 Motion
 
 - Hover/focus transition: `120–180ms`.
 - Drawer/modal transition: `180–240ms`.
-- Không animate giá trị KPI từ 0 mỗi lần filter.
-- Tôn trọng `prefers-reduced-motion`.
-- Không dùng chuyển động lặp lại ngoài skeleton loading.
+- Do not animate KPI values from 0 on every filter change.
+- Respect `prefers-reduced-motion`.
+- Do not use looping motion except skeleton loading.
 
 ---
 
 ## 9. Data visualization guidelines
 
-### 9.1 Chọn loại chart
+### 9.1 Choosing chart types
 
-| Câu hỏi | Chart phù hợp |
+| Question | Suitable chart |
 |---|---|
-| Transaction/alert thay đổi theo thời gian? | Line chart hoặc area chart. |
-| Transaction đi từ ingestion tới alert/case? | Funnel hoặc staged flow. |
-| Tỷ lệ case theo kết luận? | Donut hoặc stacked bar. |
-| Project/transaction type nào có nhiều alert nhất? | Horizontal bar hoặc ranked list. |
-| Phân bố risk level? | Stacked bar hoặc histogram. |
-| Tỷ lệ AI/RULE/RULE_FALLBACK? | Stacked bar hoặc donut tối đa ba phần. |
-| Nhiều series theo thời gian? | Tối đa 3–5 line; nhiều hơn dùng filter. |
+| How do transactions/alerts change over time? | Line chart or area chart. |
+| How do transactions progress from ingestion to alert/case? | Funnel or staged flow. |
+| What are the case proportions by conclusion? | Donut or stacked bar. |
+| Which projects/transaction types have the most alerts? | Horizontal bar or ranked list. |
+| What is the risk-level distribution? | Stacked bar or histogram. |
+| What are the AI/RULE/RULE_FALLBACK proportions? | Stacked bar or donut with at most three segments. |
+| Multiple series over time? | At most 3–5 lines; use filters for more. |
 
-### 9.2 Quy tắc chart
+### 9.2 Chart rules
 
-- Chart luôn có title và đơn vị.
-- Legend dùng cùng thứ tự với series trên chart.
-- Tooltip hiển thị thời gian, giá trị, đơn vị và tên series.
-- Trục và grid line có tương phản thấp hơn data line.
-- Không dùng hiệu ứng 3D.
-- Không dùng pie/donut với quá năm phân khúc.
-- Chart phải có empty state riêng.
-- Dữ liệu quan trọng cần có bản text hoặc bảng tương đương.
-- Critical luôn cùng màu giữa chart, badge và KPI.
-- Scoring source dùng màu riêng với risk level để tránh nhầm lẫn: AI tím, RULE xanh dương, RULE_FALLBACK cam.
+- Charts always have a title and units.
+- Legend order matches series order on the chart.
+- Tooltips show time, value, unit and series name.
+- Axes and grid lines have lower contrast than data lines.
+- Do not use 3D effects.
+- Do not use pie/donut charts with more than five segments.
+- Charts must have their own empty state.
+- Important data needs an equivalent text or table representation.
+- Critical always uses the same color across charts, badges and KPIs.
+- Scoring sources use colors distinct from risk levels to avoid confusion: purple for AI, blue for RULE, orange for RULE_FALLBACK.
 
 ### 9.3 Chart palette
 
-| Series | Màu |
+| Series | Color |
 |---|---|
 | Critical | `#ed6775` |
 | High | `#eda765` |
@@ -602,32 +602,32 @@ Thứ tự cột đề xuất:
 
 ## 10. Content guidelines
 
-### 10.1 Cách đặt tên
+### 10.1 Naming
 
-| Thành phần | Quy tắc | Ví dụ tốt |
+| Element | Rule | Good example |
 |---|---|---|
-| Page title | Danh từ hoặc cụm danh từ ngắn | `Transaction risk overview` |
-| KPI | Nêu chính xác metric | `High-risk transactions` |
-| Button | Động từ + đối tượng | `Export transactions` |
-| Empty state title | Nêu trạng thái | `Không có giao dịch phù hợp` |
-| Error title | Nêu tác vụ thất bại | `Không thể tải giao dịch` |
-| Tooltip | Giải thích tác dụng | `Làm mới dữ liệu` |
+| Page title | Noun or short noun phrase | `Transaction risk overview` |
+| KPI | Name the exact metric | `High-risk transactions` |
+| Button | Verb + object | `Export transactions` |
+| Empty state title | State the situation | `No matching transactions` |
+| Error title | State the failed task | `Unable to load transactions` |
+| Tooltip | Explain the effect | `Refresh data` |
 
-### 10.2 Viết số và thời gian
+### 10.2 Numbers and time
 
-- Dùng locale của người dùng khi hiển thị ngày và số.
-- Timestamp chi tiết dùng tooltip hoặc drawer.
-- Bảng có thể hiển thị `17/09/2026`; tooltip hiển thị cả giờ và timezone.
-- Số lớn dùng dấu phân cách hàng nghìn.
-- Phần trăm tối đa một chữ số thập phân trừ khi nghiệp vụ yêu cầu.
-- Luôn ghi rõ kỳ so sánh: “giảm 18% so với 30 ngày trước”.
+- Use the user's locale to display dates and numbers.
+- Detailed timestamps appear in tooltips or drawers.
+- Tables may show `17/09/2026`; tooltips show the time and timezone as well.
+- Large numbers use thousands separators.
+- Percentages use at most one decimal place unless business requirements specify otherwise.
+- Always state the comparison period: “down 18% compared with the previous 30 days”.
 
-### 10.3 Ngôn ngữ
+### 10.3 Language
 
-- Chọn một ngôn ngữ chính cho UI.
-- Tên kỹ thuật không nên dịch máy nếu dễ gây nhầm: API, risk score, scoring source, rule fallback, webhook.
-- Nếu dùng tiếng Việt, giữ thuật ngữ nhất quán trong toàn hệ thống.
-- Tránh trộn `Open` và `Đã xử lý` trong cùng nhóm trạng thái.
+- Choose one primary UI language.
+- Avoid machine-translating technical terms if it may cause confusion: API, risk score, scoring source, rule fallback, webhook.
+- If using Vietnamese, keep terminology consistent throughout the system.
+- Avoid mixing English `Open` with Vietnamese “Processed” within the same state group.
 
 ---
 
@@ -635,93 +635,93 @@ Thứ tự cột đề xuất:
 
 | Component | Loading | Empty | Error | Disabled | Success |
 |---|---|---|---|---|---|
-| KPI grid | Skeleton 4 card | Giá trị `0` kèm mô tả | Inline alert phía trên grid | — | Render số liệu |
-| Chart panel | Skeleton giữ chiều cao | Icon + “Chưa có dữ liệu” | Inline retry | Control disabled | Render chart |
-| Table | 6–8 skeleton row | Empty row + clear filter | Panel error + retry | Action disabled | Rows + count |
-| Filter | Giữ giá trị | — | Không reset lựa chọn | Disabled khi option chưa có | Applied state |
-| Export | Spinner trong button | Disabled nếu 0 record | Toast hoặc inline error | Disabled trong lúc chạy | Toast + file |
-| Drawer | Skeleton chi tiết | Transaction/alert không tồn tại | Error + close/retry | Mutation button disabled | Data detail |
+| KPI grid | 4-card skeleton | Value `0` with a description | Inline alert above the grid | — | Render metrics |
+| Chart panel | Skeleton preserving height | Icon + “No data yet” | Inline retry | Control disabled | Render chart |
+| Table | 6–8 skeleton rows | Empty row + clear filter | Panel error + retry | Action disabled | Rows + count |
+| Filter | Retain values | — | Do not reset selections | Disabled when options are unavailable | Applied state |
+| Export | Spinner in button | Disabled if 0 records | Toast or inline error | Disabled while running | Toast + file |
+| Drawer | Detail skeleton | Transaction/alert does not exist | Error + close/retry | Mutation button disabled | Data detail |
 | Mutation | Button loading | — | Inline message | Prevent double submit | Toast + updated UI |
 
 ### 11.1 Loading pattern
 
-- Lần tải đầu: skeleton toàn vùng.
-- Refetch: giữ dữ liệu cũ và hiển thị trạng thái “đang cập nhật”.
-- Không thay toàn bộ trang bằng spinner giữa màn hình.
-- Skeleton phải gần với kích thước nội dung thật để giảm layout shift.
+- Initial load: skeleton for the entire region.
+- Refetch: retain old data and show an “updating” state.
+- Do not replace the entire page with a centered spinner.
+- Skeletons should approximate actual content dimensions to reduce layout shift.
 
 ### 11.2 Empty state pattern
 
-| Nguyên nhân | Nội dung | Action |
+| Cause | Content | Action |
 |---|---|---|
-| Hệ thống chưa có dữ liệu | “Chưa có dữ liệu bảo mật” | “Kết nối nguồn dữ liệu” |
-| Filter không có kết quả | “Không có kết quả phù hợp” | “Xóa bộ lọc” |
-| Search không có kết quả | Hiện từ khóa đang tìm | “Xóa tìm kiếm” |
-| Không có alert mở | Thông báo tích cực | “Xem tất cả giao dịch” |
+| The system has no data yet | “No security data yet” | “Connect a data source” |
+| Filters return no results | “No matching results” | “Clear filters” |
+| Search returns no results | Show the search keyword | “Clear search” |
+| No open alerts | Positive message | “View all transactions” |
 
 ### 11.3 Error pattern
 
-- Lỗi toàn trang chỉ dùng khi route không thể hoạt động.
-- Lỗi một panel không chặn các panel còn lại.
-- Message cho người dùng ngắn và có action rõ.
-- Log kỹ thuật ở hệ thống observability; không hiển thị stack trace.
+- Use full-page errors only when the route cannot function.
+- An error in one panel must not block the others.
+- User messages are short and provide a clear action.
+- Technical logs belong in the observability system; do not display stack traces.
 
 ---
 
 ## 12. Accessibility specification
 
-| Mã | Yêu cầu | Cách kiểm tra |
+| ID | Requirement | How to check |
 |---|---|---|
-| A11Y-01 | Mọi chức năng dùng được bằng keyboard | Duyệt toàn trang chỉ bằng Tab/Shift+Tab/Enter/Escape. |
-| A11Y-02 | Focus ring luôn nhìn thấy | Kiểm tra focus trên nền tối và panel. |
-| A11Y-03 | Icon button có accessible name | Inspect Accessibility Tree hoặc dùng screen reader. |
-| A11Y-04 | Input/select có label | `getByRole`/`getByLabel` tìm được control. |
-| A11Y-05 | Risk level không chỉ dựa vào màu | Badge luôn có text. |
-| A11Y-06 | Modal trap focus | Tab không thoát ra nền khi modal mở. |
-| A11Y-07 | Table có header đúng | `<th scope="col">`; sortable dùng `aria-sort`. |
-| A11Y-08 | Tab semantics đúng | `tablist`, `tab`, `tabpanel`, `aria-selected`. |
-| A11Y-09 | Chart có mô tả | `aria-label`, caption hoặc bảng dữ liệu. |
-| A11Y-10 | Motion giảm được | Kiểm tra `prefers-reduced-motion`. |
+| A11Y-01 | Every feature works with a keyboard | Navigate the entire page using only Tab/Shift+Tab/Enter/Escape. |
+| A11Y-02 | Focus rings are always visible | Check focus on dark backgrounds and panels. |
+| A11Y-03 | Icon buttons have accessible names | Inspect the Accessibility Tree or use a screen reader. |
+| A11Y-04 | Inputs/selects have labels | `getByRole`/`getByLabel` can find the control. |
+| A11Y-05 | Risk levels do not rely on color alone | Badges always have text. |
+| A11Y-06 | Modals trap focus | Tab does not escape to the background while a modal is open. |
+| A11Y-07 | Tables have correct headers | `<th scope="col">`; sortable headers use `aria-sort`. |
+| A11Y-08 | Correct tab semantics | `tablist`, `tab`, `tabpanel`, `aria-selected`. |
+| A11Y-09 | Charts have descriptions | `aria-label`, caption or data table. |
+| A11Y-10 | Motion can be reduced | Check `prefers-reduced-motion`. |
 
-Mục tiêu contrast:
+Contrast targets:
 
-- Text thường: tối thiểu 4.5:1.
-- Text lớn hoặc bold: tối thiểu 3:1.
-- Control boundary và focus indicator: tối thiểu 3:1 so với nền lân cận.
+- Normal text: at least 4.5:1.
+- Large or bold text: at least 3:1.
+- Control boundaries and focus indicators: at least 3:1 against adjacent backgrounds.
 
 ---
 
 ## 13. Responsive behavior specification
 
-### Desktop lớn — trên 1550 px
+### Large desktop — above 1550 px
 
-- Main content có thể tăng padding lên 32–36 px.
-- Chart cao 250–280 px.
-- Bảng giữ mật độ mặc định, không kéo giãn row.
-- Content không vượt quá `1900px`.
+- Main content may increase padding to 32–36 px.
+- Chart height is 250–280 px.
+- Tables retain default density; do not stretch rows.
+- Content does not exceed `1900px`.
 
-### Desktop — 901 tới 1550 px
+### Desktop — 901 to 1550 px
 
-- Hiển thị đầy đủ rail, secondary nav, 4 KPI.
-- Primary chart và grouped list hiển thị hai cột.
-- Header không wrap nếu đủ chỗ.
+- Show the full rail, secondary nav and 4 KPIs.
+- Primary charts and grouped lists use two columns.
+- The header does not wrap when there is enough room.
 
-### Tablet — 681 tới 900 px
+### Tablet — 681 to 900 px
 
-- Ẩn secondary nav.
-- Có button mở secondary navigation dạng sheet nếu navigation đó cần thiết.
-- Chart vẫn có thể giữ hai cột nếu mỗi panel còn tối thiểu 260 px.
-- Table scroll ngang.
+- Hide secondary nav.
+- Provide a button opening secondary navigation as a sheet if that navigation is needed.
+- Charts may retain two columns if each panel has at least 260 px.
+- Tables scroll horizontally.
 
-### Mobile — tối đa 680 px
+### Mobile — at most 680 px
 
-- Header xuống hai hàng.
-- Rail thu còn 44 px hoặc chuyển thành bottom navigation nếu ứng dụng ưu tiên mobile.
-- KPI 2 cột; dưới 420 px chuyển 1 cột khi label dài.
-- Chart một cột.
-- Toolbar wrap; search full width.
-- Transaction/alert detail là full-screen sheet.
-- Không ẩn action quan trọng chỉ vì thiếu chỗ; dùng overflow menu.
+- Header wraps to two rows.
+- Rail shrinks to 44 px or becomes bottom navigation for mobile-first applications.
+- KPIs use 2 columns; below 420 px, switch to 1 column when labels are long.
+- Charts use one column.
+- Toolbar wraps; search uses full width.
+- Transaction/alert details use a full-screen sheet.
+- Do not hide important actions merely because space is limited; use an overflow menu.
 
 ---
 
@@ -729,14 +729,14 @@ Mục tiêu contrast:
 
 ### Naming
 
-- Boolean prop bắt đầu bằng `is`, `has`, `can` hoặc danh từ rõ nghĩa: `isLoading`, `hasError`, `canResolve`.
-- Event callback bắt đầu bằng `on`: `onFilterChange`, `onInspect`, `onResolve`.
-- Không dùng prop chung chung như `data1`, `type2`, `flag`.
-- Component public phải export interface props.
+- Boolean props start with `is`, `has`, `can` or a clear noun: `isLoading`, `hasError`, `canResolve`.
+- Event callbacks start with `on`: `onFilterChange`, `onInspect`, `onResolve`.
+- Do not use vague props such as `data1`, `type2`, `flag`.
+- Public components must export their props interface.
 
 ### Controlled components
 
-Filter, tabs, dialog và pagination nên dùng controlled props:
+Filters, tabs, dialogs and pagination should use controlled props:
 
 ```ts
 interface SelectControlProps<T extends string> {
@@ -749,66 +749,66 @@ interface SelectControlProps<T extends string> {
 
 ### Styling
 
-- Component không tự tạo màu ngoài token nếu không phải chart data series.
-- Cho phép `className` để bố trí từ parent; không để parent chỉnh internals của child.
-- Không truyền chuỗi CSS tùy ý qua props.
-- Variant dùng union type: `tone="critical"`, không dùng `red={true}`.
+- Components do not create colors outside tokens except for chart data series.
+- Allow `className` for parent-controlled layout; do not let parents modify child internals.
+- Do not pass arbitrary CSS strings through props.
+- Variants use union types: `tone="critical"`, rather than `red={true}`.
 
 ---
 
 ## 15. State ownership
 
-| State | Owner | Có lưu URL? | Có lưu server? |
+| State | Owner | Stored in URL? | Stored on server? |
 |---|---|---:|---:|
-| Active product tab | Route/layout | Có | Không |
-| Secondary nav item | Route hoặc dashboard | Có nếu là view độc lập | Không |
-| Search query | Dashboard/page | Có | Không |
-| Project/type/risk/source/case status | Dashboard/page | Có | Không |
-| Time range | Dashboard/page | Có | Có thể lưu preference |
-| Table sort/page | Dashboard/page | Có | Không |
-| Selected transaction/alert | Dashboard | Có thể dùng route segment | Không |
-| Drawer open | Dashboard | Không bắt buộc | Không |
-| Compact mode | User preference | Không | Local storage hoặc profile |
-| Alert/case status | Backend | Không | Có |
-| Toast visibility | Toast provider | Không | Không |
+| Active product tab | Route/layout | Yes | No |
+| Secondary nav item | Route or dashboard | Yes, if an independent view | No |
+| Search query | Dashboard/page | Yes | No |
+| Project/type/risk/source/case status | Dashboard/page | Yes | No |
+| Time range | Dashboard/page | Yes | May store as a preference |
+| Table sort/page | Dashboard/page | Yes | No |
+| Selected transaction/alert | Dashboard | May use a route segment | No |
+| Drawer open | Dashboard | Not required | No |
+| Compact mode | User preference | No | Local storage or profile |
+| Alert/case status | Backend | No | Yes |
+| Toast visibility | Toast provider | No | No |
 
-Nguyên tắc: state có ảnh hưởng tới URL chia sẻ được thì lưu trong search params; state UI tạm thời như drawer/toast giữ local.
+Principle: state that affects a shareable URL belongs in search params; temporary UI state such as drawers/toasts stays local.
 
 ---
 
 ## 16. Suggested Next.js boundaries
 
-| File / Component | Server hay Client | Lý do |
+| File / Component | Server or Client | Reason |
 |---|---|---|
-| `app/fraud-monitoring/page.tsx` | Server | Fetch transaction/summary và kiểm tra tenant/project. |
-| `app/fraud-monitoring/loading.tsx` | Server-compatible | Fallback khi route streaming. |
-| `app/fraud-monitoring/error.tsx` | Client | Error boundary có nút retry. |
-| `FraudGuardDashboard.tsx` | Client | Filter, tab, selected transaction. |
-| `StatCard.tsx` | Server-compatible | Presentational; có thể render ở cả hai phía. |
+| `app/fraud-monitoring/page.tsx` | Server | Fetch transactions/summary and check tenant/project. |
+| `app/fraud-monitoring/loading.tsx` | Server-compatible | Route-streaming fallback. |
+| `app/fraud-monitoring/error.tsx` | Client | Error boundary with a retry button. |
+| `FraudGuardDashboard.tsx` | Client | Filters, tabs, selected transaction. |
+| `StatCard.tsx` | Server-compatible | Presentational; may render on either side. |
 | `RiskLevelBadge.tsx` | Server-compatible | Presentational. |
-| `TransactionRiskTable.tsx` | Client | Sort, pagination và review action. |
+| `TransactionRiskTable.tsx` | Client | Sorting, pagination and review actions. |
 | `AlertCaseDrawer.tsx` | Client | Open/close, focus management, case mutation. |
-| `TransactionRiskTrend.tsx` | Client | Thư viện chart thường cần browser APIs. |
-| `route.ts` / Server Action | Server | Mutation, export và gọi API cần secret. |
+| `TransactionRiskTrend.tsx` | Client | Chart libraries usually need browser APIs. |
+| `route.ts` / Server Action | Server | Mutations, exports and API calls requiring secrets. |
 
-Giữ Client Component boundary nhỏ. Không thêm `"use client"` vào component chỉ render markup nếu không cần hook hoặc browser API.
+Keep Client Component boundaries small. Do not add `"use client"` to markup-only components that need no hooks or browser APIs.
 
 ---
 
 ## 17. Performance guidelines
 
-| Vấn đề | Quy tắc |
+| Issue | Rule |
 |---|---|
-| Dataset lớn | Server filter, sort và pagination. |
-| Search | Debounce hoặc `useDeferredValue`. |
-| Aggregation | Tính ở server hoặc `useMemo`. |
-| Chart library | Dynamic import nếu chart nặng và nằm dưới fold. |
-| Table trên 500 row | Pagination hoặc virtualization. |
-| Refetch | Giữ dữ liệu cũ, tránh nhấp nháy toàn màn hình. |
-| Icons | Import icon cụ thể, không import cả package namespace. |
-| Images | Dùng `next/image` cho raster asset; icon ưu tiên SVG component. |
-| Layout shift | Skeleton giữ kích thước chart/card. |
-| Re-render | Memo hóa column definition và derived arrays khi cần. |
+| Large dataset | Server-side filtering, sorting and pagination. |
+| Search | Debounce or `useDeferredValue`. |
+| Aggregation | Calculate on the server or with `useMemo`. |
+| Chart library | Dynamic import for heavy charts below the fold. |
+| Table exceeding 500 rows | Pagination or virtualization. |
+| Refetch | Retain old data; avoid full-screen flicker. |
+| Icons | Import specific icons, not the entire package namespace. |
+| Images | Use `next/image` for raster assets; prefer SVG components for icons. |
+| Layout shift | Skeletons preserve chart/card dimensions. |
+| Re-render | Memoize column definitions and derived arrays when needed. |
 
 ---
 
@@ -816,27 +816,27 @@ Giữ Client Component boundary nhỏ. Không thêm `"use client"` vào componen
 
 ### Unit / component tests
 
-| ID | Test case | Kết quả mong đợi |
+| ID | Test case | Expected result |
 |---|---|---|
-| T-01 | Render `RiskLevelBadge` với mọi risk level | Đúng text và variant class. |
-| T-02 | Search theo transaction reference/entity | Chỉ giữ row phù hợp. |
-| T-03 | Filter project/risk/source | Chỉ hiển thị transaction phù hợp. |
-| T-04 | Chuyển status tab | Dataset và `aria-selected` cập nhật. |
-| T-05 | Dataset rỗng | Hiện empty state với `colSpan` đúng. |
-| T-06 | Sort risk level | Thứ tự Critical → High → Medium → Low. |
-| T-07 | Mở transaction detail | Drawer hiện đúng score, source và evidence. |
-| T-08 | API mutation lỗi | Drawer giữ mở và hiển thị lỗi. |
+| T-01 | Render `RiskLevelBadge` for every risk level | Correct text and variant class. |
+| T-02 | Search by transaction reference/entity | Only matching rows remain. |
+| T-03 | Filter by project/risk/source | Only matching transactions appear. |
+| T-04 | Switch status tabs | Dataset and `aria-selected` update. |
+| T-05 | Empty dataset | Empty state with correct `colSpan`. |
+| T-06 | Sort by risk level | Order Critical → High → Medium → Low. |
+| T-07 | Open transaction details | Drawer shows the correct score, source and evidence. |
+| T-08 | API mutation fails | Drawer stays open and displays an error. |
 
 ### End-to-end tests
 
 | ID | Flow |
 |---|---|
-| E2E-01 | Mở dashboard → lọc project + Critical → review alert → tạo case → cập nhật Reviewing. |
-| E2E-02 | Search không có kết quả → clear search → dữ liệu trở lại. |
-| E2E-03 | Đặt filter → reload → filter được khôi phục từ URL. |
-| E2E-04 | Export sau filter → file chỉ chứa kết quả hiện tại. |
-| E2E-05 | Điều hướng toàn dashboard bằng keyboard. |
-| E2E-06 | Mobile viewport không có horizontal scroll toàn trang. |
+| E2E-01 | Open dashboard → filter project + Critical → review alert → create case → update to Reviewing. |
+| E2E-02 | Search with no results → clear search → data returns. |
+| E2E-03 | Set filters → reload → filters restored from URL. |
+| E2E-04 | Export after filtering → file contains only current results. |
+| E2E-05 | Navigate the entire dashboard by keyboard. |
+| E2E-06 | No page-wide horizontal scrolling in the mobile viewport. |
 
 ### Visual regression viewports
 
@@ -851,78 +851,78 @@ Giữ Client Component boundary nhỏ. Không thêm `"use client"` vào componen
 
 ## 19. Definition of Done
 
-Một dashboard screen đạt chuẩn khi:
+A dashboard screen meets the standard when:
 
-- Dùng đúng token thay vì hard-code màu và spacing rải rác.
-- Có đầy đủ desktop, tablet và mobile behavior.
-- Không xuất hiện horizontal scroll toàn trang.
-- Search, filter, tab, sort và pagination hoạt động đúng.
-- Loading không làm mất dữ liệu cũ trong quá trình refetch.
-- Có empty state và error state ở đúng phạm vi.
-- Risk level có text và màu thống nhất ở KPI, chart, badge và bảng.
-- URL lưu các filter cần chia sẻ.
-- Drawer/modal quản lý focus đúng.
-- Icon-only controls có accessible name.
-- Không đưa secret hoặc API key vào Client Component.
-- Bảng xử lý được dữ liệu dài, text overflow và dataset lớn.
-- Hoàn thành các test case quan trọng trong mục 18.
+- It uses the correct tokens instead of scattered hard-coded colors and spacing.
+- Desktop, tablet and mobile behavior are complete.
+- There is no page-wide horizontal scrolling.
+- Search, filters, tabs, sorting and pagination work correctly.
+- Loading preserves old data during refetch.
+- Empty and error states exist at the appropriate scope.
+- Risk levels have consistent text and colors across KPIs, charts, badges and tables.
+- URLs retain filters that need sharing.
+- Drawers/modals manage focus correctly.
+- Icon-only controls have accessible names.
+- No secrets or API keys are placed in Client Components.
+- Tables handle long data, text overflow and large datasets.
+- Important test cases in section 18 are completed.
 
 ---
 
-## 20. Review checklist cho pull request
+## 20. Pull request review checklist
 
 ### Design consistency
 
-- [ ] Component đã tồn tại trong inventory hay cần bổ sung component mới?
-- [ ] Màu, spacing, radius và typography có dùng token?
-- [ ] Active, hover, focus và disabled state đầy đủ?
-- [ ] Risk level, scoring source và case status có đúng semantic color?
-- [ ] Copywriting có thống nhất ngôn ngữ?
+- [ ] Does the component already exist in the inventory, or is a new one needed?
+- [ ] Do colors, spacing, radius and typography use tokens?
+- [ ] Are active, hover, focus and disabled states complete?
+- [ ] Do risk level, scoring source and case status use correct semantic colors?
+- [ ] Is the copywriting language consistent?
 
 ### Responsive
 
-- [ ] Kiểm tra ở 1440, 1024, 768 và 390 px.
-- [ ] Không có horizontal scroll toàn trang.
-- [ ] Table hoặc chart không bị cắt nội dung quan trọng.
-- [ ] Action quan trọng vẫn truy cập được trên mobile.
+- [ ] Check at 1440, 1024, 768 and 390 px.
+- [ ] No page-wide horizontal scrolling.
+- [ ] No important table/chart content is clipped.
+- [ ] Important actions remain accessible on mobile.
 
 ### Accessibility
 
-- [ ] Tất cả control truy cập được bằng keyboard.
-- [ ] Focus ring nhìn rõ.
-- [ ] Input có label.
-- [ ] Icon button có accessible name.
-- [ ] Modal/drawer trap focus và đóng được bằng Escape.
-- [ ] Không dùng màu làm tín hiệu duy nhất.
+- [ ] All controls are keyboard-accessible.
+- [ ] Focus rings are clearly visible.
+- [ ] Inputs have labels.
+- [ ] Icon buttons have accessible names.
+- [ ] Modals/drawers trap focus and close with Escape.
+- [ ] Color is not the only signal.
 
 ### Data and behavior
 
-- [ ] Loading, empty, error và success state đã xử lý.
-- [ ] Result count khớp dataset đang hiển thị.
-- [ ] Filter reset pagination.
-- [ ] Mutation không gửi hai lần.
-- [ ] Export dùng đúng dữ liệu sau filter.
-- [ ] URL state hoạt động sau reload/back/forward.
+- [ ] Loading, empty, error and success states are handled.
+- [ ] Result counts match the displayed dataset.
+- [ ] Filters reset pagination.
+- [ ] Mutations are not submitted twice.
+- [ ] Exports use the correctly filtered data.
+- [ ] URL state works after reload/back/forward.
 
 ---
 
-## 21. Quyết định thiết kế cần được thống nhất trước khi code
+## 21. Design decisions requiring agreement before coding
 
-| Quyết định | Lựa chọn đề xuất |
+| Decision | Proposed choice |
 |---|---|
-| Ngôn ngữ UI | Tiếng Việt hoặc tiếng Anh hoàn toàn, không trộn tự do. |
-| Icon library | Lucide React hoặc icon system hiện có. |
-| Chart library | Recharts cho đồ án quy mô vừa; ECharts nếu dữ liệu/phân tích phức tạp. |
-| Dialog / Drawer | Radix UI, shadcn/ui hoặc component accessible sẵn có. |
-| Data fetching | Server Component cho initial load; TanStack Query/SWR nếu cần client refetch phức tạp. |
-| Filter ownership | URL search params nếu gọi API; local state nếu demo nhỏ. |
-| Table strategy | Server pagination khi dữ liệu lớn; local table khi mock/demo. |
+| UI language | Entirely Vietnamese or English; no arbitrary mixing. |
+| Icon library | Lucide React or the existing icon system. |
+| Chart library | Recharts for a medium-sized capstone project; ECharts for complex data/analysis. |
+| Dialog / Drawer | Radix UI, shadcn/ui or an existing accessible component. |
+| Data fetching | Server Components for initial load; TanStack Query/SWR for complex client refetching. |
+| Filter ownership | URL search params when calling APIs; local state for small demos. |
+| Table strategy | Server pagination for large datasets; local tables for mocks/demos. |
 | Styling | CSS Modules + global design tokens. |
-| Theme | Dark mặc định; chỉ thêm light theme khi có yêu cầu sản phẩm. |
+| Theme | Dark by default; add a light theme only when required by the product. |
 
 ---
 
-## 22. Mẫu naming cho codebase
+## 22. Codebase naming examples
 
 ```text
 Components:       PascalCase       TransactionRiskTable.tsx
@@ -938,7 +938,7 @@ URL params:       kebab-case       time-range=30
 
 ---
 
-## 23. Tóm tắt implementation contract
+## 23. Implementation contract summary
 
 ```ts
 type DashboardContract = {
@@ -965,4 +965,4 @@ type DashboardContract = {
 };
 ```
 
-Contract này giúp page, component và API phát triển độc lập mà vẫn thống nhất dữ liệu và hành vi.
+This contract lets pages, components and APIs develop independently while keeping data and behavior consistent.

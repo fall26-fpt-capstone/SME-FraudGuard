@@ -1,0 +1,39 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Awaiting Activation" as Waiting
+state "Active" as Active
+state "Expired" as Expired
+state Origin <<choice>>
+[*] --> Origin
+Origin --> Waiting : [onboarding grant]
+Origin --> Active : [verified paid activation]
+Waiting -down-> Active : SME Admin activates workspace
+Active -down-> Expired : Validity ends\n[now >= expiry]
+Expired --> [*]
+@enduml

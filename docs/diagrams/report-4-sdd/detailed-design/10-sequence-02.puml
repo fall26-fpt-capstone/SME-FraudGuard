@@ -1,0 +1,60 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Operator" as User
+participant "Alerts and Detection History Page" as UI
+participant "AlertReviewController" as C
+participant "ReviewService" as S
+participant "TransactionQueryRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: reviewAlertsAndHistory(request)
+C -> C: resolveExecutionContext()
+C -> S ++: reviewAlertsAndHistory(request, context)
+S -> S: requireWorkspaceOperator(ctx)
+S -> R ++: findProtectedAlertHistory(req, ctx)
+R -> DB ++: SELECT original alert, attempts and version references\nWHERE workspace scope
+DB --> R --: rows / committed result
+R --> S --: protectedAlertHistory
+
+opt ruleAlertFollowUpRequested
+S -> R ++: saveReviewFlagIfCurrent(req, ctx)
+R -> DB ++: UPDATE Rule Alert follow-up flag + audit\nWHERE current version; COMMIT
+DB --> R --: rows / committed result
+R --> S --: saved / stale / failed
+
+end
+S -> S: preserveOriginalDetectionSources()
+S --> C --: AlertReviewResponse / controlled error
+C --> UI --: AlertReviewResponse / safe error
+UI --> User --: render permitted result
+@enduml

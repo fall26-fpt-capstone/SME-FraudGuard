@@ -1,0 +1,238 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class PlanOffer <<entity>> {
+- id: UUID
+- planType: Free | Subscription
+- monthlyPrice: Decimal
+- annualPrice: Decimal
+- currency: String
+- status: String
+--
++ retire(): boolean
+}
+class PurchaseOrder <<entity>> {
+- id: UUID
+- workspaceId: UUID
+- termMonths: Integer
+- quotedAmount: Decimal
+- currency: String
+- status: String
+--
++ applyOnce(): boolean
+}
+class PaymentEvent <<entity>> {
+- providerReference: String
+- idempotencyKey: String
+- verificationResult: String
+--
++ matches(purchase: PurchaseOrder): Boolean
+}
+class SubscriptionPeriod <<entity>> {
+- workspaceId: UUID
+- startsAt: Instant
+- endsAt: Instant
+- grantSource: String
+--
++ contains(instant: String): Boolean
+}
+interface PaymentGatewayPort <<port>> {
+
++ initiateCheckout(purchase: PurchaseOrder): CheckoutResponse
++ verifyConfirmation(req: PaymentConfirmation): VerifiedPayment
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class SubscriptionController <<controller>> {
+- service: ISubscriptionService
+--
++ grantInitialPlan(request: InitialPlanRequest): SubscriptionResponse
++ maintainOffer(request: PlanOfferRequest): PlanOfferResponse
++ purchaseSubscription(request: PurchaseRequest): CheckoutResponse
+- resolveExecutionContext(): AccessContext
+}
+class SubscriptionService <<service>> {
+
++ grantInitialPlan(request: InitialPlanRequest, context: AccessContext): SubscriptionResponse
++ maintainOffer(request: PlanOfferRequest, context: AccessContext): PlanOfferResponse
++ purchaseSubscription(request: PurchaseRequest, context: AccessContext): CheckoutResponse
++ resolveEntitlement(request: EntitlementRequest, context: AccessContext): EntitlementDecision
++ verifyAndApplyPayment(request: PaymentConfirmation, context: AccessContext): PaymentProcessingResult
+- requireOwnWorkspaceAdmin(ctx: AccessContext): void
+- requirePlatformAdmin(ctx: AccessContext): void
+- validateFixedEntitlementsAndPrices(req: PlanOfferRequest): void
+- validateOperationalPurchase(req: PurchaseRequest): void
+}
+interface ISubscriptionService <<service>> {
+
++ grantInitialPlan(request: InitialPlanRequest, context: AccessContext): SubscriptionResponse
++ maintainOffer(request: PlanOfferRequest, context: AccessContext): PlanOfferResponse
++ purchaseSubscription(request: PurchaseRequest, context: AccessContext): CheckoutResponse
++ resolveEntitlement(request: EntitlementRequest, context: AccessContext): EntitlementDecision
++ verifyAndApplyPayment(request: PaymentConfirmation, context: AccessContext): PaymentProcessingResult
+}
+class PlanOfferRequest <<DTO>> {
+- planType: PlanType
+- monthlyPrice: Decimal
+- annualPrice: Decimal
+- currency: String
+- action: OfferAction
+- expectedVersion: long
+}
+class PlanOfferResponse <<DTO>> {
+- offers: List<PlanOffer>
+- availability: OfferStatus
+}
+interface PlanRepository <<repository>> {
+
++ findOffersAndUsage(req: PlanOfferRequest): List<PlanOffer>
++ saveOfferIfCurrent(req: PlanOfferRequest, ctx: AccessContext): MutationResult
+}
+class InitialPlanRequest <<DTO>> {
+- workspaceId: UUID
+- offerId: UUID
+- termMonths: int
+}
+class SubscriptionResponse <<DTO>> {
+- planType: PlanType
+- startsAt: Instant
+- expiresAt: Instant
+}
+interface SubscriptionRepository <<repository>> {
+
++ findWorkspaceAndOffer(req: InitialPlanRequest): InitialPlanContext
++ saveInitialAllocation(req: InitialPlanRequest, ctx: AccessContext): MutationResult
+}
+class PurchaseRequest <<DTO>> {
+- offerId: UUID
+- termMonths: int
+- reviewedQuote: QuoteReference
+}
+class CheckoutResponse <<DTO>> {
+- purchaseRef: UUID
+- checkoutDestination: URI
+- status: PurchaseStatus
+}
+interface PurchaseOrderRepository <<repository>> {
+
++ applyPaymentOnce(req: PaymentConfirmation): MutationResult
++ createQuotedPurchase(req: PurchaseRequest, ctx: AccessContext): MutationResult
++ findEntitlementAndOffers(req: PurchaseRequest, ctx: AccessContext): SubscriptionOverview
++ lockPurchaseAndEntitlement(req: PaymentConfirmation): PurchaseEntitlementContext
++ recordUnappliedPayment(req: PaymentConfirmation): MutationResult
+}
+class PaymentCallbackController <<controller>> {
+- service: ISubscriptionService
+--
++ verifyAndApplyPayment(request: PaymentConfirmation): PaymentProcessingResult
+- resolveExecutionContext(): AccessContext
+}
+class PaymentConfirmation <<DTO>> {
+- purchaseRef: UUID
+- providerRef: String
+- amount: Decimal
+- currency: String
+- authenticatedProof: ProviderProof
+}
+class PaymentProcessingResult <<DTO>> {
+- purchaseRef: UUID
+- effectApplied: boolean
+- outcome: PaymentOutcome
+}
+class EntitlementPolicy <<security>> {
+- service: ISubscriptionService
+--
++ resolveEntitlement(request: EntitlementRequest): EntitlementDecision
+- resolveExecutionContext(): AccessContext
+}
+class EntitlementRequest <<DTO>> {
+- workspaceId: UUID
+- operationTime: Instant
+- operationType: OperationType
+}
+class EntitlementDecision <<DTO>> {
+- subscriptionActive: boolean
+- detectionPath: DetectionSource
+- newCaseAllowed: boolean
+}
+interface SubscriptionPeriodRepository <<repository>> {
+
++ findCommittedPeriods(req: EntitlementRequest): List<SubscriptionPeriod>
+}
+SubscriptionController -[hidden]down-> PaymentCallbackController
+PaymentCallbackController -[hidden]down-> EntitlementPolicy
+ISubscriptionService -[hidden]down-> SubscriptionService
+PaymentGatewayPort -[hidden]down-> PlanRepository
+PlanRepository -[hidden]down-> SubscriptionRepository
+SubscriptionRepository -[hidden]down-> PurchaseOrderRepository
+PurchaseOrderRepository -[hidden]down-> SubscriptionPeriodRepository
+PlanOffer -[hidden]down-> PurchaseOrder
+PurchaseOrder -[hidden]down-> PaymentEvent
+PaymentEvent -[hidden]down-> SubscriptionPeriod
+SubscriptionController -[hidden]right-> ISubscriptionService
+ISubscriptionService -[hidden]right-> PaymentGatewayPort
+PaymentGatewayPort -[hidden]right-> PlanOffer
+EntitlementPolicy -[hidden]down-> PlanOfferRequest
+PlanOfferRequest -[hidden]right-> PlanOfferResponse
+PlanOfferResponse -[hidden]right-> InitialPlanRequest
+PlanOfferRequest -[hidden]down-> SubscriptionResponse
+SubscriptionResponse -[hidden]right-> PurchaseRequest
+PurchaseRequest -[hidden]right-> CheckoutResponse
+SubscriptionResponse -[hidden]down-> PaymentConfirmation
+PaymentConfirmation -[hidden]right-> PaymentProcessingResult
+PaymentProcessingResult -[hidden]right-> EntitlementRequest
+PaymentConfirmation -[hidden]down-> EntitlementDecision
+EntitlementDecision -[hidden]right-> AccessContext
+EntitlementPolicy -[norank]-> ISubscriptionService
+EntitlementPolicy -[dashed,norank]-> EntitlementDecision
+EntitlementPolicy -[dashed,norank]-> EntitlementRequest
+PaymentCallbackController -[norank]-> ISubscriptionService
+PaymentCallbackController -[dashed,norank]-> PaymentConfirmation
+PaymentCallbackController -[dashed,norank]-> PaymentProcessingResult
+PlanOffer "1" -[norank]- "0..*" PurchaseOrder
+PlanOffer "1" -[norank]- "0..*" SubscriptionPeriod
+PlanRepository -[norank]-> PlanOffer
+PurchaseOrder "0..1" -[norank]- "0..1" SubscriptionPeriod
+PurchaseOrder "1" -[norank]- "0..*" PaymentEvent
+PurchaseOrderRepository -[norank]-> PurchaseOrder
+SubscriptionController -[norank]-> ISubscriptionService
+SubscriptionController -[dashed,norank]-> CheckoutResponse
+SubscriptionController -[dashed,norank]-> InitialPlanRequest
+SubscriptionController -[dashed,norank]-> PlanOfferRequest
+SubscriptionController -[dashed,norank]-> PlanOfferResponse
+SubscriptionController -[dashed,norank]-> PurchaseRequest
+SubscriptionController -[dashed,norank]-> SubscriptionResponse
+SubscriptionPeriodRepository -[norank]-> SubscriptionPeriod
+SubscriptionRepository -[norank]-> SubscriptionPeriod
+SubscriptionService -[norank]-> PaymentGatewayPort
+SubscriptionService -[norank]-> PlanRepository
+SubscriptionService -[norank]-> PurchaseOrder
+SubscriptionService -[norank]-> PurchaseOrderRepository
+SubscriptionService -[norank]-> SubscriptionPeriodRepository
+SubscriptionService -[norank]-> SubscriptionRepository
+SubscriptionService -[dashed,norank]-> AccessContext
+SubscriptionService -[dashed,norank]-|> ISubscriptionService
+@enduml

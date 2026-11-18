@@ -1,0 +1,172 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class DisclosureService <<service>> {
+
++ revealFields(request: DisclosureRequest, context: AccessContext): DisclosureResponse
+}
+class Transaction <<entity>> {
+- id: UUID
+- workspaceId: UUID
+- publicValues: TypedValues
+- sensitiveValues: ProtectedValues
+- keyReference: String
+}
+class Alert <<entity>> {
+- kind: Rule | AI
+- transactionId: UUID
+- originAttemptId: UUID
+}
+class DetectionAttempt <<entity>> {
+- source: DetectionSource
+- outcome: String
+- configurationRef: UUID
+- modelVersion: String [0..1]
+}
+class DisclosurePolicy <<security>> {
+
++ authorizeCurrentDisclosure(req: DisclosureRequest, ctx: AccessContext): DisclosureDecision
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class TransactionReviewController <<controller>> {
+- service: IReviewService
+--
++ reviewTransactionsOrImport(request: TransactionReviewRequest): TransactionReviewResponse
+- resolveExecutionContext(): AccessContext
+}
+class ReviewService <<service>> {
+
++ reviewAlertsAndHistory(request: AlertReviewRequest, context: AccessContext): AlertReviewResponse
++ reviewTransactionsOrImport(request: TransactionReviewRequest, context: AccessContext): TransactionReviewResponse
+- authorizeRequestedReview(ctx: AccessContext): void
+- requireWorkspaceOperator(ctx: AccessContext): void
+}
+interface IReviewService <<service>> {
+
++ reviewAlertsAndHistory(request: AlertReviewRequest, context: AccessContext): AlertReviewResponse
++ reviewTransactionsOrImport(request: TransactionReviewRequest, context: AccessContext): TransactionReviewResponse
+}
+class TransactionReviewRequest <<DTO>> {
+- transactionRef: UUID
+- batchRef: UUID
+- criteria: ReviewFilter
+- page: PageRequest
+}
+class TransactionReviewResponse <<DTO>> {
+- transactions: ProtectedTransactionPage
+- importDetail: SafeImportDetail
+}
+interface TransactionQueryRepository <<repository>> {
+
++ findImportResults(req: TransactionReviewRequest, ctx: AccessContext): SafeImportDetail
++ findProtectedAlertHistory(req: AlertReviewRequest, ctx: AccessContext): ProtectedAlertHistory
++ findProtectedTransactions(req: TransactionReviewRequest, ctx: AccessContext): Page<ProtectedTransaction>
++ findProtectedValues(req: DisclosureRequest, ctx: AccessContext): ProtectedFieldValues
++ recordDisclosureAudit(req: DisclosureRequest, ctx: AccessContext): MutationResult
++ saveReviewFlagIfCurrent(req: AlertReviewRequest, ctx: AccessContext): MutationResult
+}
+class AlertReviewController <<controller>> {
+- service: IReviewService
+--
++ reviewAlertsAndHistory(request: AlertReviewRequest): AlertReviewResponse
+- resolveExecutionContext(): AccessContext
+}
+class AlertReviewRequest <<DTO>> {
+- alertRef: UUID
+- transactionRef: UUID
+- followUp: boolean
+- expectedVersion: long
+}
+class AlertReviewResponse <<DTO>> {
+- alert: ProtectedAlertDetail
+- attempts: List<DetectionAttempt>
+}
+class DisclosureController <<controller>> {
+- service: IDisclosureService
+--
++ revealFields(request: DisclosureRequest): DisclosureResponse
+- resolveExecutionContext(): AccessContext
+}
+interface IDisclosureService <<service>> {
+
++ revealFields(request: DisclosureRequest, context: AccessContext): DisclosureResponse
+}
+class DisclosureRequest <<DTO>> {
+- transactionRef: UUID
+- caseRef: UUID
+- fieldIds: Set<UUID>
+}
+class DisclosureResponse <<DTO>> {
+- authorizedValues: Map<UUID, String>
+- accessAuditRef: UUID
+}
+interface ProtectedValuePort <<port>> {
+
++ decryptPermittedFields(req: DisclosureRequest): PermittedFieldValues
+}
+TransactionReviewController -[hidden]down-> AlertReviewController
+AlertReviewController -[hidden]down-> DisclosureController
+IReviewService -[hidden]down-> IDisclosureService
+IDisclosureService -[hidden]down-> DisclosureService
+DisclosureService -[hidden]down-> ReviewService
+TransactionQueryRepository -[hidden]down-> ProtectedValuePort
+Transaction -[hidden]down-> Alert
+Alert -[hidden]down-> DetectionAttempt
+TransactionReviewController -[hidden]right-> IReviewService
+IReviewService -[hidden]right-> TransactionQueryRepository
+TransactionQueryRepository -[hidden]right-> Transaction
+DisclosureController -[hidden]down-> TransactionReviewRequest
+TransactionReviewRequest -[hidden]right-> TransactionReviewResponse
+TransactionReviewResponse -[hidden]right-> AlertReviewRequest
+TransactionReviewRequest -[hidden]down-> AlertReviewResponse
+AlertReviewResponse -[hidden]right-> DisclosureRequest
+DisclosureRequest -[hidden]right-> DisclosureResponse
+AlertReviewResponse -[hidden]down-> DisclosurePolicy
+DisclosurePolicy -[hidden]right-> AccessContext
+Alert -[norank]-> DetectionAttempt
+AlertReviewController -[norank]-> IReviewService
+AlertReviewController -[dashed,norank]-> AlertReviewRequest
+AlertReviewController -[dashed,norank]-> AlertReviewResponse
+DisclosureController -[norank]-> IDisclosureService
+DisclosureController -[dashed,norank]-> DisclosureRequest
+DisclosureController -[dashed,norank]-> DisclosureResponse
+DisclosureService -[norank]-> DisclosurePolicy
+DisclosureService -[norank]-> ProtectedValuePort
+DisclosureService -[norank]-> Transaction
+DisclosureService -[norank]-> TransactionQueryRepository
+DisclosureService -[dashed,norank]-|> IDisclosureService
+ReviewService -[norank]-> Alert
+ReviewService -[norank]-> Transaction
+ReviewService -[norank]-> TransactionQueryRepository
+ReviewService -[dashed,norank]-> AccessContext
+ReviewService -[dashed,norank]-|> IReviewService
+Transaction "1" -[norank]- "0..*" DetectionAttempt
+TransactionQueryRepository -[norank]-> Transaction
+TransactionReviewController -[norank]-> IReviewService
+TransactionReviewController -[dashed,norank]-> TransactionReviewRequest
+TransactionReviewController -[dashed,norank]-> TransactionReviewResponse
+@enduml

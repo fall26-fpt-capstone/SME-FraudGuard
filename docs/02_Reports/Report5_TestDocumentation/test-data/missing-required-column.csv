@@ -1,0 +1,4 @@
+"ref","total","currency","customer_ref","device","is_remote","note"
+"FG-VALID-001","150000.25","VND","SYNTH-SENSITIVE-A-001","web","false","Synthetic sample"
+"FG-VALID-002","1000000","VND","SYNTH-SENSITIVE-A-001","web","true","Synthetic sample"
+"FG-VALID-003","150000.25","VND","SYNTH-SENSITIVE-A-001","web","false","Comma, quoted ""text"""

@@ -1,0 +1,62 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Assigned Staff" as User
+participant "Configuration Apply Page" as UI
+participant "ConfigurationController" as C
+participant "ConfigurationService" as S
+participant "ConfigurationRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: applyConfiguration(request)
+C -> C: resolveExecutionContext()
+C -> S ++: applyConfiguration(request, context)
+S -> S: requireCurrentStaffAssignment(ctx)
+S -> R ++: lockCandidateAndActive(req)
+R -> DB ++: SELECT draft, test metadata and active reference FOR UPDATE
+DB --> R --: rows / committed result
+R --> S --: applicationContext
+
+S -> S: validateExactRevisionTestAndAssessment(req)
+alt validCurrentDraftAndExpectedActive
+S -> R ++: activateRevisionIfCurrent(req, ctx)
+R -> DB ++: SWITCH single active version + retain previous version\n+ INSERT application history; COMMIT
+DB --> R --: rows / committed result
+R --> S --: newActiveVersion / rolledBack
+
+else invalidUntestedOrStale
+  S -> S: retainPreviousActiveVersion()
+end
+S --> C --: ConfigurationResponse / controlled error
+C --> UI --: ConfigurationResponse / safe error
+UI --> User --: render permitted result
+@enduml

@@ -1,0 +1,68 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Operator" as User
+participant "Investigation Review Page" as UI
+participant "CaseController" as C
+participant "CaseService" as S
+participant "CaseRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: reviewInvestigation(request)
+C -> C: resolveExecutionContext()
+C -> S ++: reviewInvestigation(request, context)
+S -> S: requireWorkspaceOperator(ctx)
+S -> R ++: findCurrentSubmittedReport(req, ctx)
+R -> DB ++: SELECT Pending Review case + latest submitted report
+DB --> R --: rows / committed result
+R --> S --: reviewContext
+
+S -> S: validateReviewVersionAndDecision(req)
+alt requestMoreWorkWithComments
+S -> R ++: returnToInvestigationIfCurrent(req, ctx)
+R -> DB ++: INSERT review comments + history\nUPDATE Pending Review -> Investigating; COMMIT
+DB --> R --: rows / committed result
+R --> S --: investigating / stale / failed
+
+else validFinalConclusion
+S -> R ++: confirmConclusionIfCurrent(req, ctx)
+R -> DB ++: INSERT separate conclusion + confirmation history\nUPDATE Pending Review -> Closed; COMMIT atomically
+DB --> R --: rows / committed result
+R --> S --: closed / stale / failed
+
+else forbiddenOrIncompleteReview
+  S -> S: rejectReviewWithoutTransition()
+end
+S --> C --: CaseResponse / controlled error
+C --> UI --: CaseResponse / safe error
+UI --> User --: render permitted result
+@enduml

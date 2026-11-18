@@ -1,0 +1,245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1860" viewBox="0 0 2000 1860">
+<rect width="2000" height="1860" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#111} .association{stroke:#475569;stroke-width:1.1;fill:none} .include{stroke:#475569;stroke-width:1.2;stroke-dasharray:5 4;fill:none}</style>
+<defs><marker id="openArrow" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#475569"/></marker></defs>
+<rect x="170" y="90" width="1520" height="1700" fill="white" stroke="#64748B"/>
+<text x="1200" y="112.0" text-anchor="middle" dominant-baseline="middle" font-size="20" font-weight="bold">SME-FraudGuard</text>
+<line x1="140.0" y1="190.0" x2="189.00" y2="132.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PU" data-uc="1" x1="140.0" y1="190.0" x2="189.00" y2="132.70"/>
+<line x1="140.0" y1="190.0" x2="444.10" y2="190.80" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PU" data-uc="2" x1="140.0" y1="190.0" x2="444.10" y2="190.80"/>
+<line x1="140.0" y1="190.0" x2="742.90" y2="239.80" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PU" data-uc="3" x1="140.0" y1="190.0" x2="742.90" y2="239.80"/>
+<line x1="140.0" y1="530.0" x2="194.90" y2="267.20" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="4" x1="140.0" y1="530.0" x2="194.90" y2="267.20"/>
+<line x1="140.0" y1="530.0" x2="237.40" y2="351.10" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="5" x1="140.0" y1="530.0" x2="237.40" y2="351.10"/>
+<line x1="140.0" y1="530.0" x2="325.90" y2="425.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="6" x1="140.0" y1="530.0" x2="325.90" y2="425.70"/>
+<line x1="140.0" y1="530.0" x2="765.80" y2="451.10" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="7" x1="140.0" y1="530.0" x2="765.80" y2="451.10"/>
+<line x1="1800.0" y1="250.0" x2="1642.30" y2="140.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="8" x1="1800.0" y1="250.0" x2="1642.30" y2="140.50"/>
+<line x1="1800.0" y1="250.0" x2="1206.80" y2="148.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="9" x1="1800.0" y1="250.0" x2="1206.80" y2="148.30"/>
+<line x1="140.0" y1="530.0" x2="239.60" y2="659.60" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="10" x1="140.0" y1="530.0" x2="239.60" y2="659.60"/>
+<line x1="140.0" y1="970.0" x2="239.60" y2="659.60" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="10" x1="140.0" y1="970.0" x2="239.60" y2="659.60"/>
+<line x1="1800.0" y1="250.0" x2="599.60" y2="659.60" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="10" x1="1800.0" y1="250.0" x2="599.60" y2="659.60"/>
+<line x1="140.0" y1="530.0" x2="242.90" y2="739.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="11" x1="140.0" y1="530.0" x2="242.90" y2="739.30"/>
+<line x1="140.0" y1="970.0" x2="242.90" y2="739.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="11" x1="140.0" y1="970.0" x2="242.90" y2="739.30"/>
+<line x1="1800.0" y1="250.0" x2="602.90" y2="739.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="11" x1="1800.0" y1="250.0" x2="602.90" y2="739.30"/>
+<line x1="140.0" y1="970.0" x2="443.60" y2="1022.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="12" x1="140.0" y1="970.0" x2="443.60" y2="1022.70"/>
+<line x1="140.0" y1="970.0" x2="240.20" y2="1097.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="13" x1="140.0" y1="970.0" x2="240.20" y2="1097.00"/>
+<line x1="140.0" y1="970.0" x2="256.10" y2="1175.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="14" x1="140.0" y1="970.0" x2="256.10" y2="1175.70"/>
+<line x1="140.0" y1="970.0" x2="179.00" y2="1268.80" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="15" x1="140.0" y1="970.0" x2="179.00" y2="1268.80"/>
+<line x1="140.0" y1="530.0" x2="458.40" y2="508.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="16" x1="140.0" y1="530.0" x2="458.40" y2="508.70"/>
+<line x1="1800.0" y1="250.0" x2="1482.20" y2="216.10" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="17" x1="1800.0" y1="250.0" x2="1482.20" y2="216.10"/>
+<line x1="140.0" y1="530.0" x2="201.10" y2="955.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="18" x1="140.0" y1="530.0" x2="201.10" y2="955.70"/>
+<line x1="140.0" y1="970.0" x2="201.10" y2="955.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="18" x1="140.0" y1="970.0" x2="201.10" y2="955.70"/>
+<line x1="140.0" y1="530.0" x2="237.90" y2="816.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="19" x1="140.0" y1="530.0" x2="237.90" y2="816.30"/>
+<line x1="140.0" y1="970.0" x2="237.90" y2="816.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="ST" data-uc="19" x1="140.0" y1="970.0" x2="237.90" y2="816.30"/>
+<line x1="1800.0" y1="250.0" x2="597.90" y2="816.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="19" x1="1800.0" y1="250.0" x2="597.90" y2="816.30"/>
+<line x1="140.0" y1="1490.0" x2="670.00" y2="1450.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="CS" data-uc="20" x1="140.0" y1="1490.0" x2="670.00" y2="1450.00"/>
+<line x1="140.0" y1="1490.0" x2="670.00" y2="1570.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="CS" data-uc="21" x1="140.0" y1="1490.0" x2="670.00" y2="1570.00"/>
+<line x1="1800.0" y1="250.0" x2="1030.00" y2="1690.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="22" x1="1800.0" y1="250.0" x2="1030.00" y2="1690.00"/>
+<line x1="1800.0" y1="870.0" x2="1030.00" y2="1690.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="22" x1="1800.0" y1="870.0" x2="1030.00" y2="1690.00"/>
+<line x1="1800.0" y1="250.0" x2="1387.90" y2="368.60" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="23" x1="1800.0" y1="250.0" x2="1387.90" y2="368.60"/>
+<line x1="1800.0" y1="870.0" x2="1387.90" y2="368.60" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="23" x1="1800.0" y1="870.0" x2="1387.90" y2="368.60"/>
+<line x1="1800.0" y1="870.0" x2="1069.30" y2="824.10" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="24" x1="1800.0" y1="870.0" x2="1069.30" y2="824.10"/>
+<line x1="1800.0" y1="870.0" x2="824.70" y2="890.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="25" x1="1800.0" y1="870.0" x2="824.70" y2="890.30"/>
+<line x1="1800.0" y1="870.0" x2="1196.70" y2="930.10" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="26" x1="1800.0" y1="870.0" x2="1196.70" y2="930.10"/>
+<line x1="1800.0" y1="870.0" x2="1366.30" y2="997.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="27" x1="1800.0" y1="870.0" x2="1366.30" y2="997.30"/>
+<line x1="1800.0" y1="870.0" x2="1296.40" y2="1073.20" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="28" x1="1800.0" y1="870.0" x2="1296.40" y2="1073.20"/>
+<line x1="1800.0" y1="870.0" x2="1112.80" y2="1306.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="29" x1="1800.0" y1="870.0" x2="1112.80" y2="1306.30"/>
+<line x1="1800.0" y1="1150.0" x2="1112.80" y2="1306.30" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="IN" data-uc="29" x1="1800.0" y1="1150.0" x2="1112.80" y2="1306.30"/>
+<line x1="1800.0" y1="870.0" x2="1163.10" y2="1379.20" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="30" x1="1800.0" y1="870.0" x2="1163.10" y2="1379.20"/>
+<line x1="1800.0" y1="1150.0" x2="1163.10" y2="1379.20" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="IN" data-uc="30" x1="1800.0" y1="1150.0" x2="1163.10" y2="1379.20"/>
+<line x1="1800.0" y1="870.0" x2="1152.50" y2="1149.80" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="31" x1="1800.0" y1="870.0" x2="1152.50" y2="1149.80"/>
+<line x1="1800.0" y1="250.0" x2="1466.10" y2="726.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="32" x1="1800.0" y1="250.0" x2="1466.10" y2="726.50"/>
+<line x1="1800.0" y1="870.0" x2="1466.10" y2="726.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="32" x1="1800.0" y1="870.0" x2="1466.10" y2="726.50"/>
+<line x1="1800.0" y1="1150.0" x2="1466.10" y2="726.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="IN" data-uc="32" x1="1800.0" y1="1150.0" x2="1466.10" y2="726.50"/>
+<line x1="1800.0" y1="250.0" x2="1514.00" y2="571.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="33" x1="1800.0" y1="250.0" x2="1514.00" y2="571.70"/>
+<line x1="1800.0" y1="870.0" x2="1514.00" y2="571.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="33" x1="1800.0" y1="870.0" x2="1514.00" y2="571.70"/>
+<line x1="1800.0" y1="250.0" x2="1483.70" y2="652.40" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="34" x1="1800.0" y1="250.0" x2="1483.70" y2="652.40"/>
+<line x1="1800.0" y1="870.0" x2="1483.70" y2="652.40" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="34" x1="1800.0" y1="870.0" x2="1483.70" y2="652.40"/>
+<line x1="1800.0" y1="250.0" x2="1474.10" y2="803.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="35" x1="1800.0" y1="250.0" x2="1474.10" y2="803.50"/>
+<line x1="1800.0" y1="870.0" x2="1474.10" y2="803.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="35" x1="1800.0" y1="870.0" x2="1474.10" y2="803.50"/>
+<line x1="1800.0" y1="1150.0" x2="1474.10" y2="803.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="IN" data-uc="35" x1="1800.0" y1="1150.0" x2="1474.10" y2="803.50"/>
+<line x1="140.0" y1="530.0" x2="269.90" y2="581.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PA" data-uc="36" x1="140.0" y1="530.0" x2="269.90" y2="581.00"/>
+<line x1="1800.0" y1="870.0" x2="1677.30" y2="1488.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="37" x1="1800.0" y1="870.0" x2="1677.30" y2="1488.50"/>
+<line x1="1800.0" y1="1150.0" x2="1677.30" y2="1488.50" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="IN" data-uc="37" x1="1800.0" y1="1150.0" x2="1677.30" y2="1488.50"/>
+<line x1="1800.0" y1="870.0" x2="1184.40" y2="1223.70" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="OP" data-uc="38" x1="1800.0" y1="870.0" x2="1184.40" y2="1223.70"/>
+<line x1="1800.0" y1="250.0" x2="1590.60" y2="291.40" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="SA" data-uc="39" x1="1800.0" y1="250.0" x2="1590.60" y2="291.40"/>
+<line x1="1800.0" y1="350.0" x2="1590.60" y2="291.40" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PG" data-uc="39" x1="1800.0" y1="350.0" x2="1590.60" y2="291.40"/>
+<line x1="1800.0" y1="350.0" x2="1120.80" y2="313.00" stroke="white" stroke-width="3.5"/>
+<line class="association" data-actor="PG" data-uc="40" x1="1800.0" y1="350.0" x2="1120.80" y2="313.00"/>
+<line class="include" data-source="20" data-target="41" x1="670.00" y1="1450.00" x2="550.00" y2="1570.00" marker-end="url(#openArrow)"/>
+<rect x="586.0" y="1497.0" width="60" height="14" fill="white"/>
+<text x="616.0" y="1504.0" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="normal">«include»</text>
+<line class="include" data-source="20" data-target="42" x1="1030.00" y1="1450.00" x2="1320.00" y2="1750.00" marker-end="url(#openArrow)"/>
+<rect x="1130.5" y="1578.0" width="60" height="14" fill="white"/>
+<text x="1160.5" y="1585.0" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="normal">«include»</text>
+<line class="include" data-source="21" data-target="41" x1="670.00" y1="1570.00" x2="550.00" y2="1570.00" marker-end="url(#openArrow)"/>
+<rect x="586.0" y="1563.0" width="60" height="14" fill="white"/>
+<text x="616.0" y="1570.0" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="normal">«include»</text>
+<line class="include" data-source="21" data-target="42" x1="1030.00" y1="1570.00" x2="1320.00" y2="1750.00" marker-end="url(#openArrow)"/>
+<rect x="1130.5" y="1644.0" width="60" height="14" fill="white"/>
+<text x="1160.5" y="1651.0" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="normal">«include»</text>
+<line class="include" data-source="22" data-target="41" x1="670.00" y1="1690.00" x2="550.00" y2="1570.00" marker-end="url(#openArrow)"/>
+<rect x="586.0" y="1629.0" width="60" height="14" fill="white"/>
+<text x="616.0" y="1636.0" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="normal">«include»</text>
+<line class="include" data-source="22" data-target="42" x1="1030.00" y1="1690.00" x2="1320.00" y2="1750.00" marker-end="url(#openArrow)"/>
+<rect x="1130.5" y="1710.0" width="60" height="14" fill="white"/>
+<text x="1160.5" y="1717.0" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="normal">«include»</text>
+<ellipse data-uc="1" cx="369.0" cy="132.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="369.0" y="132.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-01 Log In</text>
+<ellipse data-uc="2" cx="624.1" cy="190.8" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="624.1" y="190.8" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-02 Change Password</text>
+<ellipse data-uc="3" cx="922.9" cy="239.8" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="922.9" y="239.8" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-03 Log Out</text>
+<ellipse data-uc="4" cx="374.9" cy="267.2" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="374.9" y="257.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-04 Manage Customers and</text><text x="374.9" y="276.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Workspaces</text>
+<ellipse data-uc="5" cx="417.4" cy="351.1" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="417.4" y="351.1" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-05 Assign Implementation Staff</text>
+<ellipse data-uc="6" cx="505.9" cy="425.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="505.9" y="425.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-06 Manage Plan Catalogue</text>
+<ellipse data-uc="7" cx="945.8" cy="451.1" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="945.8" y="451.1" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-07 Grant Initial Workspace Plan</text>
+<ellipse data-uc="8" cx="1462.3" cy="140.5" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1462.3" y="140.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-08 View Plans and Subscription</text>
+<ellipse data-uc="9" cx="1026.8" cy="148.3" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1026.8" y="148.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-09 Manage Enterprise Members</text>
+<ellipse data-uc="10" cx="419.6" cy="659.6" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="419.6" y="650.1" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-10 Submit Onboarding</text><text x="419.6" y="669.1" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Specifications</text>
+<ellipse data-uc="11" cx="422.9" cy="739.3" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="422.9" y="739.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-11 Track Onboarding Progress</text>
+<ellipse data-uc="12" cx="623.6" cy="1022.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="623.6" y="1013.2" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-12 Configure Fields and Channel</text><text x="623.6" y="1032.2" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Mappings</text>
+<ellipse data-uc="13" cx="420.2" cy="1097.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="420.2" y="1097.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-13 Configure Detection Rules</text>
+<ellipse data-uc="14" cx="436.1" cy="1175.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="436.1" y="1175.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-14 Test Detection Configuration</text>
+<ellipse data-uc="15" cx="359.0" cy="1268.8" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="359.0" y="1259.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-15 Confirm Implementation</text><text x="359.0" y="1278.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Readiness</text>
+<ellipse data-uc="16" cx="638.4" cy="508.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="638.4" y="508.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-16 Approve Workspace Handover</text>
+<ellipse data-uc="17" cx="1302.2" cy="216.1" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1302.2" y="216.1" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-17 Activate Workspace</text>
+<ellipse data-uc="18" cx="381.1" cy="955.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="381.1" y="955.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-18 Issue or Replace API Key</text>
+<ellipse data-uc="19" cx="417.9" cy="816.3" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="417.9" y="816.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-19 Disable API Key</text>
+<ellipse data-uc="20" cx="850.0" cy="1450.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="850.0" y="1440.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-20 Submit Transactions through</text><text x="850.0" y="1459.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">REST API</text>
+<ellipse data-uc="21" cx="850.0" cy="1570.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="850.0" y="1560.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-21 Submit Transactions through</text><text x="850.0" y="1579.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Webhook</text>
+<ellipse data-uc="22" cx="850.0" cy="1690.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="850.0" y="1680.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-22 Import Production</text><text x="850.0" y="1699.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Transactions</text>
+<ellipse data-uc="23" cx="1207.9" cy="368.6" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1207.9" y="368.6" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-23 Review Import Results</text>
+<ellipse data-uc="24" cx="889.3" cy="824.1" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="889.3" y="814.6" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-24 Review Production</text><text x="889.3" y="833.6" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Transactions</text>
+<ellipse data-uc="25" cx="644.7" cy="890.3" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="644.7" y="890.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-25 Review Rule Alerts</text>
+<ellipse data-uc="26" cx="1016.7" cy="930.1" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1016.7" y="930.1" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-26 Review AI Alerts</text>
+<ellipse data-uc="27" cx="1186.3" cy="997.3" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1186.3" y="997.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-27 Open Investigation Case</text>
+<ellipse data-uc="28" cx="1116.4" cy="1073.2" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1116.4" y="1073.2" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-28 Assign Investigation Case</text>
+<ellipse data-uc="29" cx="932.8" cy="1306.3" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="932.8" y="1306.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-29 Investigate Case</text>
+<ellipse data-uc="30" cx="983.1" cy="1379.2" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="983.1" y="1379.2" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-30 Submit Investigation Report</text>
+<ellipse data-uc="31" cx="972.5" cy="1149.8" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="972.5" y="1140.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-31 Confirm Investigation</text><text x="972.5" y="1159.3" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Conclusion</text>
+<ellipse data-uc="32" cx="1286.1" cy="726.5" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1286.1" y="726.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-32 View Investigation Reports</text>
+<ellipse data-uc="33" cx="1334.0" cy="571.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1334.0" y="571.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-33 View Enterprise Dashboard</text>
+<ellipse data-uc="34" cx="1303.7" cy="652.4" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1303.7" y="652.4" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-34 Generate and Export Reports</text>
+<ellipse data-uc="35" cx="1294.1" cy="803.5" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1294.1" y="794.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-35 Receive Relevant</text><text x="1294.1" y="813.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Notifications</text>
+<ellipse data-uc="36" cx="449.9" cy="581.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="449.9" y="581.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-36 Monitor Platform Operations</text>
+<ellipse data-uc="37" cx="1497.3" cy="1488.5" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1497.3" y="1479.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-37 View Authorized Sensitive</text><text x="1497.3" y="1498.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Fields</text>
+<ellipse data-uc="38" cx="1004.4" cy="1223.7" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1004.4" y="1223.7" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-38 Review Detection History</text>
+<ellipse data-uc="39" cx="1410.6" cy="291.4" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1410.6" y="281.9" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-39 Purchase or Renew</text><text x="1410.6" y="300.9" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Subscription</text>
+<ellipse data-uc="40" cx="940.8" cy="313.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="940.8" y="313.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-40 Process Payment Confirmation</text>
+<ellipse data-uc="41" cx="370.0" cy="1570.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="370.0" y="1560.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-41 Validate and Normalize</text><text x="370.0" y="1579.5" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">Submitted Data</text>
+<ellipse data-uc="42" cx="1500.0" cy="1750.0" rx="180" ry="27" fill="white" stroke="#475569"/>
+<text x="1500.0" y="1750.0" text-anchor="middle" dominant-baseline="middle" font-size="17" font-weight="normal">UC-42 Detect Transaction Anomalies</text>
+<g data-actor="PU" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="140.0" cy="160.0" r="9"/><path d="M140.0,169.0 L140.0,206.0 M122.0,184.0 L158.0,184.0 M140.0,206.0 L125.0,228.0 M140.0,206.0 L155.0,228.0"/></g>
+<text x="112.0" y="192.0" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Portal User</text>
+<g data-actor="PA" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="140.0" cy="500.0" r="9"/><path d="M140.0,509.0 L140.0,546.0 M122.0,524.0 L158.0,524.0 M140.0,546.0 L125.0,568.0 M140.0,546.0 L155.0,568.0"/></g>
+<text x="112.0" y="523.5" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Platform</text><text x="112.0" y="540.5" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Admin</text>
+<g data-actor="ST" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="140.0" cy="940.0" r="9"/><path d="M140.0,949.0 L140.0,986.0 M122.0,964.0 L158.0,964.0 M140.0,986.0 L125.0,1008.0 M140.0,986.0 L155.0,1008.0"/></g>
+<text x="112.0" y="963.5" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Implementation</text><text x="112.0" y="980.5" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Staff</text>
+<g data-actor="CS" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="140.0" cy="1460.0" r="9"/><path d="M140.0,1469.0 L140.0,1506.0 M122.0,1484.0 L158.0,1484.0 M140.0,1506.0 L125.0,1528.0 M140.0,1506.0 L155.0,1528.0"/></g>
+<text x="112.0" y="1475.0" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Customer</text><text x="112.0" y="1492.0" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">Transaction</text><text x="112.0" y="1509.0" text-anchor="end" dominant-baseline="middle" font-size="15" font-weight="normal">System</text>
+<g data-actor="SA" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="1800.0" cy="220.0" r="9"/><path d="M1800.0,229.0 L1800.0,266.0 M1782.0,244.0 L1818.0,244.0 M1800.0,266.0 L1785.0,288.0 M1800.0,266.0 L1815.0,288.0"/></g>
+<text x="1828.0" y="252.0" text-anchor="start" dominant-baseline="middle" font-size="15" font-weight="normal">SME Admin</text>
+<g data-actor="PG" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="1800.0" cy="320.0" r="9"/><path d="M1800.0,329.0 L1800.0,366.0 M1782.0,344.0 L1818.0,344.0 M1800.0,366.0 L1785.0,388.0 M1800.0,366.0 L1815.0,388.0"/></g>
+<text x="1828.0" y="343.5" text-anchor="start" dominant-baseline="middle" font-size="15" font-weight="normal">Payment</text><text x="1828.0" y="360.5" text-anchor="start" dominant-baseline="middle" font-size="15" font-weight="normal">Gateway</text>
+<g data-actor="OP" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="1800.0" cy="840.0" r="9"/><path d="M1800.0,849.0 L1800.0,886.0 M1782.0,864.0 L1818.0,864.0 M1800.0,886.0 L1785.0,908.0 M1800.0,886.0 L1815.0,908.0"/></g>
+<text x="1828.0" y="872.0" text-anchor="start" dominant-baseline="middle" font-size="15" font-weight="normal">Operator</text>
+<g data-actor="IN" stroke="#475569" stroke-width="1.3" fill="white"><circle cx="1800.0" cy="1120.0" r="9"/><path d="M1800.0,1129.0 L1800.0,1166.0 M1782.0,1144.0 L1818.0,1144.0 M1800.0,1166.0 L1785.0,1188.0 M1800.0,1166.0 L1815.0,1188.0"/></g>
+<text x="1828.0" y="1152.0" text-anchor="start" dominant-baseline="middle" font-size="15" font-weight="normal">Investigator</text>
+<text x="1000" y="1823.0" text-anchor="middle" dominant-baseline="middle" font-size="13" font-weight="normal">Portal User represents the five human roles. Each actor is shown once.</text>
+<text x="1000" y="1845.0" text-anchor="middle" dominant-baseline="middle" font-size="13" font-weight="normal">Crossing lines do not indicate a connection.</text>
+</svg>

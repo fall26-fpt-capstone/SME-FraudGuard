@@ -1,0 +1,349 @@
+{
+  "profile": "TEST-MAP-A",
+  "purpose": "Synthetic test workspace configuration; not the product-wide field or API contract.",
+  "synthetic": true,
+  "executionStatus": "Not Run",
+  "isolation": "Disposable A/B workspaces, provision runtime identities and keys; never use production customers, payment instruments or real money.",
+  "fields": [
+    {
+      "name": "transaction_ref",
+      "type": "String",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "amount",
+      "type": "Decimal",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "occurred_at",
+      "type": "DateTime",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "currency",
+      "type": "String",
+      "required": true,
+      "sensitive": false
+    },
+    {
+      "name": "customer_ref",
+      "type": "String",
+      "required": false,
+      "sensitive": true
+    },
+    {
+      "name": "device_type",
+      "type": "String",
+      "required": false,
+      "sensitive": false
+    },
+    {
+      "name": "is_remote",
+      "type": "Boolean",
+      "required": false,
+      "sensitive": false
+    },
+    {
+      "name": "note",
+      "type": "String",
+      "required": false,
+      "sensitive": false
+    }
+  ],
+  "conversions": {
+    "amount": "Decimal dot; no grouping separator",
+    "occurred_at": "ISO 8601 timestamp with explicit offset",
+    "is_remote": "CSV literal true/false; JSON boolean"
+  },
+  "csvMapping": {
+    "ref": "transaction_ref",
+    "total": "amount",
+    "paid_at": "occurred_at",
+    "currency": "currency",
+    "customer_ref": "customer_ref",
+    "device": "device_type",
+    "is_remote": "is_remote",
+    "note": "note"
+  },
+  "restMapping": {
+    "payment_id": "transaction_ref",
+    "total": "amount",
+    "paid_at": "occurred_at",
+    "currency": "currency",
+    "customer_ref": "customer_ref",
+    "device_type": "device_type",
+    "is_remote": "is_remote",
+    "note": "note"
+  },
+  "webhookMapping": {
+    "data.txn_id": "transaction_ref",
+    "data.amount": "amount",
+    "data.event_time": "occurred_at",
+    "data.currency": "currency",
+    "data.customer": "customer_ref",
+    "data.device": "device_type",
+    "data.remote": "is_remote",
+    "data.note": "note"
+  },
+  "rules": [
+    {
+      "id": "R1",
+      "active": true,
+      "combination": "AND",
+      "conditions": [
+        [
+          "amount",
+          ">=",
+          1000000
+        ],
+        [
+          "is_remote",
+          "=",
+          true
+        ]
+      ]
+    },
+    {
+      "id": "R2",
+      "active": true,
+      "conditions": [
+        [
+          "device_type",
+          "in",
+          [
+            "unknown",
+            "emulator"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "R3",
+      "active": true,
+      "conditions": [
+        [
+          "note",
+          "has-no-value"
+        ]
+      ]
+    },
+    {
+      "id": "R4",
+      "active": false,
+      "conditions": [
+        [
+          "amount",
+          ">",
+          0
+        ]
+      ]
+    }
+  ],
+  "files": {
+    "valid": {
+      "rows": 3,
+      "accepted": 3,
+      "duplicate": 0,
+      "conflict": 0,
+      "invalid": 0
+    },
+    "mixed": {
+      "precondition": "Preaccept TX-BASE in the same workspace before upload. Keep its original data unchanged.",
+      "rows": 7,
+      "accepted": 2,
+      "duplicate": 1,
+      "conflict": 1,
+      "invalid": 3
+    },
+    "missingColumn": {
+      "missing": "paid_at",
+      "structuralRejection": true,
+      "accepted": 0
+    },
+    "duplicate": {
+      "precondition": "Preaccept TX-BASE.",
+      "rows": 1,
+      "duplicate": 1,
+      "accepted": 0
+    }
+  },
+  "paymentQuote": {
+    "amount": 250000,
+    "currency": "VND",
+    "purpose": "Fake controlled quote only; not an approved commercial price."
+  },
+  "limits": "Use explicitly configured deployment values; no global numeric limit is prescribed.",
+  "unresolved": "See Decisions in the test workbook. Do not infer global data contracts, reanalysis policy, gateway protocol or execution results.",
+  "fixtureTables": {
+    "header": [
+      "ref",
+      "total",
+      "paid_at",
+      "currency",
+      "customer_ref",
+      "device",
+      "is_remote",
+      "note"
+    ],
+    "valid": [
+      [
+        "FG-VALID-001",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "FG-VALID-002",
+        1000000,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "true",
+        "Synthetic sample"
+      ],
+      [
+        "FG-VALID-003",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Comma, quoted \"text\""
+      ]
+    ],
+    "mixed": [
+      [
+        "FG-MIXED-001",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "FG-MIXED-002",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "FG-BASE-001",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "FG-BASE-001",
+        250000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "FG-INVALID-AMOUNT",
+        "not-a-number",
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "FG-MISSING-DATE",
+        150000.25,
+        "",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ],
+      [
+        "",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ]
+    ],
+    "missingColumn": {
+      "header": [
+        "ref",
+        "total",
+        "currency",
+        "customer_ref",
+        "device",
+        "is_remote",
+        "note"
+      ],
+      "rows": [
+        [
+          "FG-VALID-001",
+          150000.25,
+          "VND",
+          "SYNTH-SENSITIVE-A-001",
+          "web",
+          "false",
+          "Synthetic sample"
+        ],
+        [
+          "FG-VALID-002",
+          1000000,
+          "VND",
+          "SYNTH-SENSITIVE-A-001",
+          "web",
+          "true",
+          "Synthetic sample"
+        ],
+        [
+          "FG-VALID-003",
+          150000.25,
+          "VND",
+          "SYNTH-SENSITIVE-A-001",
+          "web",
+          "false",
+          "Comma, quoted \"text\""
+        ]
+      ]
+    },
+    "duplicate": [
+      [
+        "FG-BASE-001",
+        150000.25,
+        "2026-11-02T19:00:00.000Z",
+        "VND",
+        "SYNTH-SENSITIVE-A-001",
+        "web",
+        "false",
+        "Synthetic sample"
+      ]
+    ]
+  }
+}

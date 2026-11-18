@@ -1,0 +1,1434 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3320" height="2514" viewBox="0 0 3320 2514">
+<title>SME-FraudGuard Database Design</title>
+<rect width="3320" height="2514" fill="white"/>
+<g fill="none" stroke-linejoin="round" stroke-linecap="round">
+<polyline points="470,419.0 500,419.0 500,420 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="470,419.0 500,419.0 500,420 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="650,173.0 620,173.0 620,170 620,150 500,150 500,147.0 470,147.0" stroke="white" stroke-width="5"/>
+<polyline points="650,173.0 620,173.0 620,170 620,150 500,150 500,147.0 470,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,445.0 500,445.0 500,440 620,440 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="470,445.0 500,445.0 500,440 620,440 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,173.0 1170,173.0 1170,170 1170,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,173.0 1170,173.0 1170,170 1170,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,199.0 1720,199.0 1720,200 1720,150 1600,150 1600,147.0 1570,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,199.0 1720,199.0 1720,200 1720,150 1600,150 1600,147.0 1570,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,571.0 1720,571.0 1720,570 1720,790 1720,787.0 1750,787.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,571.0 1720,571.0 1720,570 1720,790 1720,787.0 1750,787.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1499.0 2820,1499.0 2820,1500 2700,1500 2700,1600 2700,1597.0 2670,1597.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1499.0 2820,1499.0 2820,1500 2700,1500 2700,1600 2700,1597.0 2670,1597.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="650,443.0 620,443.0 620,440 630,440 630,150 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="650,443.0 620,443.0 620,440 630,440 630,150 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,251.0 1170,251.0 1170,250 1050,250 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,251.0 1170,251.0 1170,250 1050,250 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1570,1069.0 1600,1069.0 1600,1070 1600,770 1600,767.0 1570,767.0" stroke="white" stroke-width="5"/>
+<polyline points="1570,1069.0 1600,1069.0 1600,1070 1600,770 1600,767.0 1570,767.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1570,499.0 1600,499.0 1600,500 1600,150 1600,147.0 1570,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1570,499.0 1600,499.0 1600,500 1600,150 1600,147.0 1570,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1949.0 2270,1949.0 2270,1950 2270,1600 2270,1597.0 2300,1597.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1949.0 2270,1949.0 2270,1950 2270,1600 2270,1597.0 2300,1597.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,393.0 500,393.0 500,390 500,140 620,140 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="470,393.0 500,393.0 500,390 500,140 620,140 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1689.0 1170,1689.0 1170,1690 1170,1320 1170,1317.0 1200,1317.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1689.0 1170,1689.0 1170,1690 1170,1320 1170,1317.0 1200,1317.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2120,519.0 2150,519.0 2150,520 2150,150 2150,147.0 2120,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2120,519.0 2150,519.0 2150,520 2150,150 2150,147.0 2120,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1849.0 2820,1849.0 2820,1850 2820,1600 2700,1600 2700,1597.0 2670,1597.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1849.0 2820,1849.0 2820,1850 2820,1600 2700,1600 2700,1597.0 2670,1597.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,519.0 2270,519.0 2270,520 2270,150 2270,147.0 2300,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,519.0 2270,519.0 2270,520 2270,150 2270,147.0 2300,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1975.0 2270,1975.0 2270,1980 2150,1980 2150,2240 2150,2237.0 2120,2237.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1975.0 2270,1975.0 2270,1980 2150,1980 2150,2240 2150,2237.0 2120,2237.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,719.0 500,719.0 500,720 500,410 620,410 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="470,719.0 500,719.0 500,720 500,410 620,410 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="650,841.0 620,841.0 620,840 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="650,841.0 620,841.0 620,840 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,473.0 1170,473.0 1170,470 1170,180 1050,180 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,473.0 1170,473.0 1170,470 1170,180 1050,180 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1239.0 1720,1239.0 1720,1240 1720,790 1720,787.0 1750,787.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1239.0 1720,1239.0 1720,1240 1720,790 1720,787.0 1750,787.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,2019.0 1720,2019.0 1720,2020 1720,1570 1720,1567.0 1750,1567.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,2019.0 1720,2019.0 1720,2020 1720,1570 1720,1567.0 1750,1567.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2670,919.0 2700,919.0 2700,920 2700,470 2700,467.0 2670,467.0" stroke="white" stroke-width="5"/>
+<polyline points="2670,919.0 2700,919.0 2700,920 2700,470 2700,467.0 2670,467.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1020,919.0 1050,919.0 1050,920 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="1020,919.0 1050,919.0 1050,920 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2120,1671.0 2150,1671.0 2150,1670 2150,1250 2270,1250 2270,1247.0 2300,1247.0" stroke="white" stroke-width="5"/>
+<polyline points="2120,1671.0 2150,1671.0 2150,1670 2150,1250 2270,1250 2270,1247.0 2300,1247.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1020,763.0 1050,763.0 1050,760 1040,760 1040,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1020,763.0 1050,763.0 1050,760 1040,760 1040,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1095.0 1170,1095.0 1170,1100 1160,1100 1160,450 1170,450 1170,447.0 1200,447.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1095.0 1170,1095.0 1170,1100 1160,1100 1160,450 1170,450 1170,447.0 1200,447.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2670,2249.0 2700,2249.0 2700,2250 2700,1600 2700,1597.0 2670,1597.0" stroke="white" stroke-width="5"/>
+<polyline points="2670,2249.0 2700,2249.0 2700,2250 2700,1600 2700,1597.0 2670,1597.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,693.0 500,693.0 500,690 610,690 610,150 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="470,693.0 500,693.0 500,690 610,690 610,150 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1570,819.0 1600,819.0 1600,820 1590,820 1590,150 1600,150 1600,147.0 1570,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1570,819.0 1600,819.0 1600,820 1590,820 1590,150 1600,150 1600,147.0 1570,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,173.0 1720,173.0 1720,170 1610,170 1610,80 1050,80 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,173.0 1720,173.0 1720,170 1610,170 1610,80 1050,80 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,1019.0 500,1019.0 500,1020 600,1020 600,420 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="470,1019.0 500,1019.0 500,1020 600,1020 600,420 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,2315.0 1720,2315.0 1720,2320 1710,2320 1710,1570 1720,1570 1720,1567.0 1750,1567.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,2315.0 1720,2315.0 1720,2320 1710,2320 1710,1570 1720,1570 1720,1567.0 1750,1567.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,793.0 1170,793.0 1170,790 1060,790 1060,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,793.0 1170,793.0 1170,790 1060,790 1060,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1525.0 2820,1525.0 2820,1520 2710,1520 2710,2200 2700,2200 2700,2197.0 2670,2197.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1525.0 2820,1525.0 2820,1520 2710,1520 2710,2200 2700,2200 2700,2197.0 2670,2197.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,865.0 1720,865.0 1720,860 1620,860 1620,140 1600,140 1600,150 1600,147.0 1570,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,865.0 1720,865.0 1720,860 1620,860 1620,140 1600,140 1600,150 1600,147.0 1570,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1619.0 1720,1619.0 1720,1620 1730,1620 1730,790 1720,790 1720,787.0 1750,787.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1619.0 1720,1619.0 1720,1620 1730,1620 1730,790 1720,790 1720,787.0 1750,787.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,2045.0 1720,2045.0 1720,2040 1600,2040 1600,1320 1600,1317.0 1570,1317.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,2045.0 1720,2045.0 1720,2040 1600,2040 1600,1320 1600,1317.0 1570,1317.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1325.0 2270,1325.0 2270,1320 2280,1320 2280,470 2270,470 2270,467.0 2300,467.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1325.0 2270,1325.0 2270,1320 2280,1320 2280,470 2270,470 2270,467.0 2300,467.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,225.0 1720,225.0 1720,220 1720,380 1070,380 1070,420 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,225.0 1720,225.0 1720,220 1720,380 1070,380 1070,420 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1291.0 1720,1291.0 1720,1290 1720,1250 1050,1250 1050,1090 1050,1087.0 1020,1087.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1291.0 1720,1291.0 1720,1290 1720,1250 1050,1250 1050,1090 1050,1087.0 1020,1087.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,993.0 500,993.0 500,990 490,990 490,160 620,160 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="470,993.0 500,993.0 500,990 490,990 490,160 620,160 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="650,1113.0 620,1113.0 620,1110 590,1110 590,130 620,130 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="650,1113.0 620,1113.0 620,1110 590,1110 590,130 620,130 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1043.0 1170,1043.0 1170,1040 1180,1040 1180,160 1050,160 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1043.0 1170,1043.0 1170,1040 1180,1040 1180,160 1050,160 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,493.0 1720,493.0 1720,490 1610,490 1610,320 1070,320 1070,140 1050,140 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,493.0 1720,493.0 1720,490 1610,490 1610,320 1070,320 1070,140 1050,140 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,1319.0 500,1319.0 500,1320 630,1320 630,420 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="470,1319.0 500,1319.0 500,1320 630,1320 630,420 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2670,1299.0 2700,1299.0 2700,1300 2690,1300 2690,150 2700,150 2700,147.0 2670,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2670,1299.0 2700,1299.0 2700,1300 2690,1300 2690,150 2700,150 2700,147.0 2670,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1265.0 1720,1265.0 1720,1260 1590,1260 1590,1190 1070,1190 1070,740 1050,740 1050,737.0 1020,737.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1265.0 1720,1265.0 1720,1260 1590,1260 1590,1190 1070,1190 1070,740 1050,740 1050,737.0 1020,737.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1369.0 1170,1369.0 1170,1370 1150,1370 1150,140 1170,140 1170,150 1170,147.0 1200,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1369.0 1170,1369.0 1170,1370 1150,1370 1150,140 1170,140 1170,150 1170,147.0 1200,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,1293.0 500,1293.0 500,1290 580,1290 580,170 620,170 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="470,1293.0 500,1293.0 500,1290 580,1290 580,170 620,170 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1570,1715.0 1600,1715.0 1600,1720 1630,1720 1630,450 1600,450 1600,447.0 1570,447.0" stroke="white" stroke-width="5"/>
+<polyline points="1570,1715.0 1600,1715.0 1600,1720 1630,1720 1630,450 1600,450 1600,447.0 1570,447.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1343.0 1170,1343.0 1170,1340 1080,1340 1080,170 1050,170 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1343.0 1170,1343.0 1170,1340 1080,1340 1080,170 1050,170 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,813.0 1720,813.0 1720,810 1610,810 1610,650 1090,650 1090,130 1040,130 1040,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,813.0 1720,813.0 1720,810 1610,810 1610,650 1090,650 1090,130 1040,130 1040,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,545.0 2270,545.0 2270,540 2140,540 2140,370 1100,370 1100,410 1050,410 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,545.0 2270,545.0 2270,540 2140,540 2140,370 1100,370 1100,410 1050,410 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,1699.0 500,1699.0 500,1700 570,1700 570,430 620,430 620,420 620,417.0 650,417.0" stroke="white" stroke-width="5"/>
+<polyline points="470,1699.0 500,1699.0 500,1700 570,1700 570,430 620,430 620,420 620,417.0 650,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2120,2289.0 2150,2289.0 2150,2290 2140,2290 2140,790 2150,790 2150,787.0 2120,787.0" stroke="white" stroke-width="5"/>
+<polyline points="2120,2289.0 2150,2289.0 2150,2290 2140,2290 2140,790 2150,790 2150,787.0 2120,787.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,493.0 2270,493.0 2270,490 2160,490 2160,70 1060,70 1060,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,493.0 2270,493.0 2270,490 2160,490 2160,70 1060,70 1060,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1645.0 1720,1645.0 1720,1640 1640,1640 1640,160 1600,160 1600,150 1600,147.0 1570,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1645.0 1720,1645.0 1720,1640 1640,1640 1640,160 1600,160 1600,150 1600,147.0 1570,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1663.0 1170,1663.0 1170,1660 1110,1660 1110,140 1050,140 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1663.0 1170,1663.0 1170,1660 1110,1660 1110,140 1050,140 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="470,1673.0 500,1673.0 500,1670 560,1670 560,120 630,120 630,150 620,150 620,147.0 650,147.0" stroke="white" stroke-width="5"/>
+<polyline points="470,1673.0 500,1673.0 500,1670 560,1670 560,120 630,120 630,150 620,150 620,147.0 650,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1213.0 1720,1213.0 1720,1210 1120,1210 1120,170 1080,170 1080,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1213.0 1720,1213.0 1720,1210 1120,1210 1120,170 1080,170 1080,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,2035.0 1170,2035.0 1170,2040 1100,2040 1100,430 1050,430 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,2035.0 1170,2035.0 1170,2040 1100,2040 1100,430 1050,430 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1570,2009.0 1600,2009.0 1600,2010 1650,2010 1650,130 1600,130 1600,150 1600,147.0 1570,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1570,2009.0 1600,2009.0 1600,2010 1650,2010 1650,130 1600,130 1600,150 1600,147.0 1570,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1200,1983.0 1170,1983.0 1170,1980 1130,1980 1130,190 1050,190 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1200,1983.0 1170,1983.0 1170,1980 1130,1980 1130,190 1050,190 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,893.0 2270,893.0 2270,890 2170,890 2170,60 1040,60 1040,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,893.0 2270,893.0 2270,890 2170,890 2170,60 1040,60 1040,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1593.0 1720,1593.0 1720,1590 1610,1590 1610,1200 1140,1200 1140,120 1050,120 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1593.0 1720,1593.0 1720,1590 1610,1590 1610,1200 1140,1200 1140,120 1050,120 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1377.0 2270,1377.0 2270,1380 2160,1380 2160,670 1070,670 1070,420 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1377.0 2270,1377.0 2270,1380 2160,1380 2160,670 1070,670 1070,420 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1273.0 2270,1273.0 2270,1270 2180,1270 2180,350 1100,350 1100,200 1050,200 1050,190 1040,190 1040,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1273.0 2270,1273.0 2270,1270 2180,1270 2180,350 1100,350 1100,200 1050,200 1050,190 1040,190 1040,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1649.0 2270,1649.0 2270,1650 2170,1650 2170,1080 1590,1080 1590,890 1170,890 1170,460 1160,460 1160,440 1050,440 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1649.0 2270,1649.0 2270,1650 2170,1650 2170,1080 1590,1080 1590,890 1170,890 1170,460 1160,460 1160,440 1050,440 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,1993.0 1720,1993.0 1720,1990 1660,1990 1660,330 1160,330 1160,110 1070,110 1070,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,1993.0 1720,1993.0 1720,1990 1660,1990 1660,330 1160,330 1160,110 1070,110 1070,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1623.0 2270,1623.0 2270,1620 2190,1620 2190,50 1070,50 1070,110 1050,110 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1623.0 2270,1623.0 2270,1620 2190,1620 2190,50 1070,50 1070,110 1050,110 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="1750,2263.0 1720,2263.0 1720,2260 1670,2260 1670,40 1080,40 1080,160 1050,160 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="1750,2263.0 1720,2263.0 1720,2260 1670,2260 1670,40 1080,40 1080,160 1050,160 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1551.0 2820,1551.0 2820,1550 2820,360 1160,360 1160,400 1050,400 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1551.0 2820,1551.0 2820,1550 2820,360 1160,360 1160,400 1050,400 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,1923.0 2270,1923.0 2270,1920 2200,1920 2200,30 1090,30 1090,130 1060,130 1060,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,1923.0 2270,1923.0 2270,1920 2200,1920 2200,30 1090,30 1090,130 1060,130 1060,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,2275.0 2270,2275.0 2270,2280 2160,2280 2160,1440 1680,1440 1680,340 1070,340 1070,390 1040,390 1040,420 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,2275.0 2270,2275.0 2270,2280 2160,2280 2160,1440 1680,1440 1680,340 1070,340 1070,390 1040,390 1040,420 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1473.0 2820,1473.0 2820,1470 2710,1470 2710,20 1100,20 1100,100 1040,100 1040,140 1050,140 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1473.0 2820,1473.0 2820,1470 2710,1470 2710,20 1100,20 1100,100 1040,100 1040,140 1050,140 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,2301.0 2270,2301.0 2270,2300 2270,2130 1090,2130 1090,660 1030,660 1030,620 1040,620 1040,420 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,2301.0 2270,2301.0 2270,2300 2270,2130 1090,2130 1090,660 1030,660 1030,620 1040,620 1040,420 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1875.0 2820,1875.0 2820,1880 2690,1880 2690,1470 2210,1470 2210,680 1190,680 1190,660 1090,660 1090,450 1060,450 1060,420 1050,420 1050,417.0 1020,417.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1875.0 2820,1875.0 2820,1880 2690,1880 2690,1470 2210,1470 2210,680 1190,680 1190,660 1090,660 1090,450 1060,450 1060,420 1050,420 1050,417.0 1020,417.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2300,2223.0 2270,2223.0 2270,2220 2170,2220 2170,2140 550,2140 550,290 1050,290 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2300,2223.0 2270,2223.0 2270,2220 2170,2220 2170,2140 550,2140 550,290 1050,290 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+<polyline points="2850,1823.0 2820,1823.0 2820,1820 2150,1820 2150,1840 540,1840 540,80 1040,80 1040,150 1050,150 1050,147.0 1020,147.0" stroke="white" stroke-width="5"/>
+<polyline points="2850,1823.0 2820,1823.0 2820,1820 2150,1820 2150,1840 540,1840 540,80 1040,80 1040,150 1050,150 1050,147.0 1020,147.0" stroke="#8b98a2" stroke-width="1.1"/>
+</g>
+<rect x="100" y="100" width="370" height="120" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M103 100 H467 Q470 100 470 103 V134 H100 V103 Q100 100 103 100" fill="#2e6892"/>
+<text x="112" y="123" fill="white" font-family="Arial" font-size="17" font-weight="bold">enterprises</text>
+<rect x="101" y="134" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="152" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="135" y="152" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="461" y="152" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="178" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="178" font-family="Arial" font-size="14" fill="#263746">name</text>
+<text x="461" y="178" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="186" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="204" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="204" font-family="Arial" font-size="14" fill="#263746">contact_email</text>
+<text x="461" y="204" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<line x1="100" y1="134" x2="470" y2="134" stroke="#62717d"/>
+<rect x="650" y="100" width="370" height="172" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M653 100 H1017 Q1020 100 1020 103 V134 H650 V103 Q650 100 653 100" fill="#2e6892"/>
+<text x="662" y="123" fill="white" font-family="Arial" font-size="17" font-weight="bold">workspaces</text>
+<rect x="651" y="134" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="152" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="685" y="152" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1011" y="152" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="659" y="178" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="685" y="178" font-family="Arial" font-size="14" fill="#263746">enterprise_id</text>
+<text x="1011" y="178" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="651" y="186" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="204" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="204" font-family="Arial" font-size="14" fill="#263746">slug</text>
+<text x="1011" y="204" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="659" y="230" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="230" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="1011" y="230" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="651" y="238" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="256" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="256" font-family="Arial" font-size="14" fill="#263746">activated_at</text>
+<text x="1011" y="256" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="650" y1="134" x2="1020" y2="134" stroke="#62717d"/>
+<rect x="650" y="370" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M653 370 H1017 Q1020 370 1020 373 V404 H650 V373 Q650 370 653 370" fill="#2e6892"/>
+<text x="662" y="393" fill="white" font-family="Arial" font-size="17" font-weight="bold">accounts</text>
+<rect x="651" y="404" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="422" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="685" y="422" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1011" y="422" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="659" y="448" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="685" y="448" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1011" y="448" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<rect x="651" y="456" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="474" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="474" font-family="Arial" font-size="14" fill="#263746">login_name</text>
+<text x="1011" y="474" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="659" y="500" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="500" font-family="Arial" font-size="14" fill="#263746">password_hash</text>
+<text x="1011" y="500" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="651" y="508" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="526" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="526" font-family="Arial" font-size="14" fill="#263746">role</text>
+<text x="1011" y="526" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="659" y="552" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="552" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="1011" y="552" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="651" y="560" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="578" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="578" font-family="Arial" font-size="14" fill="#263746">must_change_password</text>
+<text x="1011" y="578" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BOOLEAN</text>
+<line x1="650" y1="404" x2="1020" y2="404" stroke="#62717d"/>
+<rect x="100" y="320" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M103 320 H467 Q470 320 470 323 V354 H100 V323 Q100 320 103 320" fill="#2e6892"/>
+<text x="112" y="343" fill="white" font-family="Arial" font-size="17" font-weight="bold">staff_assignments</text>
+<rect x="101" y="354" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="372" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="135" y="372" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="461" y="372" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="398" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="398" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="461" y="398" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="101" y="406" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="424" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="424" font-family="Arial" font-size="14" fill="#263746">staff_id</text>
+<text x="461" y="424" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="450" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="450" font-family="Arial" font-size="14" fill="#263746">assigned_by</text>
+<text x="461" y="450" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="101" y="458" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="476" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="476" font-family="Arial" font-size="14" fill="#263746">assigned_at</text>
+<text x="461" y="476" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<text x="109" y="502" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="502" font-family="Arial" font-size="14" fill="#263746">ended_at</text>
+<text x="461" y="502" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<line x1="100" y1="354" x2="470" y2="354" stroke="#62717d"/>
+<rect x="100" y="620" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M103 620 H467 Q470 620 470 623 V654 H100 V623 Q100 620 103 620" fill="#2e6892"/>
+<text x="112" y="643" fill="white" font-family="Arial" font-size="17" font-weight="bold">onboarding_documents</text>
+<rect x="101" y="654" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="672" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="135" y="672" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="461" y="672" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="698" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="698" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="461" y="698" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="101" y="706" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="724" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="724" font-family="Arial" font-size="14" fill="#263746">uploaded_by</text>
+<text x="461" y="724" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="750" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="750" font-family="Arial" font-size="14" fill="#263746">storage_ref</text>
+<text x="461" y="750" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="758" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="776" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="776" font-family="Arial" font-size="14" fill="#263746">file_name</text>
+<text x="461" y="776" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="109" y="802" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="802" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="461" y="802" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="100" y1="654" x2="470" y2="654" stroke="#62717d"/>
+<rect x="100" y="920" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M103 920 H467 Q470 920 470 923 V954 H100 V923 Q100 920 103 920" fill="#2e6892"/>
+<text x="112" y="943" fill="white" font-family="Arial" font-size="17" font-weight="bold">onboarding_events</text>
+<rect x="101" y="954" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="972" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="135" y="972" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="461" y="972" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="998" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="998" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="461" y="998" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="101" y="1006" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1024" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="1024" font-family="Arial" font-size="14" fill="#263746">actor_id</text>
+<text x="461" y="1024" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="1050" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1050" font-family="Arial" font-size="14" fill="#263746">action</text>
+<text x="461" y="1050" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="1058" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1076" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1076" font-family="Arial" font-size="14" fill="#263746">comment</text>
+<text x="461" y="1076" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<text x="109" y="1102" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1102" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="461" y="1102" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="100" y1="954" x2="470" y2="954" stroke="#62717d"/>
+<rect x="1200" y="100" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 100 H1567 Q1570 100 1570 103 V134 H1200 V103 Q1200 100 1203 100" fill="#2e6892"/>
+<text x="1212" y="123" fill="white" font-family="Arial" font-size="17" font-weight="bold">config_versions</text>
+<rect x="1201" y="134" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="152" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="152" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="152" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="178" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="178" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="178" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="186" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="204" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="204" font-family="Arial" font-size="14" fill="#263746">version_no</text>
+<text x="1561" y="204" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">INTEGER</text>
+<text x="1209" y="230" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="230" font-family="Arial" font-size="14" fill="#263746">is_active</text>
+<text x="1561" y="230" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BOOLEAN</text>
+<rect x="1201" y="238" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="256" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="256" font-family="Arial" font-size="14" fill="#263746">created_by</text>
+<text x="1561" y="256" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="282" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="282" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="1561" y="282" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1200" y1="134" x2="1570" y2="134" stroke="#62717d"/>
+<rect x="1200" y="400" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 400 H1567 Q1570 400 1570 403 V434 H1200 V403 Q1200 400 1203 400" fill="#2e6892"/>
+<text x="1212" y="423" fill="white" font-family="Arial" font-size="17" font-weight="bold">field_definitions</text>
+<rect x="1201" y="434" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="452" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="452" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="452" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="478" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="478" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="478" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="486" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="504" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="504" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="1561" y="504" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="530" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="530" font-family="Arial" font-size="14" fill="#263746">field_name</text>
+<text x="1561" y="530" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1201" y="538" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="556" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="556" font-family="Arial" font-size="14" fill="#263746">data_type</text>
+<text x="1561" y="556" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1209" y="582" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="582" font-family="Arial" font-size="14" fill="#263746">required</text>
+<text x="1561" y="582" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BOOLEAN</text>
+<rect x="1201" y="590" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="608" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="608" font-family="Arial" font-size="14" fill="#263746">sensitive</text>
+<text x="1561" y="608" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BOOLEAN</text>
+<line x1="1200" y1="434" x2="1570" y2="434" stroke="#62717d"/>
+<rect x="1200" y="720" width="370" height="146" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 720 H1567 Q1570 720 1570 723 V754 H1200 V723 Q1200 720 1203 720" fill="#2e6892"/>
+<text x="1212" y="743" fill="white" font-family="Arial" font-size="17" font-weight="bold">channel_mappings</text>
+<rect x="1201" y="754" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="772" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="772" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="772" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="798" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="798" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="798" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="806" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="824" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="824" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="1561" y="824" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="850" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="850" font-family="Arial" font-size="14" fill="#263746">channel</text>
+<text x="1561" y="850" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<line x1="1200" y1="754" x2="1570" y2="754" stroke="#62717d"/>
+<rect x="1200" y="970" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 970 H1567 Q1570 970 1570 973 V1004 H1200 V973 Q1200 970 1203 970" fill="#2e6892"/>
+<text x="1212" y="993" fill="white" font-family="Arial" font-size="17" font-weight="bold">field_mappings</text>
+<rect x="1201" y="1004" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1022" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="1022" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="1022" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1048" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1048" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="1048" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="1056" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1074" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1074" font-family="Arial" font-size="14" fill="#263746">channel_mapping_id</text>
+<text x="1561" y="1074" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1100" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1100" font-family="Arial" font-size="14" fill="#263746">field_definition_id</text>
+<text x="1561" y="1100" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="1108" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1126" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1126" font-family="Arial" font-size="14" fill="#263746">source_path</text>
+<text x="1561" y="1126" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1209" y="1152" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1152" font-family="Arial" font-size="14" fill="#263746">conversion_spec</text>
+<text x="1561" y="1152" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<line x1="1200" y1="1004" x2="1570" y2="1004" stroke="#62717d"/>
+<rect x="1200" y="1270" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 1270 H1567 Q1570 1270 1570 1273 V1304 H1200 V1273 Q1200 1270 1203 1270" fill="#2e6892"/>
+<text x="1212" y="1293" fill="white" font-family="Arial" font-size="17" font-weight="bold">rules</text>
+<rect x="1201" y="1304" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1322" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="1322" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="1322" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1348" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1348" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="1348" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="1356" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1374" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1374" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="1561" y="1374" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1400" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1400" font-family="Arial" font-size="14" fill="#263746">name</text>
+<text x="1561" y="1400" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1201" y="1408" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1426" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1426" font-family="Arial" font-size="14" fill="#263746">description</text>
+<text x="1561" y="1426" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1209" y="1452" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1452" font-family="Arial" font-size="14" fill="#263746">enabled</text>
+<text x="1561" y="1452" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BOOLEAN</text>
+<rect x="1201" y="1460" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1478" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1478" font-family="Arial" font-size="14" fill="#263746">combination</text>
+<text x="1561" y="1478" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<line x1="1200" y1="1304" x2="1570" y2="1304" stroke="#62717d"/>
+<rect x="1200" y="1590" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 1590 H1567 Q1570 1590 1570 1593 V1624 H1200 V1593 Q1200 1590 1203 1590" fill="#2e6892"/>
+<text x="1212" y="1613" fill="white" font-family="Arial" font-size="17" font-weight="bold">rule_conditions</text>
+<rect x="1201" y="1624" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1642" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="1642" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="1642" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1668" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1668" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="1668" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="1676" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1694" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1694" font-family="Arial" font-size="14" fill="#263746">rule_id</text>
+<text x="1561" y="1694" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1720" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1720" font-family="Arial" font-size="14" fill="#263746">field_definition_id</text>
+<text x="1561" y="1720" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="1728" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1746" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1746" font-family="Arial" font-size="14" fill="#263746">operator</text>
+<text x="1561" y="1746" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1209" y="1772" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1772" font-family="Arial" font-size="14" fill="#263746">operand</text>
+<text x="1561" y="1772" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB ?</text>
+<rect x="1201" y="1780" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1798" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="1798" font-family="Arial" font-size="14" fill="#263746">position</text>
+<text x="1561" y="1798" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">INTEGER</text>
+<line x1="1200" y1="1624" x2="1570" y2="1624" stroke="#62717d"/>
+<rect x="1200" y="1910" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1203 1910 H1567 Q1570 1910 1570 1913 V1944 H1200 V1913 Q1200 1910 1203 1910" fill="#2e6892"/>
+<text x="1212" y="1933" fill="white" font-family="Arial" font-size="17" font-weight="bold">test_runs</text>
+<rect x="1201" y="1944" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="1962" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1235" y="1962" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1561" y="1962" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="1988" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="1988" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1561" y="1988" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="1996" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="2014" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="2014" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="1561" y="2014" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1209" y="2040" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1235" y="2040" font-family="Arial" font-size="14" fill="#263746">run_by</text>
+<text x="1561" y="2040" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1201" y="2048" width="368" height="26" fill="#f5f7f9"/>
+<text x="1209" y="2066" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="2066" font-family="Arial" font-size="14" fill="#263746">result_counts</text>
+<text x="1561" y="2066" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<text x="1209" y="2092" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1235" y="2092" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="1561" y="2092" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1200" y1="1944" x2="1570" y2="1944" stroke="#62717d"/>
+<rect x="650" y="690" width="370" height="250" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M653 690 H1017 Q1020 690 1020 693 V724 H650 V693 Q650 690 653 690" fill="#2e6892"/>
+<text x="662" y="713" fill="white" font-family="Arial" font-size="17" font-weight="bold">api_credentials</text>
+<rect x="651" y="724" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="742" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="685" y="742" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1011" y="742" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="659" y="768" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="685" y="768" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1011" y="768" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="651" y="776" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="794" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="794" font-family="Arial" font-size="14" fill="#263746">key_prefix</text>
+<text x="1011" y="794" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="659" y="820" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="820" font-family="Arial" font-size="14" fill="#263746">key_verifier</text>
+<text x="1011" y="820" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BYTEA</text>
+<rect x="651" y="828" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="846" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="685" y="846" font-family="Arial" font-size="14" fill="#263746">issued_by</text>
+<text x="1011" y="846" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="659" y="872" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="872" font-family="Arial" font-size="14" fill="#263746">issued_at</text>
+<text x="1011" y="872" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<rect x="651" y="880" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="898" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="898" font-family="Arial" font-size="14" fill="#263746">disabled_at</text>
+<text x="1011" y="898" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<text x="659" y="924" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="685" y="924" font-family="Arial" font-size="14" fill="#263746">disabled_by</text>
+<text x="1011" y="924" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<line x1="650" y1="724" x2="1020" y2="724" stroke="#62717d"/>
+<rect x="650" y="1040" width="370" height="172" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M653 1040 H1017 Q1020 1040 1020 1043 V1074 H650 V1043 Q650 1040 653 1040" fill="#2e6892"/>
+<text x="662" y="1063" fill="white" font-family="Arial" font-size="17" font-weight="bold">webhook_connections</text>
+<rect x="651" y="1074" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="1092" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="685" y="1092" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="1011" y="1092" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="659" y="1118" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="685" y="1118" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="1011" y="1118" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="651" y="1126" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="1144" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="1144" font-family="Arial" font-size="14" fill="#263746">secret_ciphertext</text>
+<text x="1011" y="1144" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BYTEA</text>
+<text x="659" y="1170" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="1170" font-family="Arial" font-size="14" fill="#263746">key_reference</text>
+<text x="1011" y="1170" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="651" y="1178" width="368" height="26" fill="#f5f7f9"/>
+<text x="659" y="1196" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="685" y="1196" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="1011" y="1196" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<line x1="650" y1="1074" x2="1020" y2="1074" stroke="#62717d"/>
+<rect x="1750" y="100" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 100 H2117 Q2120 100 2120 103 V134 H1750 V103 Q1750 100 1753 100" fill="#2e6892"/>
+<text x="1762" y="123" fill="white" font-family="Arial" font-size="17" font-weight="bold">import_batches</text>
+<rect x="1751" y="134" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="152" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="152" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="152" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="178" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="178" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="178" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="186" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="204" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="204" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="2111" y="204" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="230" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="230" font-family="Arial" font-size="14" fill="#263746">uploaded_by</text>
+<text x="2111" y="230" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="238" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="256" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="256" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="2111" y="256" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1759" y="282" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="282" font-family="Arial" font-size="14" fill="#263746">result_counts</text>
+<text x="2111" y="282" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<rect x="1751" y="290" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="308" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="308" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="2111" y="308" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1750" y1="134" x2="2120" y2="134" stroke="#62717d"/>
+<rect x="1750" y="420" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 420 H2117 Q2120 420 2120 423 V454 H1750 V423 Q1750 420 1753 420" fill="#2e6892"/>
+<text x="1762" y="443" fill="white" font-family="Arial" font-size="17" font-weight="bold">import_rows</text>
+<rect x="1751" y="454" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="472" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="472" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="472" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="498" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="498" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="498" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="506" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="524" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="524" font-family="Arial" font-size="14" fill="#263746">import_batch_id</text>
+<text x="2111" y="524" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="550" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="550" font-family="Arial" font-size="14" fill="#263746">row_number</text>
+<text x="2111" y="550" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">INTEGER</text>
+<rect x="1751" y="558" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="576" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="576" font-family="Arial" font-size="14" fill="#263746">transaction_id</text>
+<text x="2111" y="576" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<text x="1759" y="602" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="602" font-family="Arial" font-size="14" fill="#263746">outcome</text>
+<text x="2111" y="602" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1751" y="610" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="628" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="628" font-family="Arial" font-size="14" fill="#263746">safe_error_code</text>
+<text x="2111" y="628" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<line x1="1750" y1="454" x2="2120" y2="454" stroke="#62717d"/>
+<rect x="1750" y="740" width="370" height="302" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 740 H2117 Q2120 740 2120 743 V774 H1750 V743 Q1750 740 1753 740" fill="#2e6892"/>
+<text x="1762" y="763" fill="white" font-family="Arial" font-size="17" font-weight="bold">transactions</text>
+<rect x="1751" y="774" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="792" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="792" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="792" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="818" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="818" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="818" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="826" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="844" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="844" font-family="Arial" font-size="14" fill="#263746">external_id</text>
+<text x="2111" y="844" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1759" y="870" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="870" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="2111" y="870" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="878" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="896" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="896" font-family="Arial" font-size="14" fill="#263746">event_time</text>
+<text x="2111" y="896" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<text x="1759" y="922" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="922" font-family="Arial" font-size="14" fill="#263746">public_values</text>
+<text x="2111" y="922" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<rect x="1751" y="930" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="948" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="948" font-family="Arial" font-size="14" fill="#263746">sensitive_values</text>
+<text x="2111" y="948" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BYTEA ?</text>
+<text x="1759" y="974" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="974" font-family="Arial" font-size="14" fill="#263746">key_reference</text>
+<text x="2111" y="974" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<rect x="1751" y="982" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1000" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1000" font-family="Arial" font-size="14" fill="#263746">dedup_fingerprint</text>
+<text x="2111" y="1000" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">BYTEA</text>
+<text x="1759" y="1026" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1026" font-family="Arial" font-size="14" fill="#263746">accepted_at</text>
+<text x="2111" y="1026" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1750" y1="774" x2="2120" y2="774" stroke="#62717d"/>
+<rect x="1750" y="1140" width="370" height="276" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 1140 H2117 Q2120 1140 2120 1143 V1174 H1750 V1143 Q1750 1140 1753 1140" fill="#2e6892"/>
+<text x="1762" y="1163" fill="white" font-family="Arial" font-size="17" font-weight="bold">ingestion_receipts</text>
+<rect x="1751" y="1174" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1192" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="1192" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="1192" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="1218" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1218" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="1218" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="1226" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1244" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1244" font-family="Arial" font-size="14" fill="#263746">transaction_id</text>
+<text x="2111" y="1244" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<text x="1759" y="1270" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1270" font-family="Arial" font-size="14" fill="#263746">api_credential_id</text>
+<text x="2111" y="1270" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<rect x="1751" y="1278" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1296" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1296" font-family="Arial" font-size="14" fill="#263746">webhook_connection_id</text>
+<text x="2111" y="1296" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<text x="1759" y="1322" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1322" font-family="Arial" font-size="14" fill="#263746">channel</text>
+<text x="2111" y="1322" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1751" y="1330" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1348" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1348" font-family="Arial" font-size="14" fill="#263746">source_event_ref</text>
+<text x="2111" y="1348" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<text x="1759" y="1374" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1374" font-family="Arial" font-size="14" fill="#263746">outcome</text>
+<text x="2111" y="1374" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1751" y="1382" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1400" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1400" font-family="Arial" font-size="14" fill="#263746">received_at</text>
+<text x="2111" y="1400" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1750" y1="1174" x2="2120" y2="1174" stroke="#62717d"/>
+<rect x="1750" y="1520" width="370" height="302" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 1520 H2117 Q2120 1520 2120 1523 V1554 H1750 V1523 Q1750 1520 1753 1520" fill="#2e6892"/>
+<text x="1762" y="1543" fill="white" font-family="Arial" font-size="17" font-weight="bold">detection_attempts</text>
+<rect x="1751" y="1554" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1572" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="1572" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="1572" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="1598" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1598" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="1598" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="1606" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1624" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1624" font-family="Arial" font-size="14" fill="#263746">transaction_id</text>
+<text x="2111" y="1624" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="1650" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1650" font-family="Arial" font-size="14" fill="#263746">config_version_id</text>
+<text x="2111" y="1650" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="1658" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1676" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1676" font-family="Arial" font-size="14" fill="#263746">subscription_period_id</text>
+<text x="2111" y="1676" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<text x="1759" y="1702" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1702" font-family="Arial" font-size="14" fill="#263746">source</text>
+<text x="2111" y="1702" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1751" y="1710" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1728" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1728" font-family="Arial" font-size="14" fill="#263746">classification</text>
+<text x="2111" y="1728" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<text x="1759" y="1754" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1754" font-family="Arial" font-size="14" fill="#263746">model_version</text>
+<text x="2111" y="1754" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<rect x="1751" y="1762" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1780" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1780" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="2111" y="1780" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1759" y="1806" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="1806" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="2111" y="1806" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1750" y1="1554" x2="2120" y2="1554" stroke="#62717d"/>
+<rect x="1750" y="1920" width="370" height="172" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 1920 H2117 Q2120 1920 2120 1923 V1954 H1750 V1923 Q1750 1920 1753 1920" fill="#2e6892"/>
+<text x="1762" y="1943" fill="white" font-family="Arial" font-size="17" font-weight="bold">rule_matches</text>
+<rect x="1751" y="1954" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="1972" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="1972" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="1972" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="1998" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="1998" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="1998" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="2006" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="2024" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="2024" font-family="Arial" font-size="14" fill="#263746">detection_attempt_id</text>
+<text x="2111" y="2024" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="2050" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="2050" font-family="Arial" font-size="14" fill="#263746">rule_id</text>
+<text x="2111" y="2050" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="2058" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="2076" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="2076" font-family="Arial" font-size="14" fill="#263746">matched_conditions</text>
+<text x="2111" y="2076" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<line x1="1750" y1="1954" x2="2120" y2="1954" stroke="#62717d"/>
+<rect x="1750" y="2190" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M1753 2190 H2117 Q2120 2190 2120 2193 V2224 H1750 V2193 Q1750 2190 1753 2190" fill="#2e6892"/>
+<text x="1762" y="2213" fill="white" font-family="Arial" font-size="17" font-weight="bold">alerts</text>
+<rect x="1751" y="2224" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="2242" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="1785" y="2242" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2111" y="2242" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="2268" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="2268" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2111" y="2268" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="2276" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="2294" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="2294" font-family="Arial" font-size="14" fill="#263746">transaction_id</text>
+<text x="2111" y="2294" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="1759" y="2320" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="1785" y="2320" font-family="Arial" font-size="14" fill="#263746">origin_attempt_id</text>
+<text x="2111" y="2320" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="1751" y="2328" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="2346" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="2346" font-family="Arial" font-size="14" fill="#263746">kind</text>
+<text x="2111" y="2346" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="1759" y="2372" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="2372" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="2111" y="2372" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="1751" y="2380" width="368" height="26" fill="#f5f7f9"/>
+<text x="1759" y="2398" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="1785" y="2398" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="2111" y="2398" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="1750" y1="2224" x2="2120" y2="2224" stroke="#62717d"/>
+<rect x="2300" y="1550" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 1550 H2667 Q2670 1550 2670 1553 V1584 H2300 V1553 Q2300 1550 2303 1550" fill="#2e6892"/>
+<text x="2312" y="1573" fill="white" font-family="Arial" font-size="17" font-weight="bold">cases</text>
+<rect x="2301" y="1584" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1602" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="1602" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="1602" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="1628" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1628" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2661" y="1628" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="1636" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1654" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1654" font-family="Arial" font-size="14" fill="#263746">opened_by</text>
+<text x="2661" y="1654" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="1680" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1680" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="2661" y="1680" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2301" y="1688" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1706" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1706" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="2661" y="1706" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<text x="2309" y="1732" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1732" font-family="Arial" font-size="14" fill="#263746">closed_at</text>
+<text x="2661" y="1732" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<line x1="2300" y1="1584" x2="2670" y2="1584" stroke="#62717d"/>
+<rect x="2300" y="1850" width="370" height="198" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 1850 H2667 Q2670 1850 2670 1853 V1884 H2300 V1853 Q2300 1850 2303 1850" fill="#2e6892"/>
+<text x="2312" y="1873" fill="white" font-family="Arial" font-size="17" font-weight="bold">case_alerts</text>
+<rect x="2301" y="1884" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1902" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="1902" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="1902" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="1928" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1928" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2661" y="1928" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="1936" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1954" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1954" font-family="Arial" font-size="14" fill="#263746">case_id</text>
+<text x="2661" y="1954" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="1980" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1980" font-family="Arial" font-size="14" fill="#263746">alert_id</text>
+<text x="2661" y="1980" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="1988" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="2006" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="2006" font-family="Arial" font-size="14" fill="#263746">alert_kind</text>
+<text x="2661" y="2006" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2309" y="2032" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="2032" font-family="Arial" font-size="14" fill="#263746">linked_at</text>
+<text x="2661" y="2032" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="2300" y1="1884" x2="2670" y2="1884" stroke="#62717d"/>
+<rect x="2300" y="2150" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 2150 H2667 Q2670 2150 2670 2153 V2184 H2300 V2153 Q2300 2150 2303 2150" fill="#2e6892"/>
+<text x="2312" y="2173" fill="white" font-family="Arial" font-size="17" font-weight="bold">case_assignments</text>
+<rect x="2301" y="2184" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="2202" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="2202" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="2202" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="2228" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="2228" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2661" y="2228" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="2236" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="2254" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="2254" font-family="Arial" font-size="14" fill="#263746">case_id</text>
+<text x="2661" y="2254" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="2280" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="2280" font-family="Arial" font-size="14" fill="#263746">assignee_id</text>
+<text x="2661" y="2280" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="2288" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="2306" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="2306" font-family="Arial" font-size="14" fill="#263746">assigned_by</text>
+<text x="2661" y="2306" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="2332" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="2332" font-family="Arial" font-size="14" fill="#263746">assigned_at</text>
+<text x="2661" y="2332" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<rect x="2301" y="2340" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="2358" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="2358" font-family="Arial" font-size="14" fill="#263746">ended_at</text>
+<text x="2661" y="2358" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<line x1="2300" y1="2184" x2="2670" y2="2184" stroke="#62717d"/>
+<rect x="2850" y="1400" width="370" height="250" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2853 1400 H3217 Q3220 1400 3220 1403 V1434 H2850 V1403 Q2850 1400 2853 1400" fill="#2e6892"/>
+<text x="2862" y="1423" fill="white" font-family="Arial" font-size="17" font-weight="bold">investigation_reports</text>
+<rect x="2851" y="1434" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1452" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2885" y="1452" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="3211" y="1452" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2859" y="1478" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1478" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="3211" y="1478" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2851" y="1486" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1504" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1504" font-family="Arial" font-size="14" fill="#263746">case_id</text>
+<text x="3211" y="1504" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2859" y="1530" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1530" font-family="Arial" font-size="14" fill="#263746">assignment_id</text>
+<text x="3211" y="1530" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2851" y="1538" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1556" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1556" font-family="Arial" font-size="14" fill="#263746">author_id</text>
+<text x="3211" y="1556" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2859" y="1582" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2885" y="1582" font-family="Arial" font-size="14" fill="#263746">findings</text>
+<text x="3211" y="1582" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2851" y="1590" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1608" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2885" y="1608" font-family="Arial" font-size="14" fill="#263746">evidence_refs</text>
+<text x="3211" y="1608" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<text x="2859" y="1634" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2885" y="1634" font-family="Arial" font-size="14" fill="#263746">submitted_at</text>
+<text x="3211" y="1634" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<line x1="2850" y1="1434" x2="3220" y2="1434" stroke="#62717d"/>
+<rect x="2850" y="1750" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2853 1750 H3217 Q3220 1750 3220 1753 V1784 H2850 V1753 Q2850 1750 2853 1750" fill="#2e6892"/>
+<text x="2862" y="1773" fill="white" font-family="Arial" font-size="17" font-weight="bold">case_conclusions</text>
+<rect x="2851" y="1784" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1802" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2885" y="1802" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="3211" y="1802" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2859" y="1828" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1828" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="3211" y="1828" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2851" y="1836" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1854" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1854" font-family="Arial" font-size="14" fill="#263746">case_id</text>
+<text x="3211" y="1854" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2859" y="1880" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2885" y="1880" font-family="Arial" font-size="14" fill="#263746">confirmed_by</text>
+<text x="3211" y="1880" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2851" y="1888" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1906" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2885" y="1906" font-family="Arial" font-size="14" fill="#263746">conclusion</text>
+<text x="3211" y="1906" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2859" y="1932" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2885" y="1932" font-family="Arial" font-size="14" fill="#263746">rationale</text>
+<text x="3211" y="1932" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2851" y="1940" width="368" height="26" fill="#f5f7f9"/>
+<text x="2859" y="1958" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2885" y="1958" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="3211" y="1958" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="2850" y1="1784" x2="3220" y2="1784" stroke="#62717d"/>
+<rect x="2300" y="100" width="370" height="224" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 100 H2667 Q2670 100 2670 103 V134 H2300 V103 Q2300 100 2303 100" fill="#2e6892"/>
+<text x="2312" y="123" fill="white" font-family="Arial" font-size="17" font-weight="bold">plans</text>
+<rect x="2301" y="134" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="152" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="152" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="152" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="178" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="178" font-family="Arial" font-size="14" fill="#263746">name</text>
+<text x="2661" y="178" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2301" y="186" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="204" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="204" font-family="Arial" font-size="14" fill="#263746">plan_type</text>
+<text x="2661" y="204" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2309" y="230" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="230" font-family="Arial" font-size="14" fill="#263746">monthly_price</text>
+<text x="2661" y="230" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">NUMERIC</text>
+<rect x="2301" y="238" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="256" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="256" font-family="Arial" font-size="14" fill="#263746">annual_price</text>
+<text x="2661" y="256" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">NUMERIC</text>
+<text x="2309" y="282" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="282" font-family="Arial" font-size="14" fill="#263746">currency</text>
+<text x="2661" y="282" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2301" y="290" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="308" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="308" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="2661" y="308" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<line x1="2300" y1="134" x2="2670" y2="134" stroke="#62717d"/>
+<rect x="2300" y="420" width="370" height="302" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 420 H2667 Q2670 420 2670 423 V454 H2300 V423 Q2300 420 2303 420" fill="#2e6892"/>
+<text x="2312" y="443" fill="white" font-family="Arial" font-size="17" font-weight="bold">purchase_orders</text>
+<rect x="2301" y="454" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="472" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="472" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="472" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="498" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="498" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2661" y="498" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="506" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="524" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="524" font-family="Arial" font-size="14" fill="#263746">plan_id</text>
+<text x="2661" y="524" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="550" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="550" font-family="Arial" font-size="14" fill="#263746">purchased_by</text>
+<text x="2661" y="550" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="558" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="576" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="576" font-family="Arial" font-size="14" fill="#263746">gateway_order_ref</text>
+<text x="2661" y="576" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2309" y="602" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="602" font-family="Arial" font-size="14" fill="#263746">term_months</text>
+<text x="2661" y="602" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">INTEGER</text>
+<rect x="2301" y="610" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="628" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="628" font-family="Arial" font-size="14" fill="#263746">quoted_amount</text>
+<text x="2661" y="628" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">NUMERIC</text>
+<text x="2309" y="654" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="654" font-family="Arial" font-size="14" fill="#263746">currency</text>
+<text x="2661" y="654" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2301" y="662" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="680" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="680" font-family="Arial" font-size="14" fill="#263746">status</text>
+<text x="2661" y="680" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2309" y="706" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="706" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="2661" y="706" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="2300" y1="454" x2="2670" y2="454" stroke="#62717d"/>
+<rect x="2300" y="820" width="370" height="276" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 820 H2667 Q2670 820 2670 823 V854 H2300 V823 Q2300 820 2303 820" fill="#2e6892"/>
+<text x="2312" y="843" fill="white" font-family="Arial" font-size="17" font-weight="bold">payment_events</text>
+<rect x="2301" y="854" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="872" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="872" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="872" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="898" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="898" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2661" y="898" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="906" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="924" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="924" font-family="Arial" font-size="14" fill="#263746">purchase_order_id</text>
+<text x="2661" y="924" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="950" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="950" font-family="Arial" font-size="14" fill="#263746">provider_reference</text>
+<text x="2661" y="950" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT ?</text>
+<rect x="2301" y="958" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="976" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="976" font-family="Arial" font-size="14" fill="#263746">idempotency_key</text>
+<text x="2661" y="976" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2309" y="1002" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1002" font-family="Arial" font-size="14" fill="#263746">verification_result</text>
+<text x="2661" y="1002" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2301" y="1010" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1028" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1028" font-family="Arial" font-size="14" fill="#263746">reported_amount</text>
+<text x="2661" y="1028" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">NUMERIC</text>
+<text x="2309" y="1054" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1054" font-family="Arial" font-size="14" fill="#263746">currency</text>
+<text x="2661" y="1054" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="2301" y="1062" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1080" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1080" font-family="Arial" font-size="14" fill="#263746">received_at</text>
+<text x="2661" y="1080" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="2300" y1="854" x2="2670" y2="854" stroke="#62717d"/>
+<rect x="2300" y="1200" width="370" height="250" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M2303 1200 H2667 Q2670 1200 2670 1203 V1234 H2300 V1203 Q2300 1200 2303 1200" fill="#2e6892"/>
+<text x="2312" y="1223" fill="white" font-family="Arial" font-size="17" font-weight="bold">subscription_periods</text>
+<rect x="2301" y="1234" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1252" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="2335" y="1252" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="2661" y="1252" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="1278" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1278" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="2661" y="1278" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<rect x="2301" y="1286" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1304" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1304" font-family="Arial" font-size="14" fill="#263746">plan_id</text>
+<text x="2661" y="1304" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="2309" y="1330" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1330" font-family="Arial" font-size="14" fill="#263746">purchase_order_id</text>
+<text x="2661" y="1330" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<rect x="2301" y="1338" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1356" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1356" font-family="Arial" font-size="14" fill="#263746">grant_source</text>
+<text x="2661" y="1356" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="2309" y="1382" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="2335" y="1382" font-family="Arial" font-size="14" fill="#263746">granted_by</text>
+<text x="2661" y="1382" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<rect x="2301" y="1390" width="368" height="26" fill="#f5f7f9"/>
+<text x="2309" y="1408" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1408" font-family="Arial" font-size="14" fill="#263746">starts_at</text>
+<text x="2661" y="1408" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<text x="2309" y="1434" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="2335" y="1434" font-family="Arial" font-size="14" fill="#263746">ends_at</text>
+<text x="2661" y="1434" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<line x1="2300" y1="1234" x2="2670" y2="1234" stroke="#62717d"/>
+<rect x="100" y="1220" width="370" height="276" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M103 1220 H467 Q470 1220 470 1223 V1254 H100 V1223 Q100 1220 103 1220" fill="#2e6892"/>
+<text x="112" y="1243" fill="white" font-family="Arial" font-size="17" font-weight="bold">notifications</text>
+<rect x="101" y="1254" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1272" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="135" y="1272" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="461" y="1272" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="1298" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="1298" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="461" y="1298" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<rect x="101" y="1306" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1324" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="1324" font-family="Arial" font-size="14" fill="#263746">recipient_id</text>
+<text x="461" y="1324" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="1350" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1350" font-family="Arial" font-size="14" fill="#263746">channel</text>
+<text x="461" y="1350" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="1358" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1376" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1376" font-family="Arial" font-size="14" fill="#263746">message_type</text>
+<text x="461" y="1376" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="109" y="1402" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1402" font-family="Arial" font-size="14" fill="#263746">safe_context</text>
+<text x="461" y="1402" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<rect x="101" y="1410" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1428" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1428" font-family="Arial" font-size="14" fill="#263746">read_at</text>
+<text x="461" y="1428" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ ?</text>
+<text x="109" y="1454" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1454" font-family="Arial" font-size="14" fill="#263746">delivery_status</text>
+<text x="461" y="1454" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="1462" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1480" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1480" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="461" y="1480" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="100" y1="1254" x2="470" y2="1254" stroke="#62717d"/>
+<rect x="100" y="1600" width="370" height="250" rx="3" fill="white" stroke="#62717d" stroke-width="1.3"/>
+<path d="M103 1600 H467 Q470 1600 470 1603 V1634 H100 V1603 Q100 1600 103 1600" fill="#2e6892"/>
+<text x="112" y="1623" fill="white" font-family="Arial" font-size="17" font-weight="bold">audit_events</text>
+<rect x="101" y="1634" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1652" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">PK</text>
+<text x="135" y="1652" font-family="Arial" font-size="14" fill="#263746">id</text>
+<text x="461" y="1652" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID</text>
+<text x="109" y="1678" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="1678" font-family="Arial" font-size="14" fill="#263746">workspace_id</text>
+<text x="461" y="1678" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<rect x="101" y="1686" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1704" font-family="Arial" font-size="10" font-weight="bold" fill="#507491">FK</text>
+<text x="135" y="1704" font-family="Arial" font-size="14" fill="#263746">actor_id</text>
+<text x="461" y="1704" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">UUID ?</text>
+<text x="109" y="1730" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1730" font-family="Arial" font-size="14" fill="#263746">action</text>
+<text x="461" y="1730" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="1738" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1756" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1756" font-family="Arial" font-size="14" fill="#263746">object_type</text>
+<text x="461" y="1756" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<text x="109" y="1782" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1782" font-family="Arial" font-size="14" fill="#263746">object_ref</text>
+<text x="461" y="1782" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TEXT</text>
+<rect x="101" y="1790" width="368" height="26" fill="#f5f7f9"/>
+<text x="109" y="1808" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1808" font-family="Arial" font-size="14" fill="#263746">safe_metadata</text>
+<text x="461" y="1808" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">JSONB</text>
+<text x="109" y="1834" font-family="Arial" font-size="10" font-weight="bold" fill="#507491"></text>
+<text x="135" y="1834" font-family="Arial" font-size="14" fill="#263746">created_at</text>
+<text x="461" y="1834" text-anchor="end" font-family="Arial" font-size="12" fill="#637382">TIMESTAMPTZ</text>
+<line x1="100" y1="1634" x2="470" y2="1634" stroke="#62717d"/>
+<path d="M470 414.0 L482 419.0 L470 424.0 M470 419.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="419.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 168.0 V178.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="173.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M479 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M489 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 440.0 L482 445.0 L470 450.0 M470 445.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="445.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 168.0 L1188 173.0 L1200 178.0 M1200 173.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="173.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 194.0 L1738 199.0 L1750 204.0 M1750 199.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="199.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 566.0 L1738 571.0 L1750 576.0 M1750 571.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="571.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1741 782.0 V792.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="787.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1494.0 L2838 1499.0 L2850 1504.0 M2850 1499.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1499.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2679 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2689 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M650 438.0 L638 443.0 L650 448.0 M650 443.0 H638" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="443.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="147.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 246.0 L1188 251.0 L1200 256.0 M1200 251.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="251.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1570 1064.0 L1582 1069.0 L1570 1074.0 M1570 1069.0 H1582" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1590" cy="1069.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 762.0 V772.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 762.0 V772.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1570 494.0 L1582 499.0 L1570 504.0 M1570 499.0 H1582" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1590" cy="499.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 1944.0 L2288 1949.0 L2300 1954.0 M2300 1949.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1949.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2291 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2281 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 388.0 L482 393.0 L470 398.0 M470 393.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="393.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1684.0 L1188 1689.0 L1200 1694.0 M1200 1689.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1689.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1191 1312.0 V1322.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1181 1312.0 V1322.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2120 514.0 L2132 519.0 L2120 524.0 M2120 519.0 H2132" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2140" cy="519.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2129 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2139 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1844.0 L2838 1849.0 L2850 1854.0 M2850 1849.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1849.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2679 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2689 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 514.0 L2288 519.0 L2300 524.0 M2300 519.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="519.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2291 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2281 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2291 1970.0 V1980.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1975.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2129 2232.0 V2242.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2139 2232.0 V2242.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 714.0 L482 719.0 L470 724.0 M470 719.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="719.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M650 836.0 L638 841.0 L650 846.0 M650 841.0 H638" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="841.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 468.0 L1188 473.0 L1200 478.0 M1200 473.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="473.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1234.0 L1738 1239.0 L1750 1244.0 M1750 1239.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1239.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1741 782.0 V792.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="787.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 2014.0 L1738 2019.0 L1750 2024.0 M1750 2019.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="2019.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1741 1562.0 V1572.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1731 1562.0 V1572.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2670 914.0 L2682 919.0 L2670 924.0 M2670 919.0 H2682" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2690" cy="919.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2679 462.0 V472.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2689 462.0 V472.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1020 914.0 L1032 919.0 L1020 924.0 M1020 919.0 H1032" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1040" cy="919.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1040" cy="417.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2120 1666.0 L2132 1671.0 L2120 1676.0 M2120 1671.0 H2132" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2140" cy="1671.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2291 1242.0 V1252.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1247.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1020 758.0 L1032 763.0 L1020 768.0 M1020 763.0 H1032" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1040" cy="763.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1090.0 L1188 1095.0 L1200 1100.0 M1200 1095.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1095.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1191 442.0 V452.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1181 442.0 V452.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2670 2244.0 L2682 2249.0 L2670 2254.0 M2670 2249.0 H2682" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2690" cy="2249.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2679 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2689 1592.0 V1602.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 688.0 L482 693.0 L470 698.0 M470 693.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="693.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1570 814.0 L1582 819.0 L1570 824.0 M1570 819.0 H1582" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1590" cy="819.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 168.0 L1738 173.0 L1750 178.0 M1750 173.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="173.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 1014.0 L482 1019.0 L470 1024.0 M470 1019.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="1019.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 2310.0 L1738 2315.0 L1750 2320.0 M1750 2315.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="2315.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1741 1562.0 V1572.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1731 1562.0 V1572.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 788.0 L1188 793.0 L1200 798.0 M1200 793.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="793.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1520.0 L2838 1525.0 L2850 1530.0 M2850 1525.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1525.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2679 2192.0 V2202.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2689 2192.0 V2202.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 860.0 L1738 865.0 L1750 870.0 M1750 865.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="865.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1614.0 L1738 1619.0 L1750 1624.0 M1750 1619.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1619.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1741 782.0 V792.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1731 782.0 V792.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 2040.0 L1738 2045.0 L1750 2050.0 M1750 2045.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="2045.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 1312.0 V1322.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 1312.0 V1322.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2291 1320.0 V1330.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1325.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2291 462.0 V472.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="467.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 220.0 L1738 225.0 L1750 230.0 M1750 225.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="225.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1286.0 L1738 1291.0 L1750 1296.0 M1750 1291.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1291.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 1082.0 V1092.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1040" cy="1087.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 988.0 L482 993.0 L470 998.0 M470 993.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="993.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M650 1108.0 L638 1113.0 L650 1118.0 M650 1113.0 H638" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="1113.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1038.0 L1188 1043.0 L1200 1048.0 M1200 1043.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1043.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 488.0 L1738 493.0 L1750 498.0 M1750 493.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="493.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 1314.0 L482 1319.0 L470 1324.0 M470 1319.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="1319.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M631 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2670 1294.0 L2682 1299.0 L2670 1304.0 M2670 1299.0 H2682" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2690" cy="1299.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2679 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2689 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1260.0 L1738 1265.0 L1750 1270.0 M1750 1265.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1265.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 732.0 V742.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1040" cy="737.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1364.0 L1188 1369.0 L1200 1374.0 M1200 1369.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1369.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1191 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1181 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 1288.0 L482 1293.0 L470 1298.0 M470 1293.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="1293.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="147.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1570 1710.0 L1582 1715.0 L1570 1720.0 M1570 1715.0 H1582" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1590" cy="1715.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 442.0 V452.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 442.0 V452.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1338.0 L1188 1343.0 L1200 1348.0 M1200 1343.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1343.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 808.0 L1738 813.0 L1750 818.0 M1750 813.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="813.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 540.0 L2288 545.0 L2300 550.0 M2300 545.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="545.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 1694.0 L482 1699.0 L470 1704.0 M470 1699.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="1699.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="417.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2120 2284.0 L2132 2289.0 L2120 2294.0 M2120 2289.0 H2132" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2140" cy="2289.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2129 782.0 V792.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M2139 782.0 V792.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 488.0 L2288 493.0 L2300 498.0 M2300 493.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="493.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1640.0 L1738 1645.0 L1750 1650.0 M1750 1645.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1645.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1658.0 L1188 1663.0 L1200 1668.0 M1200 1663.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1663.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M470 1668.0 L482 1673.0 L470 1678.0 M470 1673.0 H482" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="490" cy="1673.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M641 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="630" cy="147.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1208.0 L1738 1213.0 L1750 1218.0 M1750 1213.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1213.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 2030.0 L1188 2035.0 L1200 2040.0 M1200 2035.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="2035.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1570 2004.0 L1582 2009.0 L1570 2014.0 M1570 2009.0 H1582" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1590" cy="2009.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1579 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1589 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1200 1978.0 L1188 1983.0 L1200 1988.0 M1200 1983.0 H1188" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1180" cy="1983.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 888.0 L2288 893.0 L2300 898.0 M2300 893.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="893.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1588.0 L1738 1593.0 L1750 1598.0 M1750 1593.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1593.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 1372.0 L2288 1377.0 L2300 1382.0 M2300 1377.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1377.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1040" cy="417.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 1268.0 L2288 1273.0 L2300 1278.0 M2300 1273.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1273.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 1644.0 L2288 1649.0 L2300 1654.0 M2300 1649.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1649.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 1988.0 L1738 1993.0 L1750 1998.0 M1750 1993.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="1993.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 1618.0 L2288 1623.0 L2300 1628.0 M2300 1623.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1623.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1750 2258.0 L1738 2263.0 L1750 2268.0 M1750 2263.0 H1738" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="1730" cy="2263.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1546.0 L2838 1551.0 L2850 1556.0 M2850 1551.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1551.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 1918.0 L2288 1923.0 L2300 1928.0 M2300 1923.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="1923.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 2270.0 L2288 2275.0 L2300 2280.0 M2300 2275.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="2275.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1468.0 L2838 1473.0 L2850 1478.0 M2850 1473.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1473.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 2296.0 L2288 2301.0 L2300 2306.0 M2300 2301.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="2301.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1870.0 L2838 1875.0 L2850 1880.0 M2850 1875.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1875.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 412.0 V422.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 412.0 V422.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2300 2218.0 L2288 2223.0 L2300 2228.0 M2300 2223.0 H2288" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2280" cy="2223.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M2850 1818.0 L2838 1823.0 L2850 1828.0 M2850 1823.0 H2838" fill="none" stroke="#596c7b" stroke-width="1.3"/>
+<circle cx="2830" cy="1823.0" r="3.2" fill="white" stroke="#596c7b" stroke-width="1.2"/>
+<path d="M1029 142.0 V152.0" stroke="#596c7b" stroke-width="1.3"/>
+<path d="M1039 142.0 V152.0" stroke="#596c7b" stroke-width="1.2"/>
+</svg>

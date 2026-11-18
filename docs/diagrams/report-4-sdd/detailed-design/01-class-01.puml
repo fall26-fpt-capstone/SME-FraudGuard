@@ -1,0 +1,142 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class Account <<entity>> {
+- id: UUID
+- workspaceId: UUID [0..1]
+- loginName: String
+- passwordHash: String
+- role: Role
+- mustChangePassword: Boolean
+--
++ changeCredential(passwordHash: String): boolean
++ verifyCredential(password: String): boolean
+}
+class Session <<entity>> {
+- accountId: UUID
+- workspaceId: UUID [0..1]
+- setupOnly: Boolean
+- ended: Boolean
+--
++ end(): boolean
+}
+interface AccountRepository <<repository>> {
+
++ endSession(req: LogoutRequest, ctx: AccessContext): MutationResult
++ findByLoginAndScope(req: LoginRequest, ctx: AccessContext): Optional<Account>
++ findCurrentAccount(ctx: AccessContext): Account
++ saveInitialCredential(req: PasswordChangeRequest, ctx: AccessContext): MutationResult
++ updateCredentialIfCurrent(req: PasswordChangeRequest, ctx: AccessContext): MutationResult
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class AuthController <<controller>> {
+- service: IAuthenticationService
+--
++ changePassword(request: PasswordChangeRequest): AccountResponse
++ completeInitialPassword(request: PasswordChangeRequest): AccountResponse
++ login(request: LoginRequest): LoginResponse
++ logout(request: LogoutRequest): LogoutResponse
+- resolveExecutionContext(): AccessContext
+}
+class AuthenticationService <<service>> {
+
++ changePassword(request: PasswordChangeRequest, context: AccessContext): AccountResponse
++ completeInitialPassword(request: PasswordChangeRequest, context: AccessContext): AccountResponse
++ login(request: LoginRequest, context: AccessContext): LoginResponse
++ logout(request: LogoutRequest, context: AccessContext): LogoutResponse
+- requireSetupSession(ctx: AccessContext): void
+- validateNewPassword(req: PasswordChangeRequest): void
+- verifyCurrentIdentity(req: PasswordChangeRequest, account: Account): boolean
+- verifyPassword(req: LoginRequest, account: Account): boolean
+}
+interface IAuthenticationService <<service>> {
+
++ changePassword(request: PasswordChangeRequest, context: AccessContext): AccountResponse
++ completeInitialPassword(request: PasswordChangeRequest, context: AccessContext): AccountResponse
++ login(request: LoginRequest, context: AccessContext): LoginResponse
++ logout(request: LogoutRequest, context: AccessContext): LogoutResponse
+}
+class LoginRequest <<DTO>> {
+- loginName: String
+- password: String
+- portal: PortalType
+}
+class LoginResponse <<DTO>> {
+- sessionRef: UUID
+- destination: LoginDestination
+- setupOnly: boolean
+}
+class PasswordChangeRequest <<DTO>> {
+- newPassword: String
+- confirmation: String
+- verification: String
+}
+class AccountResponse <<DTO>> {
+- accountId: UUID
+- credentialChanged: boolean
+}
+class LogoutRequest <<DTO>> {
+- sessionRef: UUID
+}
+class LogoutResponse <<DTO>> {
+- terminationConfirmed: boolean
+}
+enum Role {
+
+IMPLEMENTATION_STAFF
+INVESTIGATOR
+OPERATOR
+PLATFORM_ADMIN
+SME_ADMIN
+}
+IAuthenticationService -[hidden]down-> AuthenticationService
+Account -[hidden]down-> Session
+Session -[hidden]down-> Role
+AuthController -[hidden]right-> IAuthenticationService
+IAuthenticationService -[hidden]right-> AccountRepository
+AccountRepository -[hidden]right-> Account
+AuthController -[hidden]down-> LoginRequest
+LoginRequest -[hidden]right-> LoginResponse
+LoginResponse -[hidden]right-> PasswordChangeRequest
+LoginRequest -[hidden]down-> AccountResponse
+AccountResponse -[hidden]right-> LogoutRequest
+LogoutRequest -[hidden]right-> LogoutResponse
+AccountResponse -[hidden]down-> AccessContext
+Account "1" -[norank]- "0..*" Session
+Account -[norank]-> Role
+AccountRepository -[norank]-> Account
+AuthController -[norank]-> IAuthenticationService
+AuthController -[dashed,norank]-> AccountResponse
+AuthController -[dashed,norank]-> LoginRequest
+AuthController -[dashed,norank]-> LoginResponse
+AuthController -[dashed,norank]-> LogoutRequest
+AuthController -[dashed,norank]-> LogoutResponse
+AuthController -[dashed,norank]-> PasswordChangeRequest
+AuthenticationService -[norank]-> AccountRepository
+AuthenticationService -[dashed,norank]-> AccessContext
+AuthenticationService -[dashed,norank]-|> IAuthenticationService
+@enduml

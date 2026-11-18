@@ -1,104 +1,108 @@
-# FraudGuard-as-a-Service
+# SME-FraudGuard backend foundation
 
-Hệ thống phát hiện gian lận giao dịch cho SME, dạng SaaS multi-tenant (single-schema: mọi bảng nghiệp vụ có `tenant_id`).
+This is the agreed package scaffold for one Spring Boot monolith. It prepares the codebase for implementing the current SRS; it does not implement the 65 functional requirements. Legacy demo endpoints, fake authentication, numeric AI scores and case logic have been removed. There are no business controllers, service implementations, entity mappings, repositories or external clients yet.
 
-**Stack:** Java 21 · Spring Boot 3.3 · Maven (wrapper) · PostgreSQL 16 · Flyway · JUnit 5 · ArchUnit · Testcontainers
+Java 21, Spring Boot 3.3.5, Maven Wrapper, Spring Data JPA, PostgreSQL, Flyway, JUnit 5, ArchUnit and Testcontainers are retained. No runtime dependency or framework version is added or upgraded.
 
-> Đây là **khung sườn** (skeleton): cấu trúc package, hợp đồng giữa các module và luật kiến trúc đã có;
-> logic nghiệp vụ thật (parse CSV, rule evaluation, severity, state machine của case, AI scoring...) để trống kèm `TODO`.
+## Specification and responsibility
 
-## Vì sao modular monolith
+Use [Report 3 functional requirements](../docs/02_Reports/Report3_SRS/sections/functional-requirements.md) and [Report 4 detailed design](../docs/02_Reports/Report4_SDD/sections/detailed-design.md). Report 4 signatures express proposed responsibilities, not approved Java/HTTP contracts. Its provisional ERD is not a final database schema.
 
-- Nhóm nhỏ, 2 backend dev: một process, một DB, một lần deploy — không tốn công vận hành microservices.
-- Vẫn chia ranh giới rõ theo tính năng (package-by-feature) để hai dev code song song mà không giẫm chân nhau.
-- Ranh giới được **máy kiểm tra** (ArchUnit) chứ không dựa vào kỷ luật cá nhân. Sau này nếu cần tách service,
-  `api` của mỗi module chính là điểm cắt tự nhiên.
+One backend maintainer owns the application. The team reviews shared contracts/schema changes before implementation. The former Dev A/Dev B ownership split is retired.
 
-## Sơ đồ package
+| Module | SRS | Responsibility |
+| --- | --- | --- |
+| `auth` | 3.2 | Credentials, login, initial/current password changes and server sessions. |
+| `workspace` | 3.3, 3.5 | Enterprise/workspace metadata, concurrent Staff assignments, onboarding, readiness, handover and activation. |
+| `member` | 3.6 | Enterprise members, roles and sensitive-field grants; uses auth services for credential provisioning. |
+| `subscription` | 3.4 | Offers, initial allocation, purchases, verified payment effects and current/historical validity. |
+| `configuration` | 3.7 | Fields, mappings, flat rules, draft revisions, temporary sample testing and explicit application. |
+| `ingestion` | 3.8, 3.11.1-2, 3.11.6 | API keys, REST/Webhook/file acceptance, normalization, identity, transaction/import review and controlled field disclosure. |
+| `detection` | 3.9-10, 3.11.3-5 | Rules/AI processing, fallback/recovery, alerts, flags and attempt history. |
+| `investigation` | 3.12 | Cases, assignment, findings, report versions, final conclusions and assigned-case access decisions. |
+| `reporting` | 3.13 | Authorized dashboard summaries, report views, generation and safe export. |
+| `notification` | 3.14 | Scoped in-app notifications and independent email delivery orchestration. |
+| `audit` | 3.15.2 | Safe attribution and authorized object history; required local audit writes share the business transaction. |
+| `common` | Cross-cutting; 3.15.1 | Minimal config, security/error/persistence infrastructure and safe operational monitoring. |
+| `integration` | External interfaces | AI, VNPay, email and protected file storage adapters. |
 
+Configuration owns definitions; detection owns production execution and results. Sample testing must reuse production rule semantics without production records. Choose its evaluator contract during feature implementation and avoid circular service calls. Transaction views stay in ingestion, alert views in detection and case views in investigation; reporting consumes authorized summaries.
+
+## Folder layout
+
+Each business module has the following folders under `src/main/java/com/fraudguard`. `.gitkeep` preserves empty folders in Git; `package-info.java` documents responsibilities. Add real classes with a feature, then remove its unnecessary placeholder.
+
+```text
+investigation/
+|-- package-info.java
+|-- controller/
+|-- service/                 # CaseService interface goes here
+|   `-- impl/                # CaseServiceImpl goes here
+|-- repository/
+|-- entity/
+|-- dto/
+|   |-- request/
+|   `-- response/
+`-- mapper/
 ```
-com.fraudguard
-├── ingestion/                       Dev A
-│   ├── api/        TransactionIngestedEvent, IngestionResult, IngestionChannel
-│   └── internal/
-│       ├── transaction/  Transaction entity, repository, service lưu + publish event, TransactionPayload (mapping dùng chung)
-│       ├── csv/          upload CSV/Excel
-│       ├── restapi/      REST + xác thực X-API-Key
-│       └── webhook/      webhook (X-Signature), dùng chung TransactionPayload với restapi
-├── ruleengine/                      Dev B
-│   ├── api/        CaseQueryPort, CaseSummary, CaseStatus, Severity
-│   └── internal/
-│       ├── TransactionIngestedListener   lắng nghe event từ ingestion
-│       ├── rule/        Rule, RuleVersion, evaluation + dry-run (stub)
-│       ├── scoring/     gọi AI qua aiclient
-│       └── casemgmt/    FraudCase (bảng `cases`), repository, CaseQueryPort impl
-├── dashboard/                       Dev A
-│   ├── api/
-│   └── internal/reporting/   case queue, thống kê, export (gọi ruleengine qua CaseQueryPort)
-├── aiclient/       contract tới AI service (FraudScoringClient + DTO) + stub trả điểm giả
-└── common/         TenantContext, exception gốc, BaseTenantEntity (id, tenant_id, audit)
-```
 
-```
- client ──► ingestion ──(TransactionIngestedEvent)──► ruleengine ──► aiclient ──► AI service
-                                                          ▲
-                                       dashboard ─(CaseQueryPort)
-```
+The two service names above are examples, not existing classes. Common infrastructure has `config`, `exception`, `security` and `persistence` packages; integration has `ai`, `payment`, `email` and `storage` packages. AI training remains outside the backend.
 
-## Luật `api` / `internal`
+This replaces the former `api`/`internal` convention with the agreed layered packages. Public cross-module contracts live in service interfaces and DTOs.
 
-1. Mỗi module tính năng (`ingestion`, `ruleengine`, `dashboard`) có đúng 2 sub-package: `api` và `internal`.
-2. **Không** package nào ngoài module được import `*.internal.*` của module đó — chỉ được dùng `*.api.*`.
-3. `api` không được tham chiếu bất kỳ type nào trong `internal`.
-4. Hướng phụ thuộc: `ruleengine → ingestion.api`, `dashboard → ruleengine.api`. Ingestion không biết ai nghe event của nó.
-5. `common` và `aiclient` không phụ thuộc vào module tính năng; giữa các module không có vòng phụ thuộc.
+## Layer rules
 
-Các luật này nằm trong [`ArchitectureTest`](src/test/java/com/fraudguard/ArchitectureTest.java) — **vi phạm là `./mvnw verify` fail**.
-[`ArchitectureRulesSelfTest`](src/test/java/com/fraudguard/ArchitectureRulesSelfTest.java) chứng minh các luật bắt được lỗi thật
-(dùng class vi phạm cố ý trong `src/test/java/com/archfixture`). Javadoc của `ArchitectureTest` có ví dụ tự tay gây lỗi để xem build fail.
+| Layer | Responsibility |
+| --- | --- |
+| `controller` | HTTP mapping, request validation and status codes. Calls service interfaces; never repositories, entities or service implementations. |
+| `service` | Public interfaces using explicit DTOs/safe identifiers; never JPA entities or repositories. |
+| `service/impl` | Business orchestration, current role/workspace/object checks and transaction boundaries. |
+| `repository` | Workspace/object-scoped Spring Data JPA queries, private to the owning module. |
+| `entity` | Persistence model and local invariants, private to the owning module; never serialized directly to HTTP. |
+| `dto/request` | Validated request/command data. Caller-provided roles/workspace IDs are not authorization. |
+| `dto/response` | Explicit permitted response/query data, protecting sensitive fields. |
+| `mapper` | Entity/DTO conversion without database queries, authorization or business decisions. |
 
-### Event ingestion → ruleengine
+Follow `Controller -> Service interface -> ServiceImpl -> Repository -> database`. Use constructor injection and service transaction boundaries. Give service/integration boundaries interfaces; concrete mappers/helpers do not need interfaces by default. Do not create a generic CRUD base layer.
 
-`ingestion` lưu transaction rồi `ApplicationEventPublisher.publishEvent(new TransactionIngestedEvent(...))`.
-`ruleengine` nghe bằng `@TransactionalEventListener(AFTER_COMMIT, fallbackExecution = true)` — chỉ chạy sau khi transaction của
-ingestion đã commit. Lỗi bên ruleengine được log chứ không làm hỏng request ingest (TODO: outbox/retry).
+Other modules cannot import controllers, entities, repositories, mappers or service implementations. Common cannot depend on business modules or integration; adapters cannot depend on business modules. Avoid module cycles. Add public queries, DTOs or events only for concrete use cases. Keep business types out of common.
 
-## Chạy local
+## Constraints for implementation
 
-Yêu cầu: JDK 21, Docker. Không cần cài Maven (dùng `mvnw`).
+- Design real authentication before exposing business endpoints. The previous trusted-header filter and demo keys are removed. Mandatory password setup and server-side logout remain required.
+- Check role, workspace, Staff assignment, case assignment and field permission separately. SME Admin manages grants without gaining plaintext access.
+- Readiness, approval and enterprise activation are separate gates. Initial Subscription starts once at activation.
+- Subscription uses calendar month/year terms in `Asia/Ho_Chi_Minh`, UTC instants and `[start, expiry)`. Current entitlement differs from historical recovery eligibility.
+- Draft edits/tests do not activate configuration. Apply requires the exact tested revision and explicit Staff assessment. Accepted work retains its chosen context.
+- All ingestion channels share normalization and atomic transaction identity. Acceptance differs from completed detection; delivery IDs differ from business transaction IDs.
+- Free uses rules. Subscription uses AI first, then rules on AI failure. AI returns Normal/Anomaly plus model/service version, without numeric score/severity.
+- Integration owns external transport; the calling module owns business decisions. AI/VNPay/email/storage contracts, timeouts and adapters are not implemented.
+- Aggregate matched rules into one Rule Alert per attempt. Recovery preserves history and reuses the transaction's single AI Alert. Never open cases automatically.
+- Case lifecycle is Open, Investigating, Pending Review, Closed. Assignment and the four conclusions are separate. Existing authorized case work survives expiry; reopening is not implied.
+- Notification retries do not repeat business effects. Logs/audit/exports/notifications exclude secrets, unauthorized plaintext and temporary samples.
 
-```bash
+These are constraints, not working features. HTTP routes, session mechanics, external wire formats and target schema migrations will be designed with each feature.
+
+## Database history
+
+`src/main/resources/db/migration/V1__init.sql` is retained byte-for-byte. Its legacy tables, score fields and states are not the target model; the scaffold has no entities mapped to them. A fresh database still applies V1 at startup. Add reviewed migrations for later schema changes; never rewrite V1, drop tables or reset shared data. This scaffold change performs no database migration or cleanup.
+
+## Build and run
+
+From `backend/` on Windows:
+
+```powershell
+.\mvnw.cmd clean verify
 docker compose up -d
-./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-Flyway tự migrate khi app khởi động (profile mặc định là `local`). Muốn migrate tay: `./mvnw flyway:migrate`.
+On Unix use `./mvnw`. The local profile uses PostgreSQL at `localhost:5432/fraudguard`; `DB_URL`, `DB_USER` and `DB_PASSWORD` override local defaults. Compose credentials are local-development defaults. Check the target before running Compose/Flyway against an existing environment.
 
-Thử luồng end-to-end (log sẽ in `stored + published` rồi `consumed TransactionIngestedEvent`):
+There are no business endpoints. Old `/api/v1/ingest/*` and `/api/v1/dashboard/cases` routes are removed. The frontend currently uses demo state; agree and connect new API contracts during implementation.
 
-```bash
-curl -X POST http://localhost:8080/api/v1/ingest/transactions \
-  -H "Content-Type: application/json" -H "X-API-Key: demo-key-tenant-a" \
-  -d '{"transactionId":"t-1","semanticFields":{"actor_id":"u1","numeric_value":120.5}}'
+- `ArchitectureTest` checks module privacy, service interfaces, layers, infrastructure independence and cycles. Empty selections are allowed while layers contain no business classes.
+- `ArchitectureRulesSelfTest` proves that illegal entity/repository access and entity-leaking service contracts are rejected; service-interface consumers are allowed.
+- `FraudGuardApplicationIT` starts with PostgreSQL and checks that old routes are absent. Testcontainers skips it without Docker. This is not a business acceptance test.
 
-curl http://localhost:8080/api/v1/dashboard/cases -H "X-Tenant-Id: tenant-a"
-```
-
-Các endpoint khác: `POST /api/v1/ingest/csv` (multipart `file`, header `X-Tenant-Id`),
-`POST /api/v1/ingest/webhook` (header `X-Tenant-Id`, `X-Signature`). Xác thực hiện chỉ là stub dev
-(`X-Tenant-Id`, API key trong `application-local.yml`) — thay bằng auth thật sau.
-
-## Build & test
-
-```bash
-./mvnw clean verify
-```
-
-- `*Test` (surefire): ArchUnit + unit test, không cần Docker.
-- `*IT` (failsafe): chạy app với PostgreSQL thật qua Testcontainers; tự bỏ qua nếu máy không có Docker.
-
-## Ghi chú thiết kế
-
-- Entity `Case` tên là `FraudCase` (bảng `cases`) vì `CASE` là từ khóa của JPQL/HQL.
-- `cases.transaction_id` là id nghiệp vụ, **không** có foreign key sang `transactions` — các module không chia sẻ ràng buộc DB.
-- Cô lập tenant hiện mới ở mức cột `tenant_id` + `TenantContext`. TODO: ép lọc theo tenant ở tầng repository (Hibernate filter).
+Implement one feature at a time with its DTOs, authorization, service interface/implementation, repository, entity/migration where needed and meaningful tests. Update this README as routes become real. Runtime dependency arrows should reflect real service/event relationships after those are implemented.

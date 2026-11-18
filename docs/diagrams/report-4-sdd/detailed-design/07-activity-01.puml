@@ -1,0 +1,57 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Trigger: issue, replace or disable API key;
+:Check current role, workspace and Staff assignment;
+if (Issuance or replacement\nrequested?) then (yes)
+  if (Platform Admin or assigned\nStaff?) then (yes)
+    :Generate secret and protected verifier;
+    :Save verifier and safe issuance history;
+    if (Credential committed?) then (yes)
+      :Disclose new full secret once for secure delivery;
+      :Allow controlled old/new overlap until separate revocation;
+    else (no)
+      :Do not show unpersisted secret as usable;
+    endif
+  else (no)
+    :Deny issuance;
+  endif
+else (disable)
+  if (Authorized actor for this\ncredential?) then (yes)
+    :Commit disabled state and history idempotently;
+    :Reject later authentication with disabled key;
+    :Preserve accepted transactions;
+  else (no)
+    :Deny revocation;
+  endif
+endif
+stop
+@enduml

@@ -1,0 +1,70 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:SME Admin or Operator submits production CSV/Excel;
+:Check workspace activation, role and technical limits;
+:Validate readability and required columns;
+if (File structure valid?) then (yes)
+  :Create import operation reference;
+  repeat
+    :Read and map next row using File mapping;
+    if (Typed required values valid?) then (yes)
+      :Resolve workspace business identity atomically;
+      if (Identity already accepted?) then (yes)
+        if (Normalized content\nequivalent?) then (yes)
+          :Record Duplicate and existing reference;
+        else (no)
+          :Record Conflict; preserve original;
+        endif
+      else (no)
+        :Commit new protected transaction and selected context;
+        if (Durable acceptance\ncommitted?) then (yes)
+          :Record New and request detection;
+        else (no)
+          :Expose completed versus pending work and safe retry;
+          stop
+        endif
+      endif
+    else (no)
+      :Record Invalid with safe row/field error;
+    endif
+    :Update one exclusive row outcome and pending count;
+  repeat while (More rows and processing\navailable?) is (yes) not (no)
+  if (Unfinished rows remain?) then (yes)
+    :Expose partial progress and safe retry reference;
+  else (no)
+    :Reconcile totals and mark import completed;
+  endif
+else (no)
+  :Reject file with zero production rows;
+endif
+stop
+@enduml

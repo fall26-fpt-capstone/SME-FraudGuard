@@ -1,0 +1,69 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "VNPay" as User
+participant "PaymentCallbackController" as C
+participant "SubscriptionService" as S
+participant "PaymentGatewayPort" as P
+participant "PurchaseOrderRepository" as R
+participant "Database" as DB
+User -> C ++: verifyAndApplyPayment(request)
+C -> C: resolveExecutionContext()
+C -> S ++: verifyAndApplyPayment(request, context)
+S -> P ++: verifyConfirmation(req)
+P --> S --: verifiedPayment / rejection
+S -> R ++: lockPurchaseAndEntitlement(req)
+R -> DB ++: SELECT purchase + current validity FOR UPDATE
+DB --> R --: rows / committed result
+R --> S --: purchaseContext
+
+S -> S: matchPaymentIdentityAmountCurrency(req)
+alt verifiedSuccessfulPayment
+  alt purchaseAlreadyApplied
+    S -> S: reuseAppliedEntitlement()
+  else firstPaidEffect
+    S -> S: calculateCalendarPeriod(req)
+S -> R ++: applyPaymentOnce(req)
+R -> DB ++: INSERT verified payment + period + audit\nCOMMIT once by purchase identity
+DB --> R --: rows / committed result
+R --> S --: applied / recoverableFailure
+
+  end
+else unverifiedOrMismatched
+S -> R ++: recordUnappliedPayment(req)
+R -> DB ++: INSERT safe verification outcome; no entitlement
+DB --> R --: rows / committed result
+R --> S --: unapplied
+end
+S --> C --: PaymentProcessingResult / controlled error
+C --> User --: processing result / acknowledgment
+@enduml

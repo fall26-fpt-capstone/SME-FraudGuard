@@ -1,0 +1,59 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Retain enterprise specifications and documents;
+:Assigned Staff configures and tests exact revision;
+:Explicitly apply assessed configuration;
+if (Required setup and current\nassessment complete?) then (yes)
+  :Staff explicitly confirms readiness;
+  :Platform Admin reviews current handover;
+  if (Handover approved?) then (yes)
+    :SME Admin explicitly requests activation;
+    :Recheck current readiness, approval and workspace authority;
+    if (Already activated?) then (yes)
+      :Return existing activation; do not extend term;
+    else (no)
+      :Commit activation, initial term and history once;
+      if (Commit succeeded?) then (yes)
+        :Enable permitted production operations;
+      else (no)
+        :Keep production unavailable;
+      endif
+    endif
+  else (return)
+    :Record return comments and history;
+    :Require corrected work, renewed readiness and review;
+  endif
+else (no)
+  :Show missing setup or changed configuration;
+endif
+stop
+@enduml

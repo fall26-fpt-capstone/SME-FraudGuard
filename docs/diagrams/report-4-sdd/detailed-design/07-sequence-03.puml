@@ -1,0 +1,62 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Customer Transaction System" as User
+participant "WebhookController" as C
+participant "TransactionIngestionService" as S
+participant "TransactionAcceptancePort" as A
+participant "IngestionReceiptRepository" as R
+participant "Database" as DB
+User -> C ++: receiveWebhook(request)
+C -> C: resolveExecutionContext()
+C -> S ++: receiveWebhook(request, context)
+S -> S: verifySenderSignatureAndReplay(req)
+S -> S: requireActivatedWorkspace(req)
+S -> R ++: findDeliveryState(req)
+R -> DB ++: SELECT connection-scoped delivery identity and stage
+DB --> R --: rows / committed result
+R --> S --: deliveryState
+
+alt completedDelivery
+  S -> S: reuseDeliveryResult()
+else newOrRetryableDelivery
+S -> A ++: validateAndAccept(req)
+A --> S --: accepted / duplicate / conflict / invalid
+S -> R ++: saveDeliveryStage(req)
+R -> DB ++: INSERT/UPDATE authenticated delivery receipt; COMMIT
+DB --> R --: rows / committed result
+R --> S --: guaranteedStage
+
+end
+S --> C --: WebhookReceipt / controlled error
+C --> User --: processing result / acknowledgment
+@enduml

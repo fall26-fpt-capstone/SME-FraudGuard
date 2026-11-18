@@ -1,0 +1,65 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Trigger: create / investigate / review case;
+:Verify current identity, workspace and object scope;
+switch (Action type?)
+case (create)
+  :Require Operator, current Subscription and same-workspace unlinked AI Alerts;
+  if (All opening gates satisfied?) then (yes)
+    :Commit Open case, unique AI links and history;
+  else (no)
+    :Reject without partial case or links;
+  endif
+case (investigate)
+  :Load current case and version; reject Closed changes;
+  :Operator assigns eligible user or self; first start changes Open to Investigating;
+  :Reassignment preserves Investigating/Pending Review;
+  :Operator/assigned Investigator saves protected findings in Investigating;
+  if (Report submitted?) then (yes)
+    :Recheck assignment, required content and version;
+    :Commit report and Pending Review together;
+  else (no)
+    :Retain findings and current state;
+  endif
+case (review)
+  :Require Operator, Pending Review and current report;
+  if (Additional work needed?) then (yes)
+    :Require comments; retain report; return to Investigating;
+  else (confirm)
+    :Validate supported conclusion and rationale;
+    :Commit separate conclusion, history and Closed state;
+    :No automatic training, enforcement or reopening;
+  endif
+endswitch
+:Existing authorized case work continues after Subscription expiry;
+stop
+@enduml

@@ -1,0 +1,5 @@
+{
+  "htmlLike": "<b>SYNTHETIC LABEL</b>",
+  "formulaLike": "=1+1",
+  "note": "Literal data only: display/export as text, never evaluate as HTML or spreadsheet formula."
+}

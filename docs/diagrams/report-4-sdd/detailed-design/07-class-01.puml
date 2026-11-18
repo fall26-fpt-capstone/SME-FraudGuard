@@ -1,0 +1,316 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class IntegrationCredential <<entity>> {
+- workspaceId: UUID
+- keyPrefix: String
+- keyVerifier: String
+- disabledAt: Instant [0..1]
+--
++ disable(): boolean
++ verify(secret: String): Boolean
+}
+class ChannelMapping <<entity>> {
+- configRef: UUID
+- channel: Channel
+--
++ normalize(payload: String): TypedValues
+}
+class Transaction <<entity>> {
+- workspaceId: UUID
+- externalId: String
+- eventTime: Instant
+- configRef: UUID
+- fingerprint: String
+- acceptedAt: Instant
+}
+class IngestionReceipt <<entity>> {
+- channel: Channel
+- sourceEventRef: String
+- outcome: String
+}
+class ImportBatch <<entity>> {
+- workspaceId: UUID
+- status: String
+- resultCounts: Counts
+}
+class ImportRow <<entity>> {
+- rowNumber: Integer
+- outcome: New | Duplicate | Conflict | Invalid
+- safeErrorCode: String
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class CredentialController <<controller>> {
+- service: ICredentialService
+--
++ manageCredential(request: CredentialRequest): CredentialResponse
+- resolveExecutionContext(): AccessContext
+}
+class CredentialService <<service>> {
+
++ manageCredential(request: CredentialRequest, context: AccessContext): CredentialResponse
+- authorizeKeyAdministration(ctx: AccessContext): void
+- requireAdminOrAssignedStaff(ctx: AccessContext): void
+}
+interface ICredentialService <<service>> {
+
++ manageCredential(request: CredentialRequest, context: AccessContext): CredentialResponse
+}
+class CredentialRequest <<DTO>> {
+- credentialId: UUID
+- action: CredentialAction
+- expectedVersion: long
+}
+class CredentialResponse <<DTO>> {
+- keyPrefix: String
+- status: CredentialStatus
+- oneTimeSecret: String [issuance only]
+}
+interface ApiCredentialRepository <<repository>> {
+
++ disableCredentialIfAllowed(req: CredentialRequest, ctx: AccessContext): MutationResult
++ findCredentialMetadata(req: CredentialRequest, ctx: AccessContext): List<CredentialMetadata>
++ saveNewVerifier(req: CredentialRequest, ctx: AccessContext): MutationResult
+}
+class RestIngestController <<controller>> {
+- service: ITransactionIngestionService
+--
++ submitRest(request: RestTransactionRequest): IngestionResult
+- resolveExecutionContext(): AccessContext
+}
+class TransactionIngestionService <<service>> {
+
++ acceptNormalized(request: AcceptanceRequest, context: AccessContext): IngestionResult
++ importTransactions(request: ProductionImportRequest, context: AccessContext): ImportResponse
++ receiveWebhook(request: WebhookDeliveryRequest, context: AccessContext): WebhookReceipt
++ submitRest(request: RestTransactionRequest, context: AccessContext): IngestionResult
+- requireActivatedWorkspace(req: WebhookDeliveryRequest): void
+- requireAdminOrOperator(ctx: AccessContext): void
+- validateActivationAndFileStructure(req: ProductionImportRequest): void
+- verifySenderSignatureAndReplay(req: WebhookDeliveryRequest): boolean
+}
+interface ITransactionIngestionService <<service>> {
+
++ acceptNormalized(request: AcceptanceRequest, context: AccessContext): IngestionResult
++ importTransactions(request: ProductionImportRequest, context: AccessContext): ImportResponse
++ receiveWebhook(request: WebhookDeliveryRequest, context: AccessContext): WebhookReceipt
++ submitRest(request: RestTransactionRequest, context: AccessContext): IngestionResult
+}
+class RestTransactionRequest <<DTO>> {
+- credential: SubmissionCredential
+- payload: TransactionPayload
+}
+class IngestionResult <<DTO>> {
+- transactionRef: UUID
+- outcome: IngestionOutcome
+- safeErrors: List<FieldError>
+}
+interface SubmissionAuthenticationPort <<port>> {
+
++ authenticateSubmission(req: RestTransactionRequest): SubmissionIdentity
+}
+interface TransactionAcceptancePort <<port>> {
+
++ validateAndAccept(req: ProductionImportRequest): IngestionResult
++ validateAndAccept(req: RestTransactionRequest): IngestionResult
++ validateAndAccept(req: WebhookDeliveryRequest): IngestionResult
+}
+class WebhookController <<controller>> {
+- service: ITransactionIngestionService
+--
++ receiveWebhook(request: WebhookDeliveryRequest): WebhookReceipt
+- resolveExecutionContext(): AccessContext
+}
+class WebhookDeliveryRequest <<DTO>> {
+- connectionRef: UUID
+- eventRef: String
+- authentication: DeliveryProof
+- payload: TransactionPayload
+}
+class WebhookReceipt <<DTO>> {
+- deliveryRef: String
+- guaranteedStage: ReceiptStage
+- outcome: IngestionOutcome
+}
+interface IngestionReceiptRepository <<repository>> {
+
++ findDeliveryState(req: WebhookDeliveryRequest): IngestionReceipt
++ saveDeliveryStage(req: WebhookDeliveryRequest): MutationResult
+}
+class FileImportController <<controller>> {
+- service: ITransactionIngestionService
+--
++ importTransactions(request: ProductionImportRequest): ImportResponse
+- resolveExecutionContext(): AccessContext
+}
+class ProductionImportRequest <<DTO>> {
+- workspaceId: UUID
+- file: UploadedFile
+- channel: File
+}
+class ImportResponse <<DTO>> {
+- batchRef: UUID
+- counts: ImportCounts
+- pendingRows: long
+- status: ImportStage
+}
+interface ImportBatchRepository <<repository>> {
+
++ createImportBatch(req: ProductionImportRequest, ctx: AccessContext): MutationResult
++ reconcileBatchCounts(req: ProductionImportRequest): MutationResult
++ saveExclusiveRowOutcome(req: ProductionImportRequest): MutationResult
+}
+class ValidationPipeline <<application>> {
+- service: INormalizationService
+--
++ normalizeAndValidate(request: ValidationRequest): ValidationResult
+- resolveExecutionContext(): AccessContext
+}
+class NormalizationService <<service>> {
+
++ normalizeAndValidate(request: ValidationRequest, context: AccessContext): ValidationResult
+- validateRequiredFieldsAndPrecision(req: ValidationRequest): void
+}
+interface INormalizationService <<service>> {
+
++ normalizeAndValidate(request: ValidationRequest, context: AccessContext): ValidationResult
+}
+class ValidationRequest <<DTO>> {
+- configurationRef: UUID
+- mode: ProcessingMode
+- sourceValues: TypedValues
+- channel: IngestionChannel
+}
+class ValidationResult <<DTO>> {
+- normalizedValues: TypedValues
+- errors: List<FieldError>
+- valid: boolean
+}
+interface ConfigurationQueryPort <<port>> {
+
++ resolvePinnedMapping(req: ValidationRequest): ChannelMapping
+}
+class TransactionAcceptanceHandler <<application>> {
+- service: ITransactionIngestionService
+--
++ acceptNormalized(request: AcceptanceRequest): IngestionResult
+- resolveExecutionContext(): AccessContext
+}
+class AcceptanceRequest <<DTO>> {
+- workspaceId: UUID
+- externalId: String
+- normalizedValues: TypedValues
+- fingerprint: String
+- selectedContext: AcceptanceContext
+}
+interface TransactionRepository <<repository>> {
+
++ commitTransactionAndReceipt(req: AcceptanceRequest): MutationResult
++ resolveBusinessIdentityAtomically(req: AcceptanceRequest): IdentityResolution
+}
+interface TransactionEventPublisher <<port>> {
+
++ publishTransactionIngested(req: AcceptanceRequest): void
+}
+CredentialController -[hidden]down-> RestIngestController
+RestIngestController -[hidden]down-> WebhookController
+WebhookController -[hidden]down-> FileImportController
+FileImportController -[hidden]down-> ValidationPipeline
+ValidationPipeline -[hidden]down-> TransactionAcceptanceHandler
+ICredentialService -[hidden]down-> ITransactionIngestionService
+ITransactionIngestionService -[hidden]down-> INormalizationService
+INormalizationService -[hidden]down-> CredentialService
+CredentialService -[hidden]down-> TransactionIngestionService
+TransactionIngestionService -[hidden]down-> NormalizationService
+ApiCredentialRepository -[hidden]down-> SubmissionAuthenticationPort
+SubmissionAuthenticationPort -[hidden]down-> TransactionAcceptancePort
+TransactionAcceptancePort -[hidden]down-> IngestionReceiptRepository
+IngestionReceiptRepository -[hidden]down-> ImportBatchRepository
+ImportBatchRepository -[hidden]down-> ConfigurationQueryPort
+ConfigurationQueryPort -[hidden]down-> TransactionRepository
+TransactionRepository -[hidden]down-> TransactionEventPublisher
+IntegrationCredential -[hidden]down-> ChannelMapping
+ChannelMapping -[hidden]down-> Transaction
+Transaction -[hidden]down-> IngestionReceipt
+IngestionReceipt -[hidden]down-> ImportBatch
+ImportBatch -[hidden]down-> ImportRow
+CredentialController -[hidden]right-> ICredentialService
+ICredentialService -[hidden]right-> ApiCredentialRepository
+ApiCredentialRepository -[hidden]right-> IntegrationCredential
+TransactionAcceptanceHandler -[hidden]down-> CredentialRequest
+CredentialRequest -[hidden]right-> CredentialResponse
+CredentialResponse -[hidden]right-> RestTransactionRequest
+CredentialRequest -[hidden]down-> IngestionResult
+IngestionResult -[hidden]right-> WebhookDeliveryRequest
+WebhookDeliveryRequest -[hidden]right-> WebhookReceipt
+IngestionResult -[hidden]down-> ProductionImportRequest
+ProductionImportRequest -[hidden]right-> ImportResponse
+ImportResponse -[hidden]right-> ValidationRequest
+ProductionImportRequest -[hidden]down-> ValidationResult
+ValidationResult -[hidden]right-> AcceptanceRequest
+AcceptanceRequest -[hidden]right-> AccessContext
+ApiCredentialRepository -[norank]-> IntegrationCredential
+CredentialController -[norank]-> ICredentialService
+CredentialController -[dashed,norank]-> CredentialRequest
+CredentialController -[dashed,norank]-> CredentialResponse
+CredentialService -[norank]-> ApiCredentialRepository
+CredentialService -[norank]-> ChannelMapping
+CredentialService -[norank]-> IntegrationCredential
+CredentialService -[norank]-> Transaction
+CredentialService -[dashed,norank]-> AccessContext
+CredentialService -[dashed,norank]-|> ICredentialService
+FileImportController -[norank]-> ITransactionIngestionService
+FileImportController -[dashed,norank]-> ImportResponse
+FileImportController -[dashed,norank]-> ProductionImportRequest
+ImportBatch "1" *-[norank]- "0..*" ImportRow
+ImportBatchRepository -[norank]-> ImportBatch
+ImportRow "0..*" -[norank]-> "0..1" Transaction
+IngestionReceiptRepository -[norank]-> IngestionReceipt
+NormalizationService -[norank]-> ConfigurationQueryPort
+NormalizationService -[dashed,norank]-|> INormalizationService
+RestIngestController -[norank]-> ITransactionIngestionService
+RestIngestController -[dashed,norank]-> IngestionResult
+RestIngestController -[dashed,norank]-> RestTransactionRequest
+Transaction "1" -[norank]- "1..*" IngestionReceipt
+TransactionAcceptanceHandler -[norank]-> ITransactionIngestionService
+TransactionAcceptanceHandler -[dashed,norank]-> AcceptanceRequest
+TransactionAcceptanceHandler -[dashed,norank]-> IngestionResult
+TransactionIngestionService -[norank]-> ImportBatchRepository
+TransactionIngestionService -[norank]-> IngestionReceiptRepository
+TransactionIngestionService -[norank]-> SubmissionAuthenticationPort
+TransactionIngestionService -[norank]-> TransactionAcceptancePort
+TransactionIngestionService -[norank]-> TransactionEventPublisher
+TransactionIngestionService -[norank]-> TransactionRepository
+TransactionIngestionService -[dashed,norank]-|> ITransactionIngestionService
+TransactionRepository -[norank]-> Transaction
+ValidationPipeline -[norank]-> INormalizationService
+ValidationPipeline -[dashed,norank]-> ValidationRequest
+ValidationPipeline -[dashed,norank]-> ValidationResult
+WebhookController -[norank]-> ITransactionIngestionService
+WebhookController -[dashed,norank]-> WebhookDeliveryRequest
+WebhookController -[dashed,norank]-> WebhookReceipt
+@enduml

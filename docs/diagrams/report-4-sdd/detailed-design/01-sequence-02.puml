@@ -1,0 +1,57 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Provisioned User" as User
+participant "Initial Password Page" as UI
+participant "AuthController" as C
+participant "AuthenticationService" as S
+participant "AccountRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: completeInitialPassword(request)
+C -> C: resolveExecutionContext()
+C -> S ++: completeInitialPassword(request, context)
+S -> S: requireSetupSession(ctx)
+S -> S: validateNewPassword(req)
+alt validPasswordAndSession
+S -> R ++: saveInitialCredential(req, ctx)
+R -> DB ++: UPDATE credential + clear setup restriction\nWHERE current account; COMMIT
+DB --> R --: rows / committed result
+R --> S --: accountUpdated
+
+else validationOrPersistenceFailure
+  S -> S: retainSetupRestriction()
+end
+S --> C --: AccountResponse / controlled error
+C --> UI --: AccountResponse / safe error
+UI --> User --: render permitted result
+@enduml

@@ -1,0 +1,43 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam stateBackgroundColor white
+skinparam stateBorderColor #222222
+skinparam stateFontSize 22
+skinparam ArrowFontSize 20
+!pragma layout elk
+top to bottom direction
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 65
+skinparam ranksep 65
+
+state "Password Change Required" as Setup
+state "Active Session" as Active
+state "Ended" as Ended
+state InitialAccess <<choice>>
+state PasswordCheck <<choice>>
+[*] --> InitialAccess
+InitialAccess --> Setup : [initial change required]
+InitialAccess --> Active : [setup complete]
+Setup -down-> PasswordCheck : Submit initial password
+PasswordCheck -up-> Setup : [invalid or not saved]
+PasswordCheck -down-> Active : [valid; saved]
+Setup --> Ended : Log out\n[termination confirmed]
+Active -down-> Ended : Log out\n[termination confirmed]
+Ended --> [*]
+@enduml

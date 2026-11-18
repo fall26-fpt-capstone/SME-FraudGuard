@@ -1,52 +1,52 @@
-# Kiểm tra landing page FraudGuard
+# FraudGuard landing page validation
 
-Ngày kiểm tra: 23/10/2026. Phiên bản hiện tại tái cấu trúc bố cục theo phong cách trang sản phẩm Base Workflow, bổ sung nền pastel, hiệu ứng chuyển cảnh khi click, cùng toàn bộ chuỗi hiệu ứng khi tải lại trang (Reload Sequence) và 6 nhóm hiệu ứng khi cuộn trang (Scroll-Triggered Animations 1–6) theo tham chiếu LawShield, đồng thời thống nhất thuật ngữ trên toàn hệ thống (loại bỏ hoàn toàn thuật ngữ `risk score` / `AI scoring` / `chấm điểm`, sử dụng phân loại trực tiếp `Abnormal / Normal / Undetermined`, `AI Detection`, `Dynamic Rule Engine`, `RULE_FALLBACK`).
+Validation date: 23/10/2026. The current version restructures the layout in the style of the Base Workflow product page, adds pastel backgrounds, click transitions, the full Reload Sequence and 6 Scroll-Triggered Animation groups (1–6) based on the LawShield reference, and standardizes terminology across the system (fully removing the terms `risk score` / `AI scoring` / scoring in Vietnamese, using direct classification `Abnormal / Normal / Undetermined`, `AI Detection`, `Dynamic Rule Engine`, `RULE_FALLBACK`).
 
-## Kết quả thực thi
+## Execution results
 
-| Kiểm tra | Kết quả | Bằng chứng |
+| Check | Result | Evidence |
 |---|---|---|
-| Production build và TypeScript | PASS | `npm run build` hoàn thành với mã thoát 0; trang chủ được prerender tĩnh. |
-| Không dùng em dash & thuật ngữ cũ | PASS | Kiểm tra toàn bộ văn bản hiển thị (`document.body.innerText`) không chứa ký tự `—` và không chứa `scoring`, `risk score`, `chấm điểm`. |
-| Responsive (R-03) | PASS | Không tràn ngang tại 11 độ rộng: 320, 360, 390, 540, 700, 768, 900, 1024, 1280, 1440, 1920px. |
-| Giao dịch mẫu tại Hero | PASS | Bấm đủ 3 giao dịch (`TX-83912`, `TXN-20260917-002`, `TXN-20260917-004`); kết quả `Abnormal`, bằng chứng và nhãn nguồn `AI` / `RULE_FALLBACK` / `RULE` cập nhật đúng. |
-| Chuyển bước quy trình tại Hero | PASS | Bấm đủ 4 tab bước (`1 Tiếp nhận`, `2 Phân công`, `3 Điều tra`, `4 Kết luận`) và nút chuyển tiếp; thanh trạng thái cập nhật từ `01/04` đến `04/04`. |
-| Màn hình Hồ sơ trung tâm (Hub) | PASS | Bấm đủ 4 nút pill và nút chuyển bước tiếp theo/quay lại đầu; trạng thái `Open -> Assigned -> Reported -> Confirmed Fraud` và thẻ vệ tinh nổi bật đúng theo bước. |
-| Nguồn đánh giá 3 cột (`#co-che`) | PASS | Bấm đủ 3 lựa chọn (`AI`, `RULE`, `RULE_FALLBACK`); cột trung tâm cập nhật màu nền pastel, tiêu đề, mô tả và tín hiệu đầu ra tương ứng. |
-| Phân quyền 5 vai trò (RBAC) | PASS | Bấm đủ 5 nút pill trên thanh chuyển vai trò (`Platform Admin`, `Implementation Staff`, `SME Admin`, `Operator`, `Investigator`); vùng minh họa và danh sách nhiệm vụ cập nhật đúng. |
-| Giải đáp (FAQ) | PASS | Mở đủ 4 câu bằng click chuột, đóng lại bằng phím `Enter`. |
-| Điều hướng trong trang | PASS | Mọi liên kết neo (`#tinh-nang`, `#ho-so`, `#co-che`, `#vai-tro`, `#goi-su-dung`, `#giai-dap`, `#main`) có đích duy nhất và điều hướng chính xác. |
-| Liên kết mở bản demo | PASS | 4 liên kết CTA trỏ đúng tới `http://localhost:3000/fraud-monitoring`. |
-| Menu mobile | PASS | Mở/đóng tại viewport 390x844, tự đóng sau khi chọn mục điều hướng và đóng bằng phím `Escape`. |
-| Bàn phím & Focus | PASS | Skip link hoạt động; phím `Space` chọn giao dịch; đường viền focus hiển thị rõ. |
-| Phóng to 200% | PASS | Kiểm tra effective viewport 390px với `deviceScaleFactor: 2`; không tràn ngang. |
-| Hiệu ứng Reload & Cuộn trang (1–6) | PASS | Kiểm tra thanh điều hướng thu gọn khi cuộn (`1240px` -> `1080px` khi `scrollY > 24`), 8/8 vùng `[data-scroll-section]` và 31/31 khối `[data-reveal]` riêng lẻ kích hoạt hiệu ứng chạy từ ngoài vào trong (`slide-left`, `slide-right`) và xuất hiện từ mờ nhòe sang rõ nét (`fade-blur`, `zoom-in`, `fade-up`) khi cuộn tới mà không gây tràn ngang. |
-| Tương phản chữ (WCAG AA) | PASS | Tính luminance từ CSS trên 323 phần tử chữ hiển thị ở nền sáng/pastel; 0 phần tử vi phạm ngưỡng AA (4.5:1 cho chữ thường, 3:1 cho chữ lớn). |
-| Console trình duyệt | PASS | Không có console error hoặc uncaught JavaScript error trên landing page. |
-| Kiểm tra hình ảnh | PASS | Đã chụp và kiểm tra trực tiếp `tmp/desktop-hero.png`, `tmp/story.png`, `tmp/desktop-final.png`, `tmp/mobile-hero.png`, `tmp/mobile-final.png`. |
+| Production build and TypeScript | PASS | `npm run build` completed with exit code 0; the home page was statically prerendered. |
+| No em dashes or obsolete terminology | PASS | All visible text (`document.body.innerText`) was checked for absence of `—`, `scoring`, `risk score` and the Vietnamese term for scoring. |
+| Responsive (R-03) | PASS | No horizontal overflow at 11 widths: 320, 360, 390, 540, 700, 768, 900, 1024, 1280, 1440, 1920px. |
+| Hero sample transactions | PASS | All 3 transactions (`TX-83912`, `TXN-20260917-002`, `TXN-20260917-004`) were clicked; the `Abnormal` result, evidence and `AI` / `RULE_FALLBACK` / `RULE` source labels updated correctly. |
+| Hero workflow steps | PASS | All 4 step tabs (`1 Intake`, `2 Assignment`, `3 Investigation`, `4 Conclusion`) and the next button were clicked; the status indicator updated from `01/04` to `04/04`. |
+| Central case view (Hub) | PASS | All 4 pill buttons and the next-step/return-to-start buttons were clicked; the `Open -> Assigned -> Reported -> Confirmed Fraud` state and highlighted satellite cards matched each step. |
+| 3-column evaluation source (`#co-che`) | PASS | All 3 options (`AI`, `RULE`, `RULE_FALLBACK`) were clicked; the center column updated its pastel background, title, description and corresponding output signal. |
+| 5-role access control (RBAC) | PASS | All 5 pills on the role switcher (`Platform Admin`, `Implementation Staff`, `SME Admin`, `Operator`, `Investigator`) were clicked; the illustration and task list updated correctly. |
+| Frequently asked questions (FAQ) | PASS | All 4 questions were opened by mouse click and closed with `Enter`. |
+| In-page navigation | PASS | Every anchor link (`#tinh-nang`, `#ho-so`, `#co-che`, `#vai-tro`, `#goi-su-dung`, `#giai-dap`, `#main`) had a unique target and navigated correctly. |
+| Open-demo links | PASS | 4 CTA links correctly pointed to `http://localhost:3000/fraud-monitoring`. |
+| Mobile menu | PASS | Opened/closed at viewport 390x844, closed automatically after a navigation selection and closed with `Escape`. |
+| Keyboard & Focus | PASS | The skip link worked; `Space` selected a transaction; the focus outline was clearly visible. |
+| 200% zoom | PASS | Checked an effective viewport of 390px with `deviceScaleFactor: 2`; no horizontal overflow. |
+| Reload & scroll effects (1–6) | PASS | Checked the navigation shrinking on scroll (`1240px` -> `1080px` when `scrollY > 24`), 8/8 `[data-scroll-section]` regions and 31/31 individual `[data-reveal]` blocks triggering outside-in (`slide-left`, `slide-right`) and blur-to-clear (`fade-blur`, `zoom-in`, `fade-up`) animations on scroll without horizontal overflow. |
+| Text contrast (WCAG AA) | PASS | Computed luminance from CSS for 323 visible text elements on light/pastel backgrounds; 0 elements violated AA thresholds (4.5:1 for normal text, 3:1 for large text). |
+| Browser console | PASS | No console errors or uncaught JavaScript errors on the landing page. |
+| Visual inspection | PASS | Captured and directly inspected `tmp/desktop-hero.png`, `tmp/story.png`, `tmp/desktop-final.png`, `tmp/mobile-hero.png`, `tmp/mobile-final.png`. |
 
 ## Antislop Delivery Gate
 
 ### Hard Gate
 
-- R-02 PASS: Không sử dụng em dash (`—`) trong văn bản giao diện.
-- R-03 PASS: Kiểm tra 11 độ rộng từ 320px đến 1920px; không tràn ngang.
-- R-17 PASS: Toàn bộ giao dịch, mã hồ sơ và doanh nghiệp (`ABC Fashion`, `TechPay`, `EduLearn`) được gắn nhãn dữ liệu mẫu rõ ràng.
-- R-18 PASS: Không có lời chứng thực (testimonial), tên khách hàng bịa đặt hoặc logo đối tác giả.
-- R-23 PASS: Bố cục theo phong cách Base Workflow kết hợp bảng màu sáng/pastel và CSS thẻ của `LCS_landingpage` theo yêu cầu người dùng.
-- R-24 PASS: Tất cả liên kết trên thanh điều hướng đều dẫn tới section thực tế trên trang.
-- R-25 PASS: 323 phần tử chữ hiển thị đạt chuẩn tương phản WCAG AA.
-- R-26 PASS: Mọi nút bấm, tab chuyển cảnh, pill chọn vai trò và mục hỏi đáp đều có hành vi thực tế và đã được kiểm tra click-through tự động.
-- R-27 PASS: Dữ liệu mẫu tĩnh nằm sẵn trong trang; không dựng trạng thái xử lý AI giả.
-- R-28 PASS: Nội dung giải đáp bám sát cơ chế phân loại `Abnormal / Normal / Undetermined`, phân quyền 5 vai trò và cơ chế `RULE_FALLBACK`.
-- R-32 PASS: Sử dụng phần tử HTML ngữ nghĩa (`button`, `a`, `details`, `summary`, `table`), hỗ trợ đầy đủ `Tab`, `Enter`, `Space`, `Escape` và skip link.
-- R-33 PASS: Cập nhật trực tiếp mã nguồn `Landing.tsx` và `landing.module.css`.
-- R-34 PASS: Giữ cố định bảng màu sáng/pastel theo yêu cầu của người dùng.
-- R-35 PASS: Đã chạy `npm run build`, khởi động lại server trên cổng 3001, chạy `node tmp/verify.cjs` trên trình duyệt thực và kiểm tra ảnh chụp màn hình.
-- R-36 PASS: Không thêm số liệu cam kết hiệu quả hoặc chứng chỉ bảo mật không có nguồn.
-- R-37 PASS: Người dùng đã duyệt phương án thiết kế và nội dung trước khi thực hiện.
-- R-38 PASS: Ghi rõ phạm vi bản demo sử dụng dữ liệu mẫu của dự án.
+- R-02 PASS: No em dash (`—`) in interface text.
+- R-03 PASS: Checked 11 widths from 320px to 1920px; no horizontal overflow.
+- R-17 PASS: All transactions, case identifiers and enterprises (`ABC Fashion`, `TechPay`, `EduLearn`) were clearly labeled as sample data.
+- R-18 PASS: No fabricated testimonials, customer names or partner logos.
+- R-23 PASS: Base Workflow-style layout combined with the light/pastel palette and card CSS of `LCS_landingpage`, as requested by the user.
+- R-24 PASS: All navigation links led to actual page sections.
+- R-25 PASS: 323 visible text elements met WCAG AA contrast requirements.
+- R-26 PASS: Every button, transition tab, role pill and FAQ item had actual behavior and was checked by automated click-through.
+- R-27 PASS: Static sample data was already present on the page; no fake AI processing states were created.
+- R-28 PASS: FAQ content followed `Abnormal / Normal / Undetermined` classification, 5-role access control and the `RULE_FALLBACK` mechanism.
+- R-32 PASS: Semantic HTML elements (`button`, `a`, `details`, `summary`, `table`), full support for `Tab`, `Enter`, `Space`, `Escape` and a skip link.
+- R-33 PASS: Updated `Landing.tsx` and `landing.module.css` source code directly.
+- R-34 PASS: Preserved the fixed light/pastel palette requested by the user.
+- R-35 PASS: Ran `npm run build`, restarted the server on port 3001, ran `node tmp/verify.cjs` in a real browser and inspected screenshots.
+- R-36 PASS: No unsourced performance promises or security certifications were added.
+- R-37 PASS: The user approved the design and content before implementation.
+- R-38 PASS: Clearly stated the demo's scope and use of project sample data.
 
 ### Purpose Gate & Quality Locks
 
-- R-01, R-04, R-06, R-07, R-08, R-09, R-10, R-11, R-12, R-13, R-14, R-15, R-16, R-19, R-20, R-21, R-22, R-29, R-30, R-31 PASS: Lý do thiết kế từng hạng mục được ghi rõ tại `README.md`.
+- R-01, R-04, R-06, R-07, R-08, R-09, R-10, R-11, R-12, R-13, R-14, R-15, R-16, R-19, R-20, R-21, R-22, R-29, R-30, R-31 PASS: Design rationale for each item was documented in `README.md`.

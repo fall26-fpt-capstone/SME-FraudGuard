@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="875" viewBox="0 0 1120 875">
+<rect width="100%" height="100%" fill="white"/>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#888"/></marker></defs>
+<text x="24" y="37" font-family="Arial" font-size="27" font-weight="bold">Conceptual ERD - Processing and Investigation</text>
+<polyline points="130.0,181 130.0,206 130.0,225 130.0,250" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="137.0" y="199.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..1</text>
+<text x="137.0" y="232.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,143.0 255,143.0 285,143.0 305,143.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="240" y="136.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="300" y="136.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="130.0,326 130.0,351 130.0,370 130.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="137.0" y="344.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="137.0" y="377.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="410.0,181 410.0,206 410.0,225 410.0,250" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="417.0" y="199.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="417.0" y="232.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="410.0,181 285,181 285,206 285,225 285,351 285,370 285,395 410.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="405.0" y="174.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="405.0" y="388.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="515,433.0 535,433.0 565,433.0 565,370 565,351 565,225 565,206 565,143.0 585,143.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="520" y="426.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="580" y="136.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..1</text>
+<polyline points="690.0,181 690.0,206 690.0,225 690.0,250" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="697.0" y="199.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1..*</text>
+<text x="697.0" y="232.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..1</text>
+<polyline points="690.0,326 690.0,351 690.0,370 690.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="697.0" y="344.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="697.0" y="377.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 235,225 255,225 285,225 535,225 565,225 585,225 585,288.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="242" y="270.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..1</text>
+<text x="592" y="270.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 235,225 235,206 255,206 285,206 535,206 565,206 815,206 845,206 865,206 865,143.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="242" y="270.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="872" y="161.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="795,433.0 815,433.0 845,433.0 865,433.0 865,370 865,351 865,288.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="800" y="426.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="872" y="306.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<rect x="25" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="130.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Workspace</text>
+<rect x="25" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="130.0" y="288.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Account</text>
+<rect x="25" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="130.0" y="433.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Field Permission</text>
+<rect x="305" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="410.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Transaction</text>
+<rect x="305" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="410.0" y="275.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Ingestion Attempt /</text>
+<text x="410.0" y="301.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Import</text>
+<rect x="305" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="410.0" y="433.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Detection Attempt</text>
+<rect x="585" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Alert</text>
+<rect x="585" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="288.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Investigation Case</text>
+<rect x="585" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="420.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Investigation</text>
+<text x="690.0" y="446.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Record</text>
+<rect x="865" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Notification</text>
+<rect x="865" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="288.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Audit Entry</text>
+</svg>

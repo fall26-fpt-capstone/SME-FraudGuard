@@ -1,0 +1,361 @@
+{
+  "flows": [
+    {
+      "key": "platform-admin",
+      "title": "WEB (Platform Admin)",
+      "entry": "Platform Login",
+      "home": "Platform Workspace",
+      "branches": [
+        [
+          "Customers / Workspaces",
+          [
+            "Create / Edit Workspace",
+            "Assign Staff",
+            "Allocate Initial Plan"
+          ]
+        ],
+        [
+          "Onboarding Review",
+          [
+            "Specifications / Progress",
+            "Approve / Return Handover"
+          ]
+        ],
+        [
+          "Plan Catalogue",
+          [
+            "Maintain / Retire Offer"
+          ]
+        ],
+        [
+          "Integration Keys",
+          [
+            "Issue / Replace Key",
+            "Disable Key"
+          ]
+        ],
+        [
+          "Platform Monitoring",
+          [
+            "Health / Errors",
+            "Administrative History"
+          ]
+        ],
+        [
+          "Account",
+          [
+            "Change Password / Log Out"
+          ]
+        ]
+      ]
+    },
+    {
+      "key": "implementation-staff",
+      "title": "WEB (Implementation Staff)",
+      "entry": "Platform Login",
+      "home": "Assigned Workspaces",
+      "branches": [
+        [
+          "Onboarding Details",
+          [
+            "Specifications / Progress",
+            "Confirm Readiness"
+          ]
+        ],
+        [
+          "Field Definitions",
+          [
+            "Create / Edit Fields"
+          ]
+        ],
+        [
+          "Channel Mappings",
+          [
+            "REST / Webhook / File"
+          ]
+        ],
+        [
+          "Rule Configuration",
+          [
+            "Create / Edit Rule",
+            "Enable / Disable Rule"
+          ]
+        ],
+        [
+          "Sample Testing",
+          [
+            "Run JSON / File Test",
+            "Results / Run Metadata"
+          ]
+        ],
+        [
+          "Configuration Release",
+          [
+            "Review Draft / Apply Version"
+          ]
+        ],
+        [
+          "Integration Keys",
+          [
+            "Issue / Replace Key",
+            "Disable Key"
+          ]
+        ],
+        [
+          "Account",
+          [
+            "Change Password / Log Out"
+          ]
+        ]
+      ]
+    },
+    {
+      "key": "sme-admin",
+      "title": "WEB (SME Admin)",
+      "entry": "Enterprise Login",
+      "home": "Enterprise Workspace",
+      "branches": [
+        [
+          "Onboarding",
+          [
+            "Specifications / Progress",
+            "Activate Approved Workspace"
+          ]
+        ],
+        [
+          "Members",
+          [
+            "Provision / Update Access",
+            "Sensitive-Field Permissions"
+          ]
+        ],
+        [
+          "Plans / Subscription",
+          [
+            "Purchase / Renew",
+            "Payment Status"
+          ]
+        ],
+        [
+          "Production File Import",
+          [
+            "Import Progress / Results"
+          ]
+        ],
+        [
+          "Dashboard / Reports",
+          [
+            "Investigation Reports",
+            "Generate / Export Report"
+          ]
+        ],
+        [
+          "Integration / Notices",
+          [
+            "Disable API Key",
+            "Relevant Notifications"
+          ]
+        ],
+        [
+          "Account",
+          [
+            "Change Password / Log Out"
+          ]
+        ]
+      ]
+    },
+    {
+      "key": "operator",
+      "title": "WEB (Operator)",
+      "entry": "Enterprise Login",
+      "home": "Operational Workspace",
+      "branches": [
+        [
+          "Transactions / Imports",
+          [
+            "Transaction Detail / History",
+            "Import File / Results",
+            "Explicit Sensitive Reveal"
+          ]
+        ],
+        [
+          "Rule Alerts",
+          [
+            "Matched Reasons / Follow-Up"
+          ]
+        ],
+        [
+          "AI Alerts",
+          [
+            "AI Detail / Open Case"
+          ]
+        ],
+        [
+          "Cases",
+          [
+            "Assign / Self-Investigate",
+            "Notes / Findings",
+            "Submit / Review Report"
+          ]
+        ],
+        [
+          "Dashboard / Reports",
+          [
+            "Generate / Export Report"
+          ]
+        ],
+        [
+          "Notifications",
+          [
+            "Authorized Record Link"
+          ]
+        ],
+        [
+          "Account",
+          [
+            "Change Password / Log Out"
+          ]
+        ]
+      ]
+    },
+    {
+      "key": "investigator",
+      "title": "WEB (Investigator)",
+      "entry": "Enterprise Login",
+      "home": "Assigned Case List",
+      "branches": [
+        [
+          "Assigned Case Detail",
+          [
+            "Related Alerts / Transactions",
+            "Detection Context",
+            "Explicit Sensitive Reveal"
+          ]
+        ],
+        [
+          "Investigation",
+          [
+            "Notes / Evidence References",
+            "Submit Report"
+          ]
+        ],
+        [
+          "Investigation Reports",
+          [
+            "Assigned Report / History"
+          ]
+        ],
+        [
+          "Notifications",
+          [
+            "Assigned Case Link"
+          ]
+        ],
+        [
+          "Account",
+          [
+            "Change Password / Log Out"
+          ]
+        ]
+      ]
+    }
+  ],
+  "entities": [
+    [
+      "Enterprise",
+      "Customer information and separate business contact details."
+    ],
+    [
+      "Workspace",
+      "Single isolated enterprise scope and activation record."
+    ],
+    [
+      "Account",
+      "Platform or enterprise identity, role and first-login/access state."
+    ],
+    [
+      "Staff Assignment",
+      "Current implementation responsibility and assignment history."
+    ],
+    [
+      "Onboarding Specification",
+      "Retained enterprise business/field documents and descriptions."
+    ],
+    [
+      "Handover Decision",
+      "Staff readiness, platform review and enterprise activation history."
+    ],
+    [
+      "Detection Configuration",
+      "Traceable workspace fields, mappings and rules."
+    ],
+    [
+      "Internal Field",
+      "Declared type, requiredness, business meaning and sensitivity."
+    ],
+    [
+      "Channel Mapping",
+      "Approved source-field conversions for REST, Webhook or shared file ingestion."
+    ],
+    [
+      "Detection Rule",
+      "Per-transaction typed conditions, combination and enabled status."
+    ],
+    [
+      "Test Run Metadata",
+      "Runner, time, configuration reference and counts; excludes sample contents."
+    ],
+    [
+      "Integration Credential",
+      "Workspace API key verification material or protected Webhook connection reference."
+    ],
+    [
+      "Transaction",
+      "Accepted normalized business transaction with workspace-unique identity."
+    ],
+    [
+      "Ingestion Attempt / Import",
+      "Channel receipt, file/batch progress and safe row/delivery outcomes."
+    ],
+    [
+      "Detection Attempt",
+      "AI/rule/fallback/recovery result with source, version and outcome."
+    ],
+    [
+      "Alert",
+      "Rule or AI review item; Rule Alert retains all matched reasons."
+    ],
+    [
+      "Investigation Case",
+      "AI-Alert-based investigation, state, responsibility and related references."
+    ],
+    [
+      "Investigation Record",
+      "Notes, evidence references, submitted reports and final conclusion history."
+    ],
+    [
+      "Plan Offer",
+      "Free/Subscription catalogue information, period prices and availability."
+    ],
+    [
+      "Workspace Entitlement",
+      "Initial/current/historical workspace plan validity."
+    ],
+    [
+      "Purchase / Payment",
+      "Quoted purchase and verified provider payment/application history."
+    ],
+    [
+      "Field Permission",
+      "Explicit Operator/Investigator disclosure eligibility managed by SME Admin."
+    ],
+    [
+      "Notification",
+      "Minimal recipient-scoped in-app/email event and delivery outcome."
+    ],
+    [
+      "Audit Entry",
+      "Attributable permitted administrative/configuration/business history."
+    ]
+  ]
+}

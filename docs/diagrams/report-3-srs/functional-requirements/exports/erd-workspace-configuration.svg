@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="875" viewBox="0 0 1120 875">
+<rect width="100%" height="100%" fill="white"/>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#888"/></marker></defs>
+<text x="24" y="37" font-family="Arial" font-size="27" font-weight="bold">Conceptual ERD - Workspace, Configuration and Plans</text>
+<polyline points="130.0,181 130.0,206 130.0,225 130.0,250" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="137.0" y="199.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="137.0" y="232.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<polyline points="130.0,326 130.0,351 130.0,370 130.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="137.0" y="344.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..1</text>
+<text x="137.0" y="377.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 255,288.0 285,288.0 285,225 285,206 285,143.0 305,143.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="240" y="281.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="300" y="136.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 255,288.0 285,288.0 305,288.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="240" y="281.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="300" y="281.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="410.0,326 410.0,351 410.0,370 410.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="417.0" y="344.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="417.0" y="377.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 235,225 235,206 255,206 285,206 535,206 565,206 585,206 585,143.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="242" y="270.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="592" y="161.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="690.0,181 690.0,206 690.0,225 690.0,250" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="697.0" y="199.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="697.0" y="232.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="690.0,181 565,181 565,206 565,225 565,351 565,370 565,395 690.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="685.0" y="174.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="685.0" y="388.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="690.0,181 565,181 565,206 565,225 565,351 565,370 565,496 565,515 565,540 690.0,540" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="685.0" y="174.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="685.0" y="533.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="690.0,181 565,181 565,206 565,225 565,351 565,370 565,496 565,515 565,641 565,660 565,685 690.0,685" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="685.0" y="174.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="685.0" y="678.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="970.0,181 970.0,206 970.0,225 970.0,250" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="977.0" y="199.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="977.0" y="232.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 235,225 255,225 285,225 535,225 565,225 815,225 845,225 865,225 865,288.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="242" y="270.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="872" y="270.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="970.0,326 970.0,351 970.0,370 970.0,395" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="977.0" y="344.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="977.0" y="377.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,288.0 235,351 235,370 255,370 285,370 535,370 565,370 815,370 845,370 845,496 845,515 845,578.0 865,578.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="242" y="306.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="860" y="571.0" text-anchor="end" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<polyline points="235,433.0 235,496 235,515 235,641 235,660 255,660 285,660 535,660 565,660 815,660 845,660 865,660 865,723.0" fill="none" stroke="#888" stroke-width="1.6"/>
+<text x="242" y="451.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">1</text>
+<text x="872" y="705.0" text-anchor="start" font-family="Arial" font-size="18" fill="#333">0..*</text>
+<rect x="25" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="130.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Enterprise</text>
+<rect x="25" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="130.0" y="288.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Workspace</text>
+<rect x="25" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="130.0" y="433.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Account</text>
+<rect x="305" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="410.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Staff Assignment</text>
+<rect x="305" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="410.0" y="275.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Onboarding</text>
+<text x="410.0" y="301.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Specification</text>
+<rect x="305" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="410.0" y="433.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Handover Decision</text>
+<rect x="585" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="130.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Detection</text>
+<text x="690.0" y="156.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Configuration</text>
+<rect x="585" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="288.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Internal Field</text>
+<rect x="585" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="433.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Channel Mapping</text>
+<rect x="585" y="540" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="578.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Detection Rule</text>
+<rect x="585" y="685" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="690.0" y="723.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Test Run Metadata</text>
+<rect x="865" y="105" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="143.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Plan Offer</text>
+<rect x="865" y="250" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="275.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Workspace</text>
+<text x="970.0" y="301.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Entitlement</text>
+<rect x="865" y="395" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="420.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Purchase /</text>
+<text x="970.0" y="446.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Payment</text>
+<rect x="865" y="540" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="565.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Integration</text>
+<text x="970.0" y="591.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Credential</text>
+<rect x="865" y="685" width="210" height="76" rx="0" fill="#f5f5f5" stroke="#aaa" stroke-width="1.3"/>
+<text x="970.0" y="723.0" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="22" fill="#333">Field Permission</text>
+</svg>

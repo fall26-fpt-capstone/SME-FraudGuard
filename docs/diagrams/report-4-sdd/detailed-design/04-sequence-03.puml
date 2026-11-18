@@ -1,0 +1,68 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam sequenceMessageAlign left
+skinparam sequenceMessageFontSize 11
+skinparam sequenceParticipantFontSize 11
+skinparam sequenceParticipantBackgroundColor white
+skinparam sequenceParticipantBorderColor #777777
+skinparam sequenceLifeLineBorderColor #999999
+skinparam sequenceLifeLineBackgroundColor white
+skinparam sequenceActivationBorderColor #777777
+skinparam sequenceActivationBackgroundColor white
+skinparam sequenceActivationBorderThickness 0.5
+skinparam sequenceGroupBorderThickness 0.6
+skinparam sequenceGroupFontSize 10
+skinparam maxMessageSize 290
+autonumber
+
+actor "Platform Admin" as User
+participant "Handover Review Page" as UI
+participant "OnboardingController" as C
+participant "OnboardingService" as S
+participant "OnboardingRepository" as R
+participant "Database" as DB
+User -> UI ++: submit(request)
+UI -> C ++: reviewHandover(request)
+C -> C: resolveExecutionContext()
+C -> S ++: reviewHandover(request, context)
+S -> S: requirePlatformAdmin(ctx)
+S -> R ++: findCurrentReadiness(req)
+R -> DB ++: SELECT current readiness + assessed configuration
+DB --> R --: rows / committed result
+R --> S --: readiness
+
+S -> S: validateHandoverDecision(req)
+alt currentReadinessAndApproval
+S -> R ++: saveApprovalIfCurrent(req, ctx)
+R -> DB ++: INSERT approval + history; COMMIT if current
+DB --> R --: rows / committed result
+R --> S --: approvedForActivation
+
+else returnedWithComments
+S -> R ++: saveReturnIfCurrent(req, ctx)
+R -> DB ++: INSERT return comments + history; COMMIT if current
+DB --> R --: rows / committed result
+R --> S --: renewedReadinessRequired
+
+else missingOrStaleDecision
+  S -> S: rejectHandoverDecision()
+end
+S --> C --: OnboardingResponse / controlled error
+C --> UI --: OnboardingResponse / safe error
+UI --> User --: render permitted result
+@enduml

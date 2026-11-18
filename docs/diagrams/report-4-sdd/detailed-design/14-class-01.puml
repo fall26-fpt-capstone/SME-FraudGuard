@@ -1,0 +1,134 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+top to bottom direction
+skinparam linetype ortho
+skinparam wrapWidth 320
+skinparam nodesep 28
+skinparam ranksep 40
+class HealthSnapshot <<entity>> {
+- serviceRef: String
+- observedAt: Instant
+- availability: String
+- safeFailureCounts: Counts
+}
+class AuditService <<service>> {
+
++ recordAndReadHistory(request: AuditRequest, context: AccessContext): AuditResponse
+}
+class AuditEvent <<entity>> {
+- workspaceId: UUID [0..1]
+- actorId: UUID
+- action: String
+- objectRef: String
+- safeMetadata: References
+- createdAt: Instant
+}
+class ObjectAccessPolicy <<security>> {
+
++ authorizeUnderlyingObjectHistory(req: AuditRequest, ctx: AccessContext): AccessDecision
+}
+interface AuditRepository <<repository>> {
+
++ commitBusinessChangeAndAudit(req: AuditRequest, ctx: AccessContext): MutationResult
++ findScopedHistory(req: AuditRequest, ctx: AccessContext): Page<AuditEvent>
+}
+class AccessContext <<security>> {
+- principalId: UUID [0..1]
+- workspaceId: UUID [0..1]
+- role: Role [0..1]
+- verifiedScope: AccessScope
+}
+class MonitoringController <<controller>> {
+- service: IMonitoringService
+--
++ monitorOperations(request: MonitoringRequest): MonitoringResponse
+- resolveExecutionContext(): AccessContext
+}
+class MonitoringService <<service>> {
+
++ monitorOperations(request: MonitoringRequest, context: AccessContext): MonitoringResponse
+- requirePlatformAdmin(ctx: AccessContext): void
+- validateOperationalFilters(req: MonitoringRequest): void
+}
+interface IMonitoringService <<service>> {
+
++ monitorOperations(request: MonitoringRequest, context: AccessContext): MonitoringResponse
+}
+class MonitoringRequest <<DTO>> {
+- serviceRef: String
+- timeRange: TimeRange
+- statusFilter: HealthFilter
+}
+class MonitoringResponse <<DTO>> {
+- snapshots: List<HealthSnapshot>
+- observedAt: Instant
+}
+interface OperationalTelemetryPort <<port>> {
+
++ readSafeOperationalTelemetry(req: MonitoringRequest): List<HealthSnapshot>
+}
+class AuditController <<controller>> {
+- service: IAuditService
+--
++ recordAndReadHistory(request: AuditRequest): AuditResponse
+- resolveExecutionContext(): AccessContext
+}
+interface IAuditService <<service>> {
+
++ recordAndReadHistory(request: AuditRequest, context: AccessContext): AuditResponse
+}
+class AuditRequest <<DTO>> {
+- action: AuditAction
+- objectRef: UUID
+- safeMetadata: SafeMetadata
+- criteria: AuditFilter
+}
+class AuditResponse <<DTO>> {
+- events: List<AuditEvent>
+- mutationStatus: MutationStatus
+}
+MonitoringController -[hidden]down-> AuditController
+IMonitoringService -[hidden]down-> IAuditService
+IAuditService -[hidden]down-> AuditService
+AuditService -[hidden]down-> MonitoringService
+AuditRepository -[hidden]down-> OperationalTelemetryPort
+HealthSnapshot -[hidden]down-> AuditEvent
+MonitoringController -[hidden]right-> IMonitoringService
+IMonitoringService -[hidden]right-> AuditRepository
+AuditRepository -[hidden]right-> HealthSnapshot
+AuditController -[hidden]down-> MonitoringRequest
+MonitoringRequest -[hidden]right-> MonitoringResponse
+MonitoringResponse -[hidden]right-> AuditRequest
+MonitoringRequest -[hidden]down-> AuditResponse
+AuditResponse -[hidden]right-> ObjectAccessPolicy
+ObjectAccessPolicy -[hidden]right-> AccessContext
+AuditController -[norank]-> IAuditService
+AuditController -[dashed,norank]-> AuditRequest
+AuditController -[dashed,norank]-> AuditResponse
+AuditRepository -[norank]-> AuditEvent
+AuditService -[norank]-> AuditRepository
+AuditService -[norank]-> ObjectAccessPolicy
+AuditService -[dashed,norank]-|> IAuditService
+MonitoringController -[norank]-> IMonitoringService
+MonitoringController -[dashed,norank]-> MonitoringRequest
+MonitoringController -[dashed,norank]-> MonitoringResponse
+MonitoringService -[norank]-> HealthSnapshot
+MonitoringService -[norank]-> OperationalTelemetryPort
+MonitoringService -[dashed,norank]-> AccessContext
+MonitoringService -[dashed,norank]-|> IMonitoringService
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ArrowColor #444444
+skinparam ArrowThickness 1
+skinparam classAttributeIconSize 0
+skinparam classBackgroundColor white
+skinparam classBorderColor #777777
+skinparam classBorderThickness 1
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam stereotypeFontSize 10
+skinparam Padding 4
+hide circle
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam activityBackgroundColor white
+skinparam activityBorderColor #222222
+skinparam activityBorderThickness 1
+skinparam activityDiamondBackgroundColor white
+skinparam activityDiamondBorderColor #222222
+skinparam activityFontSize 11
+skinparam activityDiamondFontSize 11
+skinparam conditionStyle InsideDiamond
+skinparam wrapWidth 200
+skinparam defaultTextAlignment center
+
+start
+:Load durably accepted transaction and selected context;
+if (Selected Subscription\ncontext?) then (yes)
+  :Call AI with permitted normalized features;
+  if (Valid Normal/Anomaly and\nmodel version?) then (yes)
+    :Retain AI attempt and model version;
+    if (Anomaly?) then (yes)
+      :Create or reuse transaction's single AI Alert;
+    else (Normal)
+      :Create no new AI Alert;
+    endif
+    :Retain original attempt history;
+    stop
+  else (no)
+    :Retain failed AI attempt and safe reason;
+    :Select rule-fallback source;
+  endif
+else (Free)
+  :Select primary-rule source;
+endif
+:Evaluate enabled rules in selected configuration;
+if (Rule evaluation succeeded?) then (yes)
+  :Retain attempt, source and all matched reasons;
+  if (Any rule matched?) then (yes)
+    :Create one aggregated Rule Alert for attempt;
+  else (no)
+    :Record successful no-match; create no Rule Alert;
+  endif
+else (no)
+  :Record explicit detection failure; never Normal;
+endif
+:Retain acceptance and attempt history;
+stop
+@enduml
