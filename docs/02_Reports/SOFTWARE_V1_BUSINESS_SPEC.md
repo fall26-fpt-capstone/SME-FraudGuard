@@ -4,7 +4,7 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 
 ## 1. Scope sources and usage
 
-- The authoritative source for the topic and scope is [Registration with BM03](../01_Registration/SWP490_FA26SE215_R2_Registration.pdf). [BM03 Word version](../01_Registration/SWP490_R2_BM03_Record_of_Changes_1.docx) explains proposal changes.
+- Use the [Review 2 registration snapshot](../01_Registration/SEP490_FA26SE215_R2_Registration.pdf) and its [BM03 record of changes](../01_Registration/SEP490_R2_BM03_Record_of_Changes.docx) as the baseline. The [registration v3 draft](../01_Registration/Phieu_FA26SE215_v3.docx) is the reference for the two ingestion channels described here.
 - This document consolidates business decisions discussed with the team leader and adds software implementation details. It does not replace or independently amend the proposal, or confirm that the review board has approved the changes.
 - Sections marked **confirmed** contain decisions confirmed in discussion. Sections marked **proposed** or **pending confirmation** must not be treated as official requirements during coding without approval.
 - Differences from the proposal must be recorded and agreed with the team before updating official reports. Current code/demo behavior is not a basis for expanding scope.
@@ -17,7 +17,7 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 | In v1 | Outside v1 or pending confirmation |
 | --- | --- |
 | One enterprise, one workspace, one active rule set | Multiple projects or independent business configuration sets within a workspace |
-| REST API, Webhook, CSV/Excel with separate mappings | Multiple input formats active simultaneously within one channel |
+| REST API with an API key and CSV/Excel import, with one mapping per channel | Multiple input formats active simultaneously within one channel |
 | Dynamic rules on standard and custom fields, evaluated per transaction | Historical aggregation and time-window rules; consider for v2 |
 | Free and Subscription, with manual plan administration | Online payments, QR and automatic reconciliation |
 | AI Alert and investigation workflow, testable with simulated AI | AI algorithms, data, contracts and retraining workflow not yet finalized |
@@ -27,7 +27,8 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 - Do not automatically block customer accounts, cancel orders, reject payments or execute measures in customer systems.
 - V1 does not set commercial quotas for accounts, rules, transactions or storage. This does not remove technical limits needed to protect the service; those limits must be defined in NFRs.
 - The team prioritizes completing the software before integrating the model. Simulated AI is only for clearly labeled tests/demos; it must not be presented as real model output.
-- The planned demo uses a sales website built by the team to generate payment events. No experimental results yet demonstrate that AI outperforms rules.
+- Electricity consumption and e-commerce are the two demo scenarios. Use workspace-configured fields, mappings and detection settings to support other domains with compatible inputs and detection needs. Demo field names, thresholds and sample values belong in demo configurations and test data. Apply validation, authorization and tenant isolation to every workspace.
+- No experimental results yet demonstrate that AI outperforms rules.
 
 ## 3. Terminology
 
@@ -36,11 +37,11 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 | Workspace / tenant | Data and operational scope of one enterprise |
 | Internal field | A field with consistent meaning and data type within a workspace, used to configure rules |
 | Mapping | Mapping a channel's input fields to internal fields, including conversion rules |
-| Transaction | An online payment transaction; not a Webhook event or upload attempt |
+| Transaction | An online payment transaction submitted for evaluation |
 | Detection result | The result of one transaction evaluation, with its source and relevant version information |
 | Rule Alert | An alert that a transaction matches one or more rules |
 | AI Alert | An alert that AI detected an abnormal transaction |
-| Case | An investigation case that an Operator explicitly opens from an AI Alert |
+| Case | An investigation case that an Operator opens from one or more eligible AI Alerts |
 | Import batch | One file upload and processing run, with its own progress and results |
 | Plan | A service plan definition, introductory information, pricing and availability status |
 | Workspace subscription | A workspace's time-limited plan entitlement; distinct from the plan definition |
@@ -67,7 +68,7 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 | Manage plan catalogue, pricing and enterprise terms | Administer | No | View own plan | No administration | No administration |
 | Upload onboarding specifications | Yes | Yes, as assigned | Yes, own workspace | Pending confirmation | No |
 | Analyze, map, configure rules and run tests | Track progress; no direct implementation | Perform as assigned | Coordinate confirmation; no self-configuration | No | No |
-| Request / confirm handover | Monitor | Request | Confirm acceptance | No | No |
+| Review and complete handover | Review readiness, approve or return work, and view SME requests for changes | Confirm readiness after testing and submit for approval | Request changes or confirm acceptance and activate | No | No |
 | Manage enterprise members | Detailed administrative scope pending confirmation | No | Yes | No | No |
 | View production data and investigation reports | No | No | Overview/reports as permitted | Operate within workspace | Only data related to assigned cases |
 | Open cases, investigate directly or assign | No | No | No involvement in handling | Yes, subject to plan entitlement | Cannot open/assign; receives assigned cases |
@@ -86,48 +87,49 @@ Platform Admin has full CRUD rights within platform administration; this does no
 3. SME Admin changes the initial password, enters the onboarding UI directly and sees the workspace being implemented. They may upload specifications and track progress, but cannot yet operate in production.
 4. Platform Admin assigns Staff. Staff work on the workspace object in the platform portal, rather than logging into the customer's subdomain.
 5. Staff and the enterprise confirm specifications, fields, mappings and detection conditions; documents may be received outside the system and uploaded by Admin/Staff on the customer's behalf. Specification files are for humans to read/analyze; automatic AI analysis is not assumed.
-6. Staff use customer-provided or self-created samples to check mapping and detection.
-7. Humans assess that the configuration is satisfactory; Staff request handover.
-8. The workspace enters operation when SME Admin confirms acceptance. If it is not satisfactory, SME Admin records requests for additions, which Staff address before requesting handover again.
-9. Staff continue supporting configuration changes after handover; enterprises cannot edit mappings/rules themselves.
+6. Implementation Staff tests the current configuration revision with sample data, assesses the results and explicitly confirms readiness for handover review.
+7. Platform Admin reviews the readiness submission and approves the current configuration revision or returns it to Implementation Staff with comments.
+8. After Platform Admin approval, SME Admin reviews the handover and confirms acceptance to activate the workspace. Activation enables production and starts the term of any Subscription already granted during onboarding.
+9. If SME Admin requests changes before first activation, Platform Admin can see the request and the workspace returns to implementation. Implementation Staff revises and tests the configuration, confirms readiness again and resubmits it to Platform Admin. The earlier approval remains in history. Activation requires Platform Admin approval of the current revision followed by SME Admin acceptance.
+10. Staff continue supporting configuration changes after handover. Enterprises cannot edit mappings or rules themselves.
 
-- ONB-01: Record the actor, time and comments at handover steps.
-- ONB-02: A Subscription granted during onboarding starts its term only when SME Admin confirms handover and the workspace enters operation.
+- ONB-01: Record the actor, time, comments and applicable configuration revision for readiness, approval, requests for changes and acceptance.
+- ONB-02: Activation requires current Staff readiness, Platform Admin approval of the current configuration revision and SME Admin acceptance. A Subscription granted during onboarding starts its term at activation.
 - ONB-03: Onboarding and plan entitlement are independent conditions; granting a Subscription does not bypass handover.
 - ONB-04: Staff may process specifications/samples for onboarding, but cannot view production transactions.
 
-### 5.2 Proposed states for the SRS/SDD
+### 5.2 Onboarding states
 
-`Implementation in progress → Awaiting handover confirmation → Operational`.
+`Implementation in Progress → Awaiting Handover Review → Awaiting Activation → Operational`.
 
-When SME Admin requests additions: `Awaiting handover confirmation → Implementation in progress`. These state names are proposals; enums, workspace suspension and the configuration-change release process after handover are not finalized.
+Platform Admin can return a submission from `Awaiting Handover Review` to `Implementation in Progress`. An SME Admin request for changes before first activation returns the workspace from `Awaiting Activation` to `Implementation in Progress` and requires renewed readiness and approval. These names describe business states. Implementation enums, workspace suspension and the configuration release process after handover remain open.
 
-## 6. Fields, mappings and the three ingestion channels
+## 6. Fields, mappings and ingestion channels
 
 ### 6.1 Confirmed rules
 
-- ING-01: Support REST API + API key, Webhook and CSV/Excel. V1 has one active format configuration per channel; multiple simultaneous formats within a channel are not yet supported.
+- ING-01: Support two channels: REST API authenticated by an API key and CSV/Excel import. Customer systems can automatically submit business events through the same REST API. Each channel has one active format configuration in v1.
 - ING-02: Multiple files may be uploaded in the configured format. CSV and Excel belong to the same import channel; do not assume they have two independent mappings.
-- ING-03: Field names may differ across the three channels. Staff declare/map them to the same internal field set before configuring rules.
+- ING-03: Field names may differ between the two channels. Assigned staff map them to the same internal field set before configuring rules.
 - ING-04: Support custom fields for enterprise domains. Each field has a name, data type, required status and sensitivity classification. Rules may select only declared fields.
 - ING-05: Documentation describes transaction fields generically according to workspace configuration, including types, required status and conversions. The team has not finalized a mandatory standard field list or shared date/time format; do not turn test sample fields into the product data contract.
 - ING-06: Mappings must define type conversions, such as how amounts and date/time values are parsed. Missing required fields or invalid types produce errors and must not undergo detection.
-- ING-07: API/Webhook ingestion is event-based; files are processed in batches, row by row. Channels share business logic after normalization, without separate rule sets per channel.
+- ING-07: The REST API accepts individual submissions. File imports process batches row by row. Both channels use the same business rules after normalization.
 - ING-08: The same normalized data and detection context/version must be evaluated consistently. Do not require identical AI results across runs unless the model contract guarantees that.
 - ING-09: Unreadable files or files missing required columns are rejected before processing. For row-level errors, process valid rows and clearly report invalid rows; provide progress, row counts and results per import.
 
 Illustrative example, not an API contract:
 
-| Internal field | REST API | Webhook | CSV/Excel |
-| --- | --- | --- | --- |
-| Transaction identifier | `payment_id` | `data.txn_id` | `Payment identifier` |
-| Amount | `total` | `data.amount` | `Total amount` |
-| Transaction time | `paid_at` | `data.timestamp` | `Payment date` |
-| Device type, custom field | `device_type` | `data.device` | `Device` |
+| Internal field | REST API | CSV/Excel |
+| --- | --- | --- |
+| Transaction identifier | `payment_id` | `Payment identifier` |
+| Amount | `total` | `Total amount` |
+| Transaction time | `paid_at` | `Payment date` |
+| Device type, custom field | `device_type` | `Device` |
 
 ### 6.2 Duplicate transactions and conflicts
 
-**Confirmed:** transaction identifiers are checked within a workspace across all three channels. Do not create additional transactions/alerts merely because the same transaction is resent through another channel. Concurrent requests must also be handled; UI-only checking is insufficient.
+**Confirmed:** check transaction identifiers within a workspace across both channels. An equivalent retry or cross-channel submission must create no additional transaction, detection attempt or alert. Enforce this in the backend for concurrent submissions.
 
 | Scenario | Target behavior |
 | --- | --- |
@@ -156,7 +158,7 @@ Illustrative example, not an API contract:
 - RUL-01: Empty optional fields cause ordinary comparisons to return no match, including “not equal” and “not in list”. Detecting empty values requires a dedicated condition.
 - RUL-02: A transaction matching multiple rules creates one Rule Alert containing all matching rules/reasons, rather than one alert per rule.
 - RUL-03: Rule explanations include the name, description and actual matched conditions; they must not disclose sensitive fields without permission.
-- RUL-04: Rule Alerts support viewing, monitoring flags and history lookup; investigation cases cannot be opened from Rule Alerts.
+- RUL-04: Operators can view Rule Alerts, matched conditions and alert history. The Rule Alert action for recording review or flagging follow-up remains open. Only eligible AI Alerts can be used to open investigation cases.
 - RUL-05: Do not assign risk or severity to rules on your own. Frequency/history-based rules are outside v1 and must not be assumed to be supported by AI either.
 
 The SRS needs to specify string case sensitivity, empty-value definitions, timezones/numeric precision and rule/mapping version management. Do not choose defaults that change business meaning.
@@ -165,7 +167,7 @@ The SRS needs to specify string case sensitivity, empty-value definitions, timez
 
 ### 8.1 Confirmed
 
-- TST-01: Assigned Platform Staff run tests; JSON for API/Webhook and CSV/Excel for the file channel.
+- TST-01: Assigned Implementation Staff tests the REST API mapping with JSON and the file import mapping with CSV/Excel.
 - TST-02: Use the same mapping, validation and Rule Engine logic as production. Testing does not mean bypassing data checks.
 - TST-03: Display errors or normal/abnormal results, with matched rules, conditions and descriptions.
 - TST-04: Do not create production transactions, alerts, cases, training feedback or statistics.
@@ -192,7 +194,7 @@ Temporary-file cleanup timing, failed-job handling, file size, timeouts, result 
 
 - PLN-01: Plans apply per workspace; roles and object scope are still checked separately.
 - PLN-02: The landing-page selection expresses initial needs. Platform Admin may change the plan as agreed, activate, renew and adjust its term.
-- PLN-03: A Subscription granted during onboarding starts its term when SME Admin confirms handover. An upgrade for an operational workspace starts on successful activation.
+- PLN-03: A Subscription granted during onboarding starts its term when SME Admin accepts the approved handover and activates the workspace. An upgrade for an operational workspace starts on successful activation.
 - PLN-04: Renewal while active extends the current expiry date; after expiry, the term starts on reactivation. Use calendar months/years; if the corresponding day does not exist, use the last day of the month.
 - PLN-05: On expiry or early downgrade to Free by Admin: new transactions use rules, and no new cases may be opened, including from old AI Alerts. Existing cases may continue to investigation completion; old history/reports remain accessible according to permissions.
 - PLN-06: AI unavailability does not remove the enterprise's Subscription. Use fallback and record the detection source.
@@ -235,22 +237,21 @@ Plan entitlements and workflows can be tested with a controlled simulated adapte
 
 ### 11.1 Confirmed
 
-- CAS-01: Rule Alerts are only for monitoring/flagging/lookup, not investigation. Operators review AI Alerts to open cases.
-- CAS-02: A case may handle one or more related alerts/transactions within the workspace; link details and grouping conditions still need design.
+- CAS-01: Operators review Rule Alerts for monitoring and look up their history. Investigation cases originate from eligible AI Alerts.
+- CAS-02: With an active Subscription, an Operator can create one case by selecting one or more related, eligible AI Alerts from the same workspace. Validate all selected alerts before creating the case. Each AI Alert can be linked to at most one case.
 - CAS-03: Operators may investigate, prepare reports and confirm conclusions themselves; enterprises with limited staff do not need a second person.
 - CAS-04: Operators may assign an Investigator. Investigators access only assigned cases and data needed for them, and submit reports; the Operator gives final confirmation.
 - CAS-05: SME Admin views overviews/reports without directly participating in handling. All handling steps need history for enterprise lookup.
 - CAS-06: On loss of Subscription, allow completion of existing cases under PLN-05; do not allow new cases by renaming the action.
+- CAS-07: Creating a case sets it to `Open`. The first assignment or the Operator starting their own investigation moves it to `Investigating`. Submitting a report moves it to `Pending Review`. The Operator confirms the final conclusion to move it to `Closed`, or requests additional work to return it to `Investigating` while retaining the submitted report. Record reassignment separately from case status.
 
 ### 11.2 Proposed, not fully confirmed
 
-- States: `Under investigation → Awaiting Operator confirmation → Closed`. Requests for additions by the Operator return the case to investigation; assignment is a separate attribute/history, without a new state for every reassignment.
 - Allow Operators to reopen closed cases with a mandatory reason; preserve old reports/conclusions and add new history. Reopening rights after Subscription expiry need agreement.
 - Suggested conclusions: confirmed fraud, abnormal but legitimate, false alert, insufficient evidence. Official definitions and enums are needed; insufficient evidence must not automatically become a training label.
 - Cases with multiple transactions need verification results per transaction for accurate feedback; do not apply one label to all transactions merely because they share a case.
-- Whether an alert may belong to multiple cases is not finalized; no workflow exists yet for merging/splitting existing cases. Do not infer these features from “grouping alerts into a case”.
 
-## 12. API keys and Webhooks
+## 12. REST API credentials and event submissions
 
 ### 12.1 Confirmed API key rules
 
@@ -259,18 +260,11 @@ Plan entitlements and workflows can be tested with a controlled simulated adapte
 - KEY-03: Display the full key only once at issuance; store verification information, with no feature to retrieve old keys. Do not put keys in logs or the repository.
 - KEY-04: Revocation stops acceptance immediately. For replacement: issue a new key, have the customer update/test, then revoke the old key; two keys are allowed during transition.
 
-### 12.2 Proposed Webhook direction for confirmation in the integration contract
+### 12.2 Automated event submissions
 
-The user agreed to follow the development team's proposal; the details below are a proposed design, not a contract approved by both parties:
-
-- HTTPS and a separate connection secret, distinct from the REST API key.
-- HMAC-SHA256 covering the event ID, timestamp and raw body; authenticate before mapping/processing. Protect the HMAC verification secret through secret management; do not mistakenly apply REST API key hash-only storage, because the server needs the secret to compute HMAC.
-- Check timestamps within an allowed window and event IDs per connection to limit replay; event IDs differ from transaction IDs. Sign both timestamp and event ID; do not trust unauthenticated headers.
-- Valid retries must not be successfully processed twice; previous failures still need a safe retry path. Do not mark completion merely because the request was received.
-- Persist receipt durably before acknowledging success according to the contract; the specific mechanism is not finalized. After authentication, cross-channel transaction deduplication still applies.
-- Direct third-party integrations must support the provider's signature scheme; do not assume providers use the FraudGuard contract.
-
-Design references: [Standard Webhooks](https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md), [GitHub signature verification](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries). Replay windows, event ID retention, retry/backoff, error responses and secret rotation are not finalized.
+- Customer systems send events over HTTPS to the REST ingestion API using a workspace-scoped API key. Authenticate the key and check submission permission before validating, normalizing or accepting the payload.
+- Persist acceptance durably before acknowledging success. An acceptance response and detection completion are separate outcomes. Apply the duplicate and conflict rules in section 6.2 to retries and cross-channel submissions.
+- Confirm the endpoint, key header, payload and response formats, and retry behavior in the API contract.
 
 ## 13. Sensitive data protection
 
@@ -303,7 +297,7 @@ These describe target behavior, not executed test results. Each test needs seed 
 | AC-01 | A workspace A account accesses workspace B through a direct API call | Rejected without disclosing B's data | ACC-02, ACC-05 |
 | AC-02 | An account that has not changed its initial password calls an operational feature | Blocked until password change is completed | ACC-04 |
 | AC-03 | A workspace has a Subscription before handover | Production remains unavailable; the term does not run during onboarding | ONB-02, ONB-03 |
-| AC-04 | Staff request handover, SME Admin requests additions, then confirms on a later attempt | History is retained; only acceptance confirmation enables operation | Section 5 |
+| AC-04 | After Platform Admin approval and before first activation, SME Admin requests changes | Platform Admin sees the request. Retain the prior approval in history. Reject activation until Staff retests and confirms readiness, Platform Admin approves the revised configuration, and SME Admin accepts | ONB-01, ONB-02 |
 | AC-05 | The same valid transaction passes through each corresponding mapping | Normalizes to the same meaning; test each channel independently without duplicate-data interference | ING-03, ING-07 |
 | AC-06 | Two channels submit the same ID and content concurrently | One production transaction; no duplicate detection/alerts due to repeated ingestion | Section 6.2 |
 | AC-07 | Missing required field / invalid type | Clear errors; no detection on invalid data | ING-06 |
@@ -322,8 +316,10 @@ These describe target behavior, not executed test results. Each test needs seed 
 | AC-20 | Key revoked or submitted to another workspace | Rejected; the new key works in the correct workspace during transition | KEY-02..04 |
 | AC-21 | Default API returns a transaction with sensitive fields | Response contains no plaintext, including fields hidden in the UI | SEC-01 |
 | AC-22 | Unauthorized user calls the plaintext-view API | Rejected; authorized users see only permitted objects, with an audit trail | SEC-02, SEC-03 |
+| AC-23 | Operator selects multiple eligible AI Alerts from one workspace under an active Subscription | One Open case contains the selected alerts. Reject ineligible selections without creating partial links | CAS-02 |
+| AC-24 | Investigator submits a report, then Operator requests more work and later accepts the revised report | Case moves from Investigating to Pending Review, back to Investigating and then through Pending Review to Closed. Retain the earlier report and review history | CAS-04, CAS-07 |
 
-Tests for conflicts/testing new submissions, case reopening and Webhooks must be added after the relevant designs are finalized; do not mark them as accepted.
+Add tests for conflict handling, case reopening and REST delivery details as those designs are finalized.
 
 ## 15. Inputs to ERD, SRS and SDD
 
@@ -341,7 +337,7 @@ This is a list of business concepts, not a requirement for one table per row or 
 | Detection | A transaction may have multiple processing attempts, such as fallback then AI; sources and versions must not be lost |
 | Investigation | Alerts, cases, alert/transaction links, assignment, reports, conclusions, history; feedback labels need agreement |
 | Plans | Plan catalogue, term prices, fixed v1 entitlements, grants/renewals and adjustment history |
-| Integration/security | API keys, Webhook connections, event processing states, encryption key references, audit |
+| Integration/security | API keys, event processing states, encryption key references, audit |
 
 ### 15.2 Next documentation work
 
@@ -360,14 +356,15 @@ Do not claim that new rules in this document already match the code. A separate 
 | OPEN-01 | Required fields; empty-value definitions, types/formats, timezones, unique transaction identifiers | Mapping, validation, ERD |
 | OPEN-02 | Mapping and rule release/versioning; old data after configuration changes | Traceability, consistency |
 | OPEN-03 | Testing conflicting submissions, permissions, temporary storage/retention and comparison | Ingestion, UI, security |
-| OPEN-04 | Case states, reopening, alert grouping, per-transaction conclusions | ERD, permissions, feedback |
+| OPEN-04 | Closed-case reopening and per-transaction conclusions | ERD, permissions, feedback |
 | OPEN-05 | AI inputs/outputs, dataset/features, timeouts, recovery reanalysis and labels | AI integration and evaluation |
-| OPEN-06 | Specific Webhook authentication, timestamp windows, retries, event retention, secret rotation | Contract and operations |
+| OPEN-06 | REST ingestion endpoint, key header, payload and response formats, and retry behavior | Contract and operations |
 | OPEN-07 | Sensitive-field list, plaintext viewers, keys/backup/retention | Security SDD |
 | OPEN-08 | Account activation/recovery, account locking and administrative data-deletion policy | IAM and data lifecycle |
 | OPEN-09 | Realtime/batch performance, upload limits, system load, storage, backup/recovery | Measurable NFRs |
 | OPEN-10 | Dashboard, report, export, in-app/email and platform monitoring details | Required by proposal, not yet analyzed in detail |
 | OPEN-11 | Exact expiry boundaries, in-flight requests, concurrent grants/renewals and plan exceptions | Subscription lifecycle |
+| OPEN-12 | Whether the Rule Alert action records review or flags the alert for follow-up | Operator workflow, UI, tests |
 
 ## 17. Compare with the proposal before releasing official documentation
 

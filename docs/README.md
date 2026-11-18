@@ -16,6 +16,21 @@ Read [Software v1 business specification](02_Reports/SOFTWARE_V1_BUSINESS_SPEC.m
 
 The SDD and test catalogue use the agreed SRS sections 1, 2, 4 and 5. Detailed functional-requirement mapping follows the finalized SRS section 3. Designed test cases and expected outcomes are not test-execution evidence.
 
+## Report revisions after Review 2
+
+Use the approved registration v3 and the confirmed demo workflows as the baseline for the next report revision. Make report edits in the working Google Docs and update the linked test catalogue and diagram sources as needed. After team review, export fresh PDFs from the Google Docs and place them in the matching report folders. The current PDFs are Review 2 snapshots.
+
+The working business specification now incorporates the agreed changes to WF-01, WF-03 and WF-04 below. Use those sections when revising the reports. The broader input scope and AI output for WF-02 still need to be specified.
+
+| Workflow | Revision notes |
+| --- | --- |
+| WF-01 Enterprise setup | If the SME Admin requests changes before first activation, make the request visible to the Platform Admin. Implementation Staff revises and tests the configuration, then resubmits it for Platform Admin approval. Activation requires approval of the current configuration and confirmation by the SME Admin. An initially granted Subscription starts at activation. |
+| WF-02 AI detection | Update the input scope to cover business events and measurements, including electricity readings, beyond online payments. For mixed CSV imports, report invalid rows and process valid rows. Confirm with the mentor and team whether AI returns one result per reading or one result for a period spanning multiple readings before specifying alert linkage. |
+| WF-03 Rule-based detection | Align the reports with the two channels in the working specification: REST API authenticated by an API key, including automated event submissions, and CSV/Excel import. Describe how the Operator reviews matched conditions. Confirm whether the alert action records review or flags the alert for follow-up before naming it in the workflow and tests. |
+| WF-04 Investigation | Align the workflow with the SRS case lifecycle: Open → Investigating → Pending Review → Closed. A request for additional investigation returns the case to Investigating. Retain the flow for linking multiple eligible AI Alerts and verify the alert inputs for the combined WF-02/WF-04 demo. |
+
+Review Reports 1–2 and Project Tracking for scope, membership, ownership, and milestones. Align the working business specification and Report 3 first, then update Report 4 and Report 5. Add four end-to-end activity diagrams alongside the applicable module diagrams. Review the existing state machines against the confirmed lifecycle rules and link workflow evidence from the matching folders in the submission drive's `06_WorkflowDemo` directory.
+
 ## Workflow
 
 1. The team edits source documents in the internal workspace.
