@@ -1,8 +1,8 @@
 "use client";
 import { isSandboxTransaction } from '@/utils/transaction-origin';
-import { enterprisePlan } from "@/utils/enterprise";
+import { enterprisePlan, countOpenUnlinkedAlerts, countActiveInvestigationCases, hasLegacyCaseFieldPatch } from "@/utils/enterprise";
 
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FraudGuardFilters,
   PaginationState,
@@ -15,9 +15,43 @@ import type {
   AuditLogEntry,
   UserProfile,
 } from "@/types/fraudguard";
+import type { InvestigationCase } from "@/types/investigation-case";
+import type { InvestigationReportFeedback } from "@/types/report-feedback";
 import { previewTransactionImport } from "@/utils/transaction-import";
-import { canUpdateCase, isActiveInvestigation, isCaseAssignee } from "@/utils/case-workflow";
-import { auditForUser, canDeploy, evaluateSetupReadiness, reconcileEnterpriseProjects, visibleEnterprises, transactionsForEnterprise, validateOnboardingSave } from "@/utils/enterprise";
+import { auditForUser, canDeploy, evaluateSetupReadiness, generateEnterpriseCode, visibleEnterprises, transactionsForEnterprise, validateOnboardingSave } from "@/utils/enterprise";
+import { evaluateInvestigationCaseReadAccess } from "@/utils/investigation-case";
+import { CASE_MIGRATION_VERSION, type LegacyCaseArchiveEntry, type WorkspaceMigrationMeta } from "@/utils/case-migration";
+import {
+  WORKSPACE_SCHEMA_VERSION,
+  mergeAndPersistWorkspaceSlice,
+  persistWorkspaceAndUsers,
+  recoverWorkspaceStorage,
+  restoreWorkspaceSnapshot,
+  type PersistCoordinatedResult,
+  type PreDemoWorkspaceSnapshot,
+  type WorkspacePayloadV4,
+  type WorkspaceRecoveryJournal,
+  type WorkspaceRestoreResult,
+  type WorkspaceRestoreStatus,
+  type WorkspaceStorageErrorCode,
+} from "@/utils/workspace-storage";
+import {
+  useInvestigationCases,
+  type ConfirmInvestigationReportCommandArgs,
+  type InvestigationActionOutcome,
+  type RequestInvestigationRevisionCommandArgs,
+  type SubmitConfirmedReportFeedbackCommandArgs,
+  type SubmitFeedbackOutcome,
+  type SubmitInvestigationReportCommandArgs,
+} from "@/hooks/useInvestigationCases";
+import {
+  WF04_DEMO_ENTERPRISES,
+  applyAndPersistWf04Demo,
+  resolveWf04DevToolsEnabled,
+  restoreAndPersistPreDemoWorkspace,
+  syncWf04DevToolsWindowBinding,
+  type FraudGuardWf04DevTools,
+} from "@/data/wf04-demo";
 import { demoEnterprises } from "@/data/fraudguard-enterprises";
 import { type Enterprise } from "@/types/enterprise";
 import { MembersView } from "./MembersView";
@@ -33,7 +67,7 @@ import { AlertCaseDrawer } from "./AlertCaseDrawer";
 import { AlertsView } from "./AlertsView";
 import { CasesView } from "./CasesView";
 import { RuleSetsView } from './RuleSetsView';
-import { activeSetRules, migrateProjectSets, canChangeEnterpriseSets, type LegacyRuleSet, type ManagedRuleSet } from '@/utils/rule-set-lifecycle';
+import { activeSetRules, canChangeEnterpriseSets, type LegacyRuleSet, type ManagedRuleSet } from '@/utils/rule-set-lifecycle';
 import { RulesView } from "./RulesView";
 import { ProjectsView } from "./ProjectsView";
 import { ReportsView } from "./ReportsView";
@@ -49,6 +83,22 @@ import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { OnboardingView } from "./OnboardingView";
 import { RuleTestingView } from "./RuleTestingView";
 import styles from "./SecurityDashboard.module.css";
+
+declare global {
+  interface Window {
+    __fgWf04DevTools?: FraudGuardWf04DevTools;
+  }
+}
+
+function isBrowserWf04DevToolsActive(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    resolveWf04DevToolsEnabled({
+      search: window.location.search,
+      getStorage: () => window.localStorage,
+    })
+  );
+}
 
 interface FraudGuardDashboardProps {
   initialTransactions: TransactionRisk[];
@@ -67,6 +117,26 @@ const initialFilters: FraudGuardFilters = {
   range: 30,
 };
 
+const INITIAL_MIGRATION_META: WorkspaceMigrationMeta = {
+  migrationVersion: CASE_MIGRATION_VERSION,
+  migratedAt: "",
+  sourceSchema: "seed",
+  migratedCaseCount: 0,
+  archivedLegacyCount: 0,
+  preservedExistingCaseCount: 0,
+  notes: [],
+};
+
+function serializeCoordinatedSnapshot(
+  payload: WorkspacePayloadV4,
+  snapshotUsers: readonly UserProfile[],
+): string {
+  return JSON.stringify({
+    payload,
+    users: snapshotUsers,
+  });
+}
+
 function FraudGuardDashboardContent({
   initialTransactions,
   initialRules,
@@ -74,7 +144,7 @@ function FraudGuardDashboardContent({
   initialAuditLogs: defaultAuditLogs = initialAuditLogs,
 }: FraudGuardDashboardProps) {
   const { t, language } = useLanguage();
-  // Data state (mutable for case management)
+  // Data state (managed under strict v4 schema & restoreStatus gate)
   const [users, setUsers] = useState<UserProfile[]>(DEMO_USERS);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [showTestData, setShowTestData] = useState(false);
@@ -85,43 +155,25 @@ function FraudGuardDashboardContent({
   const [deploymentEnterpriseId, setDeploymentEnterpriseId] = useState('');
   const [ruleSets, setRuleSets] = useState<ManagedRuleSet[]>([]);
   const [projects, setProjects] = useState(defaultProjects);
-  const [restored, setRestored] = useState(false);
-  const [storageError, setStorageError] = useState(false);
-  useEffect(() => {
-    try {
-      const savedUsers = JSON.parse(localStorage.getItem('fraudguard-demo-users-v1') || 'null');
-      if (Array.isArray(savedUsers)) setUsers([...DEMO_USERS.filter(u => !u.enterpriseId), ...savedUsers.filter((u: UserProfile) => u.id && u.enterpriseId && u.name && u.email && ['SME Admin','Operator','Investigator'].includes(u.role))]);
-      const current = localStorage.getItem('fraudguard-demo-workspace-v3');
-      const saved = JSON.parse(current || localStorage.getItem('fraudguard-demo-workspace-v2') || 'null');
-      if (saved && Array.isArray(saved.rules) && saved.rules.every((r: RuleTemplate) => r.id && r.conditionGroup?.children && r.appliesTo?.projects)) {
-        setRules(saved.rules);
-        const mergedProjects = Array.isArray(saved.projects) && saved.projects.every((p: ProjectItem) => p.id && p.quota)
-          ? [...saved.projects, ...defaultProjects.filter(p => !saved.projects.some((old: ProjectItem) => old.id === p.id))]
-          : defaultProjects;
-        setProjects(mergedProjects);
-        let loadedRuleSets: ManagedRuleSet[] = [];
-        if (Array.isArray(saved.ruleSets)) {
-          if (current) { loadedRuleSets = saved.ruleSets; setRuleSets(saved.ruleSets); setLegacyUnassigned(saved.legacyUnassigned ?? []); }
-          else { const migrated = migrateProjectSets(saved.ruleSets, demoEnterprises); loadedRuleSets = migrated.sets; setRuleSets(migrated.sets); setLegacyUnassigned(migrated.unassigned); }
-        }
-        if (current && Array.isArray(saved.enterprises)) {
-          setEnterprises(reconcileEnterpriseProjects(saved.enterprises, demoEnterprises, mergedProjects, loadedRuleSets));
-        }
-        if (Array.isArray(saved.transactions) && saved.transactions.every((tx: TransactionRisk) => tx.id && tx.processedAt && Array.isArray(tx.triggeredRules))) setTransactions(saved.transactions);
-        if (Array.isArray(saved.auditLogs) && saved.auditLogs.every((log: AuditLogEntry) => log.id && log.actor && log.action)) setAuditLogs(saved.auditLogs);
-      }
-    } catch { setStorageError(true); }
-    setRestored(true);
-  }, []);
-  useEffect(() => {
-    if (!restored) return;
-    try {
-      localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises, legacyUnassigned, projects, transactions, auditLogs }));
-      setStorageError(false);
-    } catch { setStorageError(true); }
-  }, [rules, ruleSets, enterprises, legacyUnassigned, projects, transactions, auditLogs, restored]);
-
-  useEffect(() => { if (restored) { try { localStorage.setItem('fraudguard-demo-users-v1', JSON.stringify(users.filter(u => u.enterpriseId))); } catch { setStorageError(true); } } }, [users, restored]);
+  const [legacyCaseArchive, setLegacyCaseArchive] = useState<LegacyCaseArchiveEntry[]>([]);
+  const [migrationMeta, setMigrationMeta] = useState<WorkspaceMigrationMeta>(INITIAL_MIGRATION_META);
+  const [wf04DemoActive, setWf04DemoActive] = useState(false);
+  const [preDemoSnapshot, setPreDemoSnapshot] = useState<PreDemoWorkspaceSnapshot | undefined>(undefined);
+  const [restoreStatus, setRestoreStatus] = useState<WorkspaceRestoreStatus>("pending");
+  const [restoreErrorCode, setRestoreErrorCode] = useState<WorkspaceStorageErrorCode | null>(null);
+  const [storageErrorCode, setStorageErrorCode] = useState<WorkspaceStorageErrorCode | null>(null);
+  const [storageFailureKind, setStorageFailureKind] = useState<"generic" | "demoLoad" | "demoRestore" | null>(null);
+  const [storageErrorRolledBack, setStorageErrorRolledBack] = useState(false);
+  const [recoveryJournal, setRecoveryJournal] = useState<WorkspaceRecoveryJournal | undefined>(undefined);
+  const [cleanupPending, setCleanupPending] = useState(false);
+  const [hasUnsavedSessionChanges, setHasUnsavedSessionChanges] = useState(false);
+  const [devSampleToolsEnabled, setDevSampleToolsEnabled] = useState(false);
+  const devSampleToolsActiveRef = useRef(false);
+  const [hasRestoredMount, setHasRestoredMount] = useState(false);
+  const didMountRestoreRef = useRef(false);
+  const lastPersistedSnapshotRef = useRef<string | null>(null);
+  const lastHookPayloadRef = useRef<WorkspacePayloadV4 | null>(null);
+  const reportFeedbacksRef = useRef<readonly InvestigationReportFeedback[]>([]);
 
   // RBAC state
   const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_DEMO_USER);
@@ -130,10 +182,265 @@ function FraudGuardDashboardContent({
     [currentUser.role],
   );
 
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [alertSelectionResetKey, setAlertSelectionResetKey] = useState(0);
+
+  const buildWorkspacePayload = useCallback(
+    (args: {
+      nextCases: readonly InvestigationCase[];
+      nextFeedbacks?: readonly InvestigationReportFeedback[];
+      auditEntry?: AuditLogEntry;
+    }): WorkspacePayloadV4 => {
+      const resolvedFeedbacks = args.nextFeedbacks ?? reportFeedbacksRef.current;
+      const built: WorkspacePayloadV4 = {
+        schemaVersion: WORKSPACE_SCHEMA_VERSION,
+        rules,
+        ruleSets,
+        enterprises,
+        legacyUnassigned,
+        projects,
+        transactions,
+        auditLogs: args.auditEntry ? [args.auditEntry, ...auditLogs] : auditLogs,
+        investigationCases: args.nextCases,
+        reportFeedbacks: resolvedFeedbacks,
+        legacyCaseArchive,
+        migrationMeta,
+        wf04DemoActive,
+        ...(preDemoSnapshot ? { preDemoSnapshot } : {}),
+      };
+      lastHookPayloadRef.current = built;
+      return built;
+    },
+    [
+      rules,
+      ruleSets,
+      enterprises,
+      legacyUnassigned,
+      projects,
+      transactions,
+      auditLogs,
+      legacyCaseArchive,
+      migrationMeta,
+      wf04DemoActive,
+      preDemoSnapshot,
+    ],
+  );
+
+  const caseHook = useInvestigationCases({
+    enterprises,
+    projects,
+    alerts: transactions,
+    legacyArchive: legacyCaseArchive,
+    users,
+    currentActor: currentUser,
+    restoreStatus,
+    persistUsersWithWorkspace: true,
+    buildWorkspacePayload,
+    onFeedbacksChange: (nextFeedbacks) => {
+      reportFeedbacksRef.current = nextFeedbacks;
+    },
+    onAuditEntry: (entry) => setAuditLogs((logs) => [entry, ...logs]),
+  });
+
+  const { replaceCases, retryPersist } = caseHook;
+
+  const currentWorkspacePayload = useMemo(
+    () =>
+      buildWorkspacePayload({
+        nextCases: caseHook.cases,
+        nextFeedbacks: caseHook.feedbacks,
+      }),
+    [buildWorkspacePayload, caseHook.cases, caseHook.feedbacks],
+  );
+
+  const handleCoordinatedFailure = useCallback(
+    (
+      failure: Extract<PersistCoordinatedResult, { ok: false }>,
+      kind: "generic" | "demoLoad" | "demoRestore",
+      markSessionUnsaved: boolean,
+    ) => {
+      const isCleanup =
+        failure.errorCode === "STORAGE_CLEANUP_FAILED" ||
+        (Boolean(failure.committed) && Boolean(failure.cleanupPending));
+
+      if (failure.preservePreDemoSnapshot && !isCleanup) {
+        setPreDemoSnapshot(failure.preservePreDemoSnapshot);
+        setWf04DemoActive(true);
+      }
+      if (
+        isCleanup ||
+        failure.recoveryRequired ||
+        failure.rollbackFailed ||
+        failure.errorCode === "STORAGE_ROLLBACK_FAILED" ||
+        failure.errorCode === "STORAGE_RECOVERY_REQUIRED"
+      ) {
+        setRestoreStatus("recovery_required");
+        setRecoveryJournal(failure.recoveryJournal);
+        setStorageErrorRolledBack(false);
+        setCleanupPending(isCleanup);
+      } else {
+        setCleanupPending(false);
+        setStorageErrorRolledBack(failure.rolledBack);
+      }
+      setStorageErrorCode(failure.errorCode);
+      setStorageFailureKind(kind);
+      if (markSessionUnsaved && !isCleanup) {
+        setHasUnsavedSessionChanges(true);
+      }
+    },
+    [],
+  );
+
+  const applyRestoredResult = useCallback(
+    (result: WorkspaceRestoreResult) => {
+      const isCleanup =
+        result.status === "recovery_required" &&
+        (Boolean(result.cleanupPending) || result.errorCode === "STORAGE_CLEANUP_FAILED");
+
+      setUsers([...result.users]);
+      setRules([...result.payload.rules]);
+      setRuleSets([...result.payload.ruleSets]);
+      setEnterprises([...result.payload.enterprises]);
+      setLegacyUnassigned([...result.payload.legacyUnassigned]);
+      setProjects([...result.payload.projects]);
+      setTransactions([...result.payload.transactions]);
+      setAuditLogs([...result.payload.auditLogs]);
+      setLegacyCaseArchive([...result.payload.legacyCaseArchive]);
+      setMigrationMeta(result.payload.migrationMeta);
+      setWf04DemoActive(Boolean(result.payload.wf04DemoActive));
+      setPreDemoSnapshot(result.payload.preDemoSnapshot);
+      const restoredFeedbacks = [...(result.payload.reportFeedbacks ?? [])];
+      reportFeedbacksRef.current = restoredFeedbacks;
+      setRestoreStatus(result.status);
+      setRestoreErrorCode(result.errorCode ?? null);
+      setRecoveryJournal(result.recoveryJournal);
+      setCleanupPending(isCleanup);
+      setStorageFailureKind(null);
+      setStorageErrorRolledBack(false);
+      if (result.status === "ready" && result.canPersist) {
+        lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(
+          result.payload,
+          result.users,
+        );
+        setStorageErrorCode(null);
+        setHasUnsavedSessionChanges(false);
+      } else {
+        lastPersistedSnapshotRef.current = null;
+        setStorageErrorCode(
+          isCleanup
+            ? "STORAGE_CLEANUP_FAILED"
+            : result.status === "ready" && result.errorCode
+              ? result.errorCode
+              : result.status === "recovery_required"
+                ? (result.errorCode ?? "STORAGE_RECOVERY_REQUIRED")
+                : null,
+        );
+        setHasUnsavedSessionChanges(result.status === "ready" && !result.canPersist);
+      }
+      replaceCases(result.payload.investigationCases, {
+        nextFeedbacks: restoredFeedbacks,
+        persisted: result.canPersist,
+        persistedAt: result.canPersist ? new Date().toISOString() : null,
+        committed: isCleanup,
+        cleanupPending: isCleanup,
+        storageError: result.errorCode
+          ? {
+              code: result.errorCode,
+              error: result.error ?? "",
+              committed: isCleanup,
+              cleanupPending: isCleanup,
+              recoveryRequired: result.status === "recovery_required",
+              recoveryJournal: result.recoveryJournal,
+              ...(result.payload.preDemoSnapshot && !isCleanup
+                ? { preservePreDemoSnapshot: result.payload.preDemoSnapshot }
+                : {}),
+            }
+          : null,
+      });
+      setCurrentUser((prev) => {
+        const matched = result.users.find((u) => u.id === prev.id);
+        return matched ?? result.users.find((u) => u.id === DEFAULT_DEMO_USER.id) ?? result.users[0] ?? prev;
+      });
+      setHasRestoredMount(true);
+    },
+    [replaceCases],
+  );
+
+  useEffect(() => {
+    if (didMountRestoreRef.current) return;
+    didMountRestoreRef.current = true;
+    const result = restoreWorkspaceSnapshot({
+      defaultRules: initialRules,
+      defaultEnterprises: demoEnterprises,
+      defaultProjects,
+      defaultTransactions: initialTransactions,
+      defaultAuditLogs,
+      defaultUsers: DEMO_USERS,
+      extraFallbackEnterprises: WF04_DEMO_ENTERPRISES,
+      migratedAt: new Date().toISOString(),
+    });
+    applyRestoredResult(result);
+  }, [initialRules, defaultProjects, initialTransactions, defaultAuditLogs, applyRestoredResult]);
+
+  // Coordinated autosave: never overwrites rollback/recovery/cleanup states or runs when paused after failure.
+  useEffect(() => {
+    if (!hasRestoredMount || restoreStatus !== "ready" || cleanupPending) return;
+    if (
+      storageErrorCode !== null ||
+      hasUnsavedSessionChanges ||
+      caseHook.hasUnsavedChanges ||
+      caseHook.storageError !== null ||
+      recoveryJournal !== undefined
+    ) {
+      return;
+    }
+
+    const nextSnapshotKey = serializeCoordinatedSnapshot(currentWorkspacePayload, users);
+    if (lastPersistedSnapshotRef.current === nextSnapshotKey) {
+      return;
+    }
+
+    const result = persistWorkspaceAndUsers({
+      payload: currentWorkspacePayload,
+      users,
+      restoreStatus,
+      operation: "autosave",
+    });
+    if (result.ok) {
+      lastPersistedSnapshotRef.current = nextSnapshotKey;
+      setStorageErrorCode(null);
+      setStorageFailureKind(null);
+      setStorageErrorRolledBack(false);
+      setCleanupPending(false);
+      setHasUnsavedSessionChanges(false);
+    } else {
+      handleCoordinatedFailure(
+        result,
+        "generic",
+        !(result.committed && result.cleanupPending),
+      );
+    }
+  }, [
+    currentWorkspacePayload,
+    users,
+    hasRestoredMount,
+    restoreStatus,
+    cleanupPending,
+    storageErrorCode,
+    hasUnsavedSessionChanges,
+    caseHook.hasUnsavedChanges,
+    caseHook.storageError,
+    recoveryJournal,
+    handleCoordinatedFailure,
+  ]);
+
   const accessibleEnterprises = visibleEnterprises(currentUser, enterprises);
   const deploymentEnterprise = accessibleEnterprises.find(e => e.id === deploymentEnterpriseId) ?? accessibleEnterprises[0];
   const assignedProjectIds = accessibleEnterprises.flatMap(e => e.projectIds);
-  const scopedTransactions = useMemo(() => transactionsForEnterprise(transactions, currentUser, enterprises), [transactions, enterprises, currentUser]);
+  const scopedTransactions = useMemo(
+    () => transactionsForEnterprise(transactions, currentUser, enterprises, caseHook.cases, legacyCaseArchive),
+    [transactions, enterprises, currentUser, caseHook.cases, legacyCaseArchive],
+  );
   const enterpriseTransactions = useMemo(() => scopedTransactions.filter(tx => !isSandboxTransaction(tx)), [scopedTransactions]);
   const dashboardTransactions = useMemo(() => scopedTransactions.filter(tx => isSandboxTransaction(tx) === showTestData), [scopedTransactions, showTestData]);
   const scopedRules = rules.filter(r => !r.enterpriseId || r.enterpriseId === deploymentEnterprise?.id).filter(r => r.appliesTo.projects.includes('*') || r.appliesTo.projects.some(id => deploymentEnterprise?.projectIds.includes(id)));
@@ -144,8 +451,464 @@ function FraudGuardDashboardContent({
     setFilters(initialFilters);
     setDrawerOpen(false);
     setSelectedTransaction(null);
+    setSelectedCaseId(null);
+    setAlertSelectionResetKey(prev => prev + 1);
     setActiveNavItem(getRoleHomeView(user.role));
   }, []);
+
+  const handleLoadWf04Demo = useCallback(() => {
+    if (!devSampleToolsActiveRef.current || !isBrowserWf04DevToolsActive()) {
+      return;
+    }
+    const res = applyAndPersistWf04Demo({
+      includeReviewSamples: true,
+      currentPayload: currentWorkspacePayload,
+      currentUsers: users,
+      savedAt: new Date().toISOString(),
+      restoreStatus,
+    });
+    const isCleanup =
+      !res.ok && Boolean(res.committed) && Boolean(res.cleanupPending);
+    if (!res.ok && !isCleanup) {
+      handleCoordinatedFailure(res, "demoLoad", false);
+      return;
+    }
+
+    if (res.ok) {
+      lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(res.payload, res.users);
+      setStorageErrorCode(null);
+      setStorageFailureKind(null);
+      setStorageErrorRolledBack(false);
+      setCleanupPending(false);
+      setHasUnsavedSessionChanges(false);
+      setRestoreStatus("ready");
+      setRecoveryJournal(undefined);
+    } else {
+      lastPersistedSnapshotRef.current = null;
+      handleCoordinatedFailure(res, "demoLoad", false);
+    }
+
+    setUsers([...res.users]);
+    setRules([...res.payload.rules]);
+    setRuleSets([...res.payload.ruleSets]);
+    setEnterprises([...res.payload.enterprises]);
+    setLegacyUnassigned([...res.payload.legacyUnassigned]);
+    setProjects([...res.payload.projects]);
+    setTransactions([...res.payload.transactions]);
+    setAuditLogs([...res.payload.auditLogs]);
+    setLegacyCaseArchive([...res.payload.legacyCaseArchive]);
+    setMigrationMeta(res.payload.migrationMeta);
+    setWf04DemoActive(Boolean(res.payload.wf04DemoActive));
+    setPreDemoSnapshot(res.payload.preDemoSnapshot);
+    const demoFeedbacks = [...(res.payload.reportFeedbacks ?? [])];
+    reportFeedbacksRef.current = demoFeedbacks;
+    replaceCases(res.payload.investigationCases, {
+      nextFeedbacks: demoFeedbacks,
+      persisted: res.ok,
+      persistedAt: res.ok ? new Date().toISOString() : null,
+      committed: isCleanup,
+      cleanupPending: isCleanup,
+      ...(isCleanup && !res.ok
+        ? {
+            storageError: {
+              code: res.errorCode,
+              error: res.error,
+              committed: true,
+              cleanupPending: true,
+              recoveryRequired: true,
+              recoveryJournal: res.recoveryJournal,
+            },
+          }
+        : {}),
+    });
+    setSelectedCaseId(null);
+    setDrawerOpen(false);
+    setSelectedTransaction(null);
+    setAlertSelectionResetKey(prev => prev + 1);
+  }, [currentWorkspacePayload, users, restoreStatus, handleCoordinatedFailure, replaceCases]);
+
+  const handleRestorePreDemo = useCallback(() => {
+    if (!devSampleToolsActiveRef.current || !isBrowserWf04DevToolsActive()) {
+      return;
+    }
+    const res = restoreAndPersistPreDemoWorkspace({
+      currentPayload: currentWorkspacePayload,
+      currentUsers: users,
+      restoreStatus,
+    });
+    const isCleanup =
+      !res.ok && Boolean(res.committed) && Boolean(res.cleanupPending);
+    if (!res.ok && !isCleanup) {
+      handleCoordinatedFailure(res, "demoRestore", false);
+      return;
+    }
+
+    if (res.ok) {
+      lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(res.payload, res.users);
+      setStorageErrorCode(null);
+      setStorageFailureKind(null);
+      setStorageErrorRolledBack(false);
+      setCleanupPending(false);
+      setHasUnsavedSessionChanges(false);
+      setRestoreStatus("ready");
+      setRecoveryJournal(undefined);
+    } else {
+      lastPersistedSnapshotRef.current = null;
+      handleCoordinatedFailure(res, "demoRestore", false);
+    }
+
+    setUsers([...res.users]);
+    setRules([...res.payload.rules]);
+    setRuleSets([...res.payload.ruleSets]);
+    setEnterprises([...res.payload.enterprises]);
+    setLegacyUnassigned([...res.payload.legacyUnassigned]);
+    setProjects([...res.payload.projects]);
+    setTransactions([...res.payload.transactions]);
+    setAuditLogs([...res.payload.auditLogs]);
+    setLegacyCaseArchive([...res.payload.legacyCaseArchive]);
+    setMigrationMeta(res.payload.migrationMeta);
+    setWf04DemoActive(Boolean(res.payload.wf04DemoActive));
+    setPreDemoSnapshot(res.payload.preDemoSnapshot);
+    const demoFeedbacks = [...(res.payload.reportFeedbacks ?? [])];
+    reportFeedbacksRef.current = demoFeedbacks;
+    replaceCases(res.payload.investigationCases, {
+      nextFeedbacks: demoFeedbacks,
+      persisted: res.ok,
+      persistedAt: res.ok ? new Date().toISOString() : null,
+      committed: isCleanup,
+      cleanupPending: isCleanup,
+      ...(isCleanup && !res.ok
+        ? {
+            storageError: {
+              code: res.errorCode,
+              error: res.error,
+              committed: true,
+              cleanupPending: true,
+              recoveryRequired: true,
+              recoveryJournal: res.recoveryJournal,
+            },
+          }
+        : {}),
+    });
+    setSelectedCaseId(null);
+    setDrawerOpen(false);
+    setSelectedTransaction(null);
+    setAlertSelectionResetKey(prev => prev + 1);
+
+    const nextActor =
+      res.users.find(u => u.id === currentUser.id) ??
+      res.users.find(u => u.id === DEFAULT_DEMO_USER.id) ??
+      res.users[0] ??
+      DEFAULT_DEMO_USER;
+    if (nextActor.id !== currentUser.id) {
+      handleSwitchUser(nextActor);
+    }
+  }, [currentWorkspacePayload, users, restoreStatus, handleCoordinatedFailure, replaceCases, currentUser.id, handleSwitchUser]);
+
+  useEffect(() => {
+    const enabled = isBrowserWf04DevToolsActive();
+    devSampleToolsActiveRef.current = enabled;
+    setDevSampleToolsEnabled(enabled);
+    return () => {
+      devSampleToolsActiveRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    devSampleToolsActiveRef.current = devSampleToolsEnabled;
+    return syncWf04DevToolsWindowBinding({
+      targetWindow: typeof window !== "undefined" ? window : null,
+      enabled: devSampleToolsEnabled,
+      onLoadSampleData: handleLoadWf04Demo,
+      onRestorePreDemo: handleRestorePreDemo,
+      isDemoActive: () => wf04DemoActive,
+    });
+  }, [devSampleToolsEnabled, handleLoadWf04Demo, handleRestorePreDemo, wf04DemoActive]);
+
+  const handleRetryStorage = useCallback(() => {
+    if (
+      restoreStatus === "blocked_corrupt" ||
+      restoreStatus === "blocked_unsupported_version" ||
+      restoreErrorCode === "BACKUP_WRITE_FAILED"
+    ) {
+      const retried = restoreWorkspaceSnapshot({
+        defaultRules: initialRules,
+        defaultEnterprises: demoEnterprises,
+        defaultProjects,
+        defaultTransactions: initialTransactions,
+        defaultAuditLogs,
+        defaultUsers: DEMO_USERS,
+        extraFallbackEnterprises: WF04_DEMO_ENTERPRISES,
+        migratedAt: new Date().toISOString(),
+      });
+      applyRestoredResult(retried);
+      return;
+    }
+
+    const isRecovery =
+      cleanupPending || restoreStatus === "recovery_required" || recoveryJournal !== undefined;
+    if (caseHook.hasUnsavedChanges || caseHook.storageError !== null) {
+      const hookRes = retryPersist({
+        allowRecoveryOverwrite: isRecovery,
+        operation: cleanupPending
+          ? "retryCleanup"
+          : isRecovery
+            ? "recoverWorkspaceStorage"
+            : "retryPersist",
+      });
+      if (hookRes.ok) {
+        lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(currentWorkspacePayload, users);
+        setRestoreStatus("ready");
+        setRestoreErrorCode(null);
+        setRecoveryJournal(undefined);
+        setStorageErrorCode(null);
+        setStorageFailureKind(null);
+        setStorageErrorRolledBack(false);
+        setCleanupPending(false);
+        setHasUnsavedSessionChanges(false);
+      } else if (hookRes.storageError) {
+        const isStillCleanup =
+          hookRes.storageError.code === "STORAGE_CLEANUP_FAILED" ||
+          (Boolean(hookRes.committed) && Boolean(hookRes.cleanupPending));
+        if (hookRes.storageError.preservePreDemoSnapshot && !isStillCleanup) {
+          setPreDemoSnapshot(hookRes.storageError.preservePreDemoSnapshot);
+          setWf04DemoActive(true);
+        }
+        if (isStillCleanup || hookRes.recoveryRequired || hookRes.rollbackFailed) {
+          setRestoreStatus("recovery_required");
+          setRecoveryJournal(hookRes.storageError.recoveryJournal);
+          setStorageErrorRolledBack(false);
+          setCleanupPending(isStillCleanup);
+        } else {
+          setCleanupPending(false);
+          setStorageErrorRolledBack(Boolean(hookRes.rolledBack));
+        }
+        setStorageErrorCode(hookRes.storageError.code as WorkspaceStorageErrorCode);
+        setHasUnsavedSessionChanges(!isStillCleanup);
+      }
+      return;
+    }
+
+    const coordRes = isRecovery
+      ? recoverWorkspaceStorage({
+          payload: currentWorkspacePayload,
+          users,
+          restoreStatus,
+        })
+      : persistWorkspaceAndUsers({
+          payload: currentWorkspacePayload,
+          users,
+          restoreStatus,
+          operation: "retryPersist",
+        });
+
+    if (coordRes.ok) {
+      lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(coordRes.payload, users);
+      setRestoreStatus("ready");
+      setRestoreErrorCode(null);
+      setRecoveryJournal(undefined);
+      setStorageErrorCode(null);
+      setStorageFailureKind(null);
+      setStorageErrorRolledBack(false);
+      setCleanupPending(false);
+      setHasUnsavedSessionChanges(false);
+    } else {
+      handleCoordinatedFailure(
+        coordRes,
+        storageFailureKind ?? "generic",
+        hasUnsavedSessionChanges,
+      );
+    }
+  }, [
+    restoreStatus,
+    restoreErrorCode,
+    cleanupPending,
+    recoveryJournal,
+    initialRules,
+    defaultProjects,
+    initialTransactions,
+    defaultAuditLogs,
+    applyRestoredResult,
+    caseHook.hasUnsavedChanges,
+    caseHook.storageError,
+    retryPersist,
+    currentWorkspacePayload,
+    users,
+    handleCoordinatedFailure,
+    storageFailureKind,
+    hasUnsavedSessionChanges,
+  ]);
+
+  const syncHookStorageResult = useCallback(
+    (
+      persisted: boolean,
+      storageError: {
+        readonly code: string;
+        readonly committed?: boolean;
+        readonly cleanupPending?: boolean;
+        readonly rolledBack?: boolean;
+        readonly rollbackFailed?: boolean;
+        readonly recoveryRequired?: boolean;
+        readonly recoveryJournal?: WorkspaceRecoveryJournal;
+        readonly preservePreDemoSnapshot?: PreDemoWorkspaceSnapshot;
+      } | null,
+    ) => {
+      if (persisted && lastHookPayloadRef.current) {
+        lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(
+          lastHookPayloadRef.current,
+          users,
+        );
+      } else if (!persisted && storageError) {
+        const isCleanup =
+          storageError.code === "STORAGE_CLEANUP_FAILED" ||
+          (Boolean(storageError.committed) && Boolean(storageError.cleanupPending));
+        setHasUnsavedSessionChanges(!isCleanup);
+        setCleanupPending(isCleanup);
+        setStorageErrorCode(storageError.code as WorkspaceStorageErrorCode);
+        setStorageFailureKind("generic");
+        setStorageErrorRolledBack(Boolean(storageError.rolledBack));
+        if (storageError.preservePreDemoSnapshot && !isCleanup) {
+          setPreDemoSnapshot(storageError.preservePreDemoSnapshot);
+          setWf04DemoActive(true);
+        }
+        if (isCleanup || storageError.recoveryRequired || storageError.rollbackFailed) {
+          setRestoreStatus("recovery_required");
+          setRecoveryJournal(storageError.recoveryJournal);
+        }
+      }
+    },
+    [users],
+  );
+
+  const mapCaseActionOutcome = useCallback(
+    (outcome: InvestigationActionOutcome): InvestigationActionOutcome => {
+      if (!outcome.ok) {
+        const phase2bErrors = t.wf04Phase2b.errors;
+        const localizedErrorMap: Partial<Record<typeof outcome.code, string>> = {
+          TIMESTAMP_OUT_OF_ORDER: t.wf04Phase2a.caseQueue.timestampOutOfOrderError,
+          INVALID_TIMESTAMP: t.wf04Phase2a.caseQueue.invalidTimestampError,
+          STALE_REPORT_VERSION: phase2bErrors.staleReportVersion,
+          REPORT_VERSION_MISMATCH: phase2bErrors.reportVersionMismatch,
+          REPORT_NOT_FOUND: phase2bErrors.reportVersionMismatch,
+          NO_PENDING_REPORT: phase2bErrors.noPendingReport,
+          FORBIDDEN_ASSIGNEE: phase2bErrors.forbiddenAssignee,
+          FORBIDDEN_TENANT: phase2bErrors.forbiddenEnterprise,
+          FORBIDDEN_ROLE: phase2bErrors.forbiddenRole,
+          INVALID_STATE: phase2bErrors.invalidStatus,
+          CASE_ALREADY_CLOSED: phase2bErrors.caseAlreadyClosed,
+          MISSING_ALERT_RESULT: phase2bErrors.missingAlertResult,
+          MISSING_ALERT_EVIDENCE: phase2bErrors.missingAlertEvidence,
+          MISSING_REPORT_SUMMARY: phase2bErrors.missingReportSummary,
+          MISSING_REVISION_REASON: phase2bErrors.missingRevisionReason,
+          MISSING_CONCLUSION_SUMMARY: phase2bErrors.missingConclusionSummary,
+        };
+        const mappedError = localizedErrorMap[outcome.code];
+        return mappedError ? { ...outcome, error: mappedError } : outcome;
+      }
+
+      syncHookStorageResult(outcome.persisted, outcome.storageError);
+      return outcome;
+    },
+    [
+      t.wf04Phase2a.caseQueue.timestampOutOfOrderError,
+      t.wf04Phase2a.caseQueue.invalidTimestampError,
+      t.wf04Phase2b.errors,
+      syncHookStorageResult,
+    ],
+  );
+
+  const mapFeedbackActionOutcome = useCallback(
+    (outcome: SubmitFeedbackOutcome): SubmitFeedbackOutcome => {
+      if (!outcome.ok) {
+        const feedbackErrors = t.wf04Phase2c.errors;
+        const localizedFeedbackMap: Partial<Record<typeof outcome.code, string>> = {
+          INVALID_FEEDBACK_INPUT: feedbackErrors.invalidInput,
+          FORBIDDEN_ROLE: feedbackErrors.forbiddenRole,
+          FORBIDDEN_TENANT: feedbackErrors.forbiddenTenant,
+          CASE_NOT_FOUND: feedbackErrors.caseNotFound,
+          CASE_NOT_CLOSED: feedbackErrors.caseNotClosed,
+          MISSING_CONFIRMED_REPORT: feedbackErrors.missingConfirmedReport,
+          MISSING_REPORT_ID: feedbackErrors.missingReportId,
+          INVALID_REPORT_ID: feedbackErrors.invalidReportId,
+          MISSING_REPORT_VERSION: feedbackErrors.missingReportVersion,
+          INVALID_REPORT_VERSION: feedbackErrors.invalidReportVersion,
+          REPORT_VERSION_MISMATCH: feedbackErrors.reportVersionMismatch,
+          STALE_REPORT_VERSION: feedbackErrors.staleReportVersion,
+          INVALID_TIMESTAMP: feedbackErrors.invalidTimestamp,
+          TIMESTAMP_OUT_OF_ORDER: feedbackErrors.timestampOutOfOrder,
+          DUPLICATE_REPORT_FEEDBACK: feedbackErrors.duplicateFeedback,
+          FORBIDDEN_READ: feedbackErrors.forbiddenRead,
+          FEEDBACK_NOT_FOUND: feedbackErrors.feedbackNotFound,
+        };
+        const mappedError = localizedFeedbackMap[outcome.code];
+        return mappedError ? { ...outcome, error: mappedError } : outcome;
+      }
+
+      syncHookStorageResult(outcome.persisted, outcome.storageError);
+      return outcome;
+    },
+    [t.wf04Phase2c.errors, syncHookStorageResult],
+  );
+
+  const handleCreateInvestigationCase = useCallback(
+    (selectedAlertIds: string[], note?: string): InvestigationActionOutcome =>
+      mapCaseActionOutcome(caseHook.createCase({ alertIds: selectedAlertIds, note })),
+    [caseHook, mapCaseActionOutcome],
+  );
+
+  const handleAssignInvestigator = useCallback(
+    (caseId: string, assigneeId: string): InvestigationActionOutcome =>
+      mapCaseActionOutcome(caseHook.assignInvestigator({ caseId, assigneeId })),
+    [caseHook, mapCaseActionOutcome],
+  );
+
+  const handleSelfAssignCase = useCallback(
+    (caseId: string): InvestigationActionOutcome =>
+      mapCaseActionOutcome(caseHook.selfAssign({ caseId })),
+    [caseHook, mapCaseActionOutcome],
+  );
+
+  const handleSubmitInvestigationReport = useCallback(
+    (args: SubmitInvestigationReportCommandArgs): InvestigationActionOutcome =>
+      mapCaseActionOutcome(caseHook.submitReport(args)),
+    [caseHook, mapCaseActionOutcome],
+  );
+
+  const handleRequestInvestigationRevision = useCallback(
+    (args: RequestInvestigationRevisionCommandArgs): InvestigationActionOutcome =>
+      mapCaseActionOutcome(caseHook.requestRevision(args)),
+    [caseHook, mapCaseActionOutcome],
+  );
+
+  const handleConfirmInvestigationCaseReport = useCallback(
+    (args: ConfirmInvestigationReportCommandArgs): InvestigationActionOutcome =>
+      mapCaseActionOutcome(caseHook.confirmAndCloseReport(args)),
+    [caseHook, mapCaseActionOutcome],
+  );
+
+  const handleSubmitReportFeedback = useCallback(
+    (args: SubmitConfirmedReportFeedbackCommandArgs): SubmitFeedbackOutcome =>
+      mapFeedbackActionOutcome(caseHook.submitReportFeedback(args)),
+    [caseHook, mapFeedbackActionOutcome],
+  );
+
+  const handleOpenInvestigationCase = useCallback(
+    (caseId: string) => {
+      const targetCase = caseHook.cases.find(c => c.caseId === caseId);
+      if (!targetCase) return;
+      const access = evaluateInvestigationCaseReadAccess(targetCase, currentUser);
+      if (!access.canViewInternalCase && !access.canViewConfirmedReport) return;
+
+      const targetView: SecondaryView =
+        currentUser.role === "Investigator" ? "my-cases" : "active-cases";
+      if (!canAccessView(currentUser.role, targetView)) return;
+
+      setDrawerOpen(false);
+      setSelectedCaseId(caseId);
+      setActiveNavItem(targetView);
+    },
+    [caseHook.cases, currentUser],
+  );
 
   const recordAudit = (action: AuditLogEntry['action'], target: string, details: string, enterpriseId = enterprises.find(e => e.id === target || e.name === target || e.projectIds.includes(target))?.id) => {
     setAuditLogs(logs => [{ enterpriseId, id: crypto.randomUUID(), timestamp: new Date().toISOString(), actor: { name: currentUser.name, email: currentUser.email, role: currentUser.role }, action, target, details, ipAddress: 'Demo' }, ...logs]);
@@ -301,17 +1064,32 @@ function FraudGuardDashboardContent({
     const anomalies = visibleTransactions.filter(
       (transaction) => transaction.riskLevel === "Abnormal",
     );
+    const visibleCases =
+      currentUser.role === "Operator"
+        ? caseHook.cases.filter(
+            (c) => Boolean(currentUser.enterpriseId) && c.enterpriseId === currentUser.enterpriseId,
+          )
+        : currentUser.role === "Investigator"
+          ? caseHook.cases.filter(
+              (c) =>
+                Boolean(currentUser.enterpriseId) &&
+                c.enterpriseId === currentUser.enterpriseId &&
+                c.assignee?.actorId === currentUser.id,
+            )
+          : [];
 
     return {
       analyzed: visibleTransactions.length,
       highRisk: anomalies.length,
-      normals: visibleTransactions.filter(transaction => transaction.riskLevel === "Normal").length,
-      openAlerts: visibleTransactions.filter(
-        (transaction) => transaction.alertId && !transaction.caseId,
-      ).length,
-      activeCases: visibleTransactions.filter(isActiveInvestigation).length,
+      normals: visibleTransactions.filter((transaction) => transaction.riskLevel === "Normal").length,
+      openAlerts: countOpenUnlinkedAlerts(
+        visibleTransactions,
+        caseHook.cases,
+        legacyCaseArchive,
+      ),
+      activeCases: countActiveInvestigationCases(visibleCases),
     };
-  }, [visibleTransactions]);
+  }, [visibleTransactions, caseHook.cases, legacyCaseArchive, currentUser]);
 
   // Dynamic project/type options
   const projectOptions = useMemo(() => {
@@ -338,25 +1116,32 @@ function FraudGuardDashboardContent({
 
   const handleUpdateTransaction = useCallback(
     (updated: TransactionRisk) => {
-      if (currentUser.role === 'Viewer' || currentUser.role === 'Platform Admin' || currentUser.role === 'Implementation Staff') return;
+      if (
+        currentUser.role === 'Viewer' ||
+        currentUser.role === 'Platform Admin' ||
+        currentUser.role === 'Implementation Staff'
+      ) {
+        return;
+      }
       const previous = transactions.find(tx => tx.id === updated.id);
       if (!previous) return;
-      const unchangedAssignee = updated.assignedInvestigator === previous.assignedInvestigator;
-      const assignee = users.find(u => u.enterpriseId === currentUser.enterpriseId &&
-        (unchangedAssignee && previous.assignedInvestigatorId ? u.id === previous.assignedInvestigatorId : u.name === updated.assignedInvestigator) &&
-        (u.role === 'Investigator' || u.id === currentUser.id && u.role === 'Operator'));
-      if (updated.assignedInvestigator && !assignee) return;
-      updated = { ...updated, assignedInvestigatorId: assignee?.id, assignedInvestigator: assignee?.name };
-      if (!previous || !enterprises.some(e => e.id === currentUser.enterpriseId && e.projectIds.includes(previous.projectId)) || !canUpdateCase(previous, updated, currentUser)) return;
-      if (updated.caseStatus === 'Assigned' && !users.some(u => u.enterpriseId === currentUser.enterpriseId && u.role === 'Investigator' && u.name === updated.assignedInvestigator)) return;
-      if (currentUser.role === 'Investigator' && (!isCaseAssignee(previous, currentUser) || !['Assigned', 'Investigating'].includes(previous.caseStatus || '') || !['Investigating', 'Reported'].includes(updated.caseStatus || ''))) return;
-      setAuditLogs(logs => [{ enterpriseId: currentUser.enterpriseId, id: crypto.randomUUID(), timestamp: new Date().toISOString(), actor: { name: currentUser.name, email: currentUser.email, role: currentUser.role }, action: 'CASE_STATUS_UPDATED', target: updated.caseId || updated.id, ipAddress: 'Demo', details: JSON.stringify({ before: previous.caseStatus, after: updated.caseStatus, report: updated.investigationReport, decision: updated.caseDecision }) }, ...logs]);
+      if (
+        !enterprises.some(
+          e => e.id === currentUser.enterpriseId && e.projectIds.includes(previous.projectId),
+        )
+      ) {
+        return;
+      }
+      // Step F lock: legacy case-field patches are strictly rejected from UI mutations.
+      if (hasLegacyCaseFieldPatch(previous, updated)) {
+        return;
+      }
       setTransactions((prev) =>
         prev.map((t) => (t.id === updated.id ? updated : t)),
       );
       setSelectedTransaction(updated);
     },
-    [currentUser, transactions, enterprises, users],
+    [currentUser, transactions, enterprises],
   );
 
   // Reset pagination when filters change
@@ -393,7 +1178,7 @@ function FraudGuardDashboardContent({
     switch (activeNavItem) {
       case "members":
         return <MembersView users={users} currentUser={currentUser} onSave={user => {
-          if (!canSaveMember(currentUser, user, users, enterpriseTransactions)) return false;
+          if (!canSaveMember(currentUser, user, users, enterpriseTransactions, caseHook.cases, legacyCaseArchive)) return false;
           const old = users.find(u => u.id === user.id);
           if (old && old.name !== user.name) setTransactions(prev => prev.map(tx => {
             if (!enterprises.some(e => e.id === user.enterpriseId && e.projectIds.includes(tx.projectId))) return tx;
@@ -409,19 +1194,32 @@ function FraudGuardDashboardContent({
         return <OnboardingView enterprises={accessibleEnterprises} users={users} currentUser={currentUser} sets={ruleSets} onCreate={(name,staffId,adminName,adminEmail)=>{
           if(!canProvisionEnterpriseAdmin(currentUser,adminName,adminEmail,users)||!name.trim()||enterprises.some(e=>e.name.toLowerCase()===name.trim().toLowerCase())||!users.some(u=>u.id===staffId&&u.role==='Implementation Staff'))return false;
           const id=crypto.randomUUID(),projectId='workspace-'+id;
-          const code = name.trim().replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() + '-2026';
+          const code = generateEnterpriseCode(name.trim(), id);
           const nextUsers: UserProfile[] = [...users,{id:crypto.randomUUID(),enterpriseId:id,name:adminName.trim(),email:adminEmail.trim().toLowerCase(),role:'SME Admin',title:'Quản trị doanh nghiệp',avatarLetter:adminName.trim().charAt(0).toUpperCase(),avatarBg:'#7c3aed',description:'Tài khoản quản trị demo của '+name.trim()}];
           const nextEnterprises: Enterprise[] = [...enterprises,{id,code,name:name.trim(),deploymentStaffId:staffId,projectIds:[projectId],specification:{stage:'intake',representativeName:adminName.trim(),representativeRole:'Quản trị Doanh nghiệp (SME Admin)',representativeEmail:adminEmail.trim().toLowerCase(),smeAdminName:adminName.trim(),smeAdminEmail:adminEmail.trim().toLowerCase(),intakeDocuments:[],supplementRequests:[],conditionsList:[],schema:[],feedbackHistory:[],dataAndEvaluationClarified:false,requirements:'',fields:'',conditions:'',sampleJson:'[]',updatedAt:new Date().toISOString()}}];
           const nextProjects: ProjectItem[] = [...projects,{id:projectId,name:name.trim(),code:id,description:'Phạm vi triển khai chính',environment:'Staging',apiKey:'',quota:{used:0,total:0,resetDate:''},status:'Inactive',createdAt:new Date().toISOString()}];
-          if (typeof localStorage !== 'undefined') {
-            try {
-              localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises: nextEnterprises, legacyUnassigned, projects: nextProjects, transactions, auditLogs }));
-              localStorage.setItem('fraudguard-demo-users-v1', JSON.stringify(nextUsers.filter(u => u.enterpriseId)));
-              setStorageError(false);
-            } catch {
-              setStorageError(true);
-              return false;
-            }
+          const writeRes = mergeAndPersistWorkspaceSlice({
+            currentPayload: currentWorkspacePayload,
+            patch: { enterprises: nextEnterprises, projects: nextProjects },
+            users: nextUsers,
+            restoreStatus,
+          });
+          const isCreateCleanup =
+            !writeRes.ok && Boolean(writeRes.committed) && Boolean(writeRes.cleanupPending);
+          if (!writeRes.ok && !isCreateCleanup) {
+            handleCoordinatedFailure(writeRes, "generic", hasUnsavedSessionChanges);
+            return false;
+          }
+          if (writeRes.ok) {
+            lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(writeRes.payload, nextUsers);
+            setStorageErrorCode(null);
+            setStorageFailureKind(null);
+            setStorageErrorRolledBack(false);
+            setCleanupPending(false);
+            setHasUnsavedSessionChanges(false);
+          } else {
+            lastPersistedSnapshotRef.current = null;
+            handleCoordinatedFailure(writeRes, "generic", false);
           }
           setUsers(nextUsers);
           setEnterprises(nextEnterprises);
@@ -448,14 +1246,27 @@ function FraudGuardDashboardContent({
             }
             return updated;
           });
-          if (typeof localStorage !== 'undefined') {
-            try {
-              localStorage.setItem('fraudguard-demo-workspace-v3', JSON.stringify({ rules, ruleSets, enterprises: nextEnterprises, legacyUnassigned, projects: nextProjects, transactions, auditLogs }));
-              setStorageError(false);
-            } catch {
-              setStorageError(true);
-              return false;
-            }
+          const writeRes = mergeAndPersistWorkspaceSlice({
+            currentPayload: currentWorkspacePayload,
+            patch: { enterprises: nextEnterprises, projects: nextProjects },
+            restoreStatus,
+          });
+          const isProvisionCleanup =
+            !writeRes.ok && Boolean(writeRes.committed) && Boolean(writeRes.cleanupPending);
+          if (!writeRes.ok && !isProvisionCleanup) {
+            handleCoordinatedFailure(writeRes, "generic", hasUnsavedSessionChanges);
+            return false;
+          }
+          if (writeRes.ok) {
+            lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(writeRes.payload, users);
+            setStorageErrorCode(null);
+            setStorageFailureKind(null);
+            setStorageErrorRolledBack(false);
+            setCleanupPending(false);
+            setHasUnsavedSessionChanges(false);
+          } else {
+            lastPersistedSnapshotRef.current = null;
+            handleCoordinatedFailure(writeRes, "generic", false);
           }
           if(!existingProject) setProjects(nextProjects);
           setEnterprises(nextEnterprises);
@@ -467,14 +1278,27 @@ function FraudGuardDashboardContent({
           const spec=check.specification;
           const nextEnterprises=enterprises.map(e=>e.id===id?{...e,specification:spec}:e);
           const nextRuleSets=ruleSets.map(set=>set.enterpriseId===id&&set.draft?{...set,draft:{...set.draft,test:undefined}}:set);
-          if(typeof localStorage!=='undefined'){
-            try{
-              localStorage.setItem('fraudguard-demo-workspace-v3',JSON.stringify({rules,ruleSets:nextRuleSets,enterprises:nextEnterprises,legacyUnassigned,projects,transactions,auditLogs}));
-              setStorageError(false);
-            }catch{
-              setStorageError(true);
-              return false;
-            }
+          const writeRes = mergeAndPersistWorkspaceSlice({
+            currentPayload: currentWorkspacePayload,
+            patch: { enterprises: nextEnterprises, ruleSets: nextRuleSets },
+            restoreStatus,
+          });
+          const isSaveCleanup =
+            !writeRes.ok && Boolean(writeRes.committed) && Boolean(writeRes.cleanupPending);
+          if (!writeRes.ok && !isSaveCleanup) {
+            handleCoordinatedFailure(writeRes, "generic", hasUnsavedSessionChanges);
+            return false;
+          }
+          if (writeRes.ok) {
+            lastPersistedSnapshotRef.current = serializeCoordinatedSnapshot(writeRes.payload, users);
+            setStorageErrorCode(null);
+            setStorageFailureKind(null);
+            setStorageErrorRolledBack(false);
+            setCleanupPending(false);
+            setHasUnsavedSessionChanges(false);
+          } else {
+            lastPersistedSnapshotRef.current = null;
+            handleCoordinatedFailure(writeRes, "generic", false);
           }
           setEnterprises(nextEnterprises);
           setRuleSets(nextRuleSets);
@@ -505,24 +1329,48 @@ function FraudGuardDashboardContent({
           <AlertsView
             transactions={enterpriseTransactions}
             onReview={handleReview}
+            canManageCases={permissions.canManageCases}
+            selectedAlertId={drawerOpen ? selectedTransaction?.id : undefined}
+            investigationCases={caseHook.cases}
+            legacyCaseArchive={legacyCaseArchive}
+            enterprises={enterprises}
+            currentUser={currentUser}
+            onCreateInvestigationCase={handleCreateInvestigationCase}
+            onOpenInvestigationCase={handleOpenInvestigationCase}
+            selectionResetKey={alertSelectionResetKey}
           />
         );
       case "active-cases":
       case "my-cases":
         return (
-          <CasesView investigators={users.filter(u => u.enterpriseId === currentUser.enterpriseId && u.role === "Investigator").map(u => u.name)}
+          <CasesView
+            investigationCases={caseHook.cases}
+            legacyCaseArchive={legacyCaseArchive}
             transactions={enterpriseTransactions}
-            onUpdateTransaction={handleUpdateTransaction}
-            onReview={handleReview}
+            enterprises={enterprises}
+            users={users}
+            investigatorUsers={users.filter(
+              u => u.enterpriseId === currentUser.enterpriseId && u.role === "Investigator",
+            )}
             permissions={permissions}
+            currentUser={currentUser}
             currentRole={currentUser.role}
             currentUserName={currentUser.name}
             currentUserId={currentUser.id}
-
+            selectedCaseId={selectedCaseId}
+            onSelectCaseId={setSelectedCaseId}
+            onAssignInvestigator={handleAssignInvestigator}
+            onSelfAssignCase={handleSelfAssignCase}
+            onSubmitReport={handleSubmitInvestigationReport}
+            onRequestRevision={handleRequestInvestigationRevision}
+            onConfirmAndCloseReport={handleConfirmInvestigationCaseReport}
+            reportFeedbacks={caseHook.feedbacks}
+            onSubmitReportFeedback={handleSubmitReportFeedback}
+            onReviewTransaction={handleReview}
           />
         );
       case "rule-templates":
-        return (<><label className={styles.drawerLabel}>{language === 'vi' ? 'Doanh nghiệp triển khai' : 'Enterprise'}<select className={styles.control} value={deploymentEnterprise?.id ?? ''} onChange={e => setDeploymentEnterpriseId(e.target.value)}>{accessibleEnterprises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label><p className={styles.muted}>{language === 'vi' ? 'Sửa mẫu dùng chung sẽ tạo bản sao riêng cho doanh nghiệp đang chọn. Các tập đã lưu không tự thay đổi; cập nhật bản sao và kiểm thử lại trong trang Tập rule.' : 'Editing shared templates creates an enterprise copy. Saved rule sets require an explicit refresh and retest.'}</p>
+        return (<><div className={styles.scopeBar}><label className={styles.filterField}><span className={styles.filterLabel}>{language === 'vi' ? 'Doanh nghiệp triển khai' : 'Enterprise'}</span><select className={styles.control} value={deploymentEnterprise?.id ?? ''} onChange={e => setDeploymentEnterpriseId(e.target.value)}>{accessibleEnterprises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label></div><p className={styles.muted}>{language === 'vi' ? 'Sửa mẫu dùng chung sẽ tạo bản sao riêng cho doanh nghiệp đang chọn. Các tập đã lưu không tự thay đổi; cập nhật bản sao và kiểm thử lại trong trang Tập rule.' : 'Editing shared templates creates an enterprise copy. Saved rule sets require an explicit refresh and retest.'}</p>
           <RulesView key={deploymentEnterprise?.id}
             transactions={[]}
             onRulesChange={changeRules}
@@ -532,7 +1380,7 @@ function FraudGuardDashboardContent({
           /></>
         );
       case "projects":
-        return (<><label className={styles.drawerLabel}>{language === 'vi' ? 'Doanh nghiệp' : 'Enterprise'}<select className={styles.control} value={deploymentEnterprise?.id ?? ''} onChange={e => setDeploymentEnterpriseId(e.target.value)}>{accessibleEnterprises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
+        return (<><div className={styles.scopeBar}><label className={styles.filterField}><span className={styles.filterLabel}>{language === 'vi' ? 'Doanh nghiệp' : 'Enterprise'}</span><select className={styles.control} value={deploymentEnterprise?.id ?? ''} onChange={e => setDeploymentEnterpriseId(e.target.value)}>{accessibleEnterprises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label></div>
           <ProjectsView enterprise={deploymentEnterprise} transactions={transactions} dataSchema={(() => { const set = ruleSets.find(item=>item.enterpriseId===deploymentEnterprise?.id); return set?.activeVersion ? set.versions.find(version=>version.version===set.activeVersion)?.schema : deploymentEnterprise?.specification?.schema; })()}
             initialProjects={projects.filter(p => deploymentEnterprise?.projectIds.includes(p.id))}
             onProjectsChange={action => { const selectedProjects = projects.filter(p => deploymentEnterprise?.projectIds.includes(p.id)); const next = typeof action === 'function' ? action(selectedProjects) : action; changeProjects([...projects.filter(p => assignedProjectIds.includes(p.id) && !deploymentEnterprise?.projectIds.includes(p.id)), ...next]); }}
@@ -544,16 +1392,43 @@ function FraudGuardDashboardContent({
         return (
           <ReportsView
             transactions={enterpriseTransactions}
-
+            investigationCases={caseHook.cases}
+            legacyCaseArchive={legacyCaseArchive}
+            enterprises={enterprises}
+            users={users}
             currentUser={currentUser}
             permissions={permissions}
             onReview={handleReview}
+            onOpenInvestigationCase={handleOpenInvestigationCase}
+            reportFeedbacks={caseHook.feedbacks}
+            onSubmitReportFeedback={handleSubmitReportFeedback}
           />
         );
       case "audit-trail":
-        return <AuditTrailView initialLogs={auditForUser(auditLogs, currentUser, enterprises, transactions)} />;
+        return (
+          <AuditTrailView
+            initialLogs={auditForUser(
+              auditLogs,
+              currentUser,
+              enterprises,
+              transactions,
+              caseHook.cases,
+              legacyCaseArchive,
+            )}
+          />
+        );
       case "platform-health":
-        return <PlatformHealthView enterprises={enterprises} transactions={transactions} onPlanChange={(id,plan)=>{if(currentUser.role!=='Platform Admin'||!['Free','Subscription'].includes(plan))return;setEnterprises(prev=>prev.map(e=>e.id===id?{...e,plan}:e));recordAudit('PROJECT_UPDATED',id,'Đổi gói demo: '+plan);}} />;
+        return (
+          <PlatformHealthView
+            enterprises={enterprises}
+            transactions={transactions}
+            reportFeedbacks={caseHook.feedbacks}
+            currentUser={currentUser}
+            users={users}
+            wf04Managed={true}
+            onPlanChange={(id,plan)=>{if(currentUser.role!=='Platform Admin'||!['Free','Subscription'].includes(plan))return;setEnterprises(prev=>prev.map(e=>e.id===id?{...e,plan}:e));recordAudit('PROJECT_UPDATED',id,'Đổi gói demo: '+plan);}}
+          />
+        );
       case "risk-overview":
       default:
         return (
@@ -565,7 +1440,7 @@ function FraudGuardDashboardContent({
               </div>
             </div>
 
-            <label className={styles.drawerLabel}>{language === 'vi' ? 'Dữ liệu hiển thị' : 'Displayed data'}<select className={styles.control} value={showTestData ? 'test' : 'operation'} onChange={event => { setShowTestData(event.target.value === 'test'); setFilters(initialFilters); setActiveTab('all'); setPagination(prev => ({...prev,page:1})); }}><option value="operation">{language === 'vi' ? 'Giao dịch doanh nghiệp' : 'Enterprise transactions'}</option><option value="test">{language === 'vi' ? 'Dữ liệu kiểm thử' : 'Test data'}</option></select></label>
+            <div className={styles.scopeBar}><label className={styles.filterField}><span className={styles.filterLabel}>{language === 'vi' ? 'Dữ liệu hiển thị' : 'Displayed data'}</span><select className={styles.control} value={showTestData ? 'test' : 'operation'} onChange={event => { setShowTestData(event.target.value === 'test'); setFilters(initialFilters); setActiveTab('all'); setPagination(prev => ({...prev,page:1})); }}><option value="operation">{language === 'vi' ? 'Giao dịch doanh nghiệp' : 'Enterprise transactions'}</option><option value="test">{language === 'vi' ? 'Dữ liệu kiểm thử' : 'Test data'}</option></select></label></div>
             {showTestData && <p role="status">{language === 'vi' ? 'Đang xem kết quả Sandbox. Dữ liệu này không tính vào báo cáo vận hành, lượt sử dụng hoặc thông báo.' : 'Viewing Sandbox results. These are excluded from operational reports, usage and notifications.'}</p>}
             <DashboardToolbar key={currentUser.id} importActions={["SME Admin","Operator"].includes(currentUser.role) ? { preview: importPreview, save: (text,filename,projectId) => {
               const rows=importPreview(text,filename,projectId); if(rows.some(r=>r.error)) throw Error("File có dòng lỗi hoặc giao dịch trùng. Kiểm tra lại trước khi lưu.");
@@ -578,6 +1453,9 @@ function FraudGuardDashboardContent({
               transactionTypes={transactionTypes}
               onChange={handleFiltersChange}
               visibleTransactions={visibleTransactions}
+              investigationCases={caseHook.cases}
+              legacyCaseArchive={legacyCaseArchive}
+              currentUser={currentUser}
             />
 
             {currentUser.role === "Operator" || currentUser.role === "Investigator" ? (
@@ -709,7 +1587,9 @@ function FraudGuardDashboardContent({
               pagination={pagination}
               onPaginationChange={setPagination}
               onReview={handleReview}
-
+              investigationCases={caseHook.cases}
+              legacyCaseArchive={legacyCaseArchive}
+              currentUser={currentUser}
             />
           </>
         );
@@ -740,6 +1620,129 @@ function FraudGuardDashboardContent({
     return navTitleMap[activeNavItem] || t.nav.items.riskOverview;
   }, [currentUser.role, activeNavItem, t, language]);
 
+  const storageBanner = useMemo(() => {
+    const st = t.wf04Phase2a.storage;
+    if (restoreStatus === "blocked_corrupt") {
+      return {
+        isError: true,
+        title: st.corruptBlocked,
+        detail: st.storageReadOnlyNotice,
+        badge: undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    if (restoreStatus === "blocked_unsupported_version") {
+      return {
+        isError: true,
+        title: st.unsupportedVersionBlocked,
+        detail: st.storageReadOnlyNotice,
+        badge: undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    if (
+      cleanupPending ||
+      storageErrorCode === "STORAGE_CLEANUP_FAILED" ||
+      caseHook.storageError?.code === "STORAGE_CLEANUP_FAILED"
+    ) {
+      return {
+        isError: true,
+        title: st.cleanupRequired,
+        detail: undefined,
+        badge: st.cleanupPendingBadge,
+        actionLabel: st.retryCleanupBtn,
+      };
+    }
+    if (
+      restoreStatus === "recovery_required" ||
+      storageErrorCode === "STORAGE_ROLLBACK_FAILED" ||
+      storageErrorCode === "STORAGE_RECOVERY_REQUIRED" ||
+      caseHook.storageError?.recoveryRequired
+    ) {
+      return {
+        isError: true,
+        title: st.recoveryRequired,
+        detail: st.storageReadOnlyNotice,
+        badge: st.recoveryBadge,
+        actionLabel: st.recoveryActionBtn,
+      };
+    }
+    if (restoreErrorCode === "BACKUP_WRITE_FAILED") {
+      return {
+        isError: true,
+        title: st.backupFailed,
+        detail: st.storageReadOnlyNotice,
+        badge: undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    if (
+      storageErrorCode === "STORAGE_READ_FAILED" ||
+      caseHook.storageError?.code === "STORAGE_READ_FAILED"
+    ) {
+      return {
+        isError: true,
+        title: st.readFailed,
+        detail: undefined,
+        badge:
+          hasUnsavedSessionChanges || caseHook.hasUnsavedChanges
+            ? st.unsavedChangesBadge
+            : undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    if (storageFailureKind === "demoLoad" && storageErrorCode !== null) {
+      return {
+        isError: true,
+        title: st.demoLoadFailed,
+        detail: storageErrorRolledBack ? st.rollbackNotice : undefined,
+        badge: undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    if (storageFailureKind === "demoRestore" && storageErrorCode !== null) {
+      return {
+        isError: true,
+        title: st.demoRestoreFailed,
+        detail: storageErrorRolledBack ? st.rollbackNotice : undefined,
+        badge: undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    if (
+      hasUnsavedSessionChanges ||
+      storageErrorCode !== null ||
+      caseHook.hasUnsavedChanges ||
+      caseHook.storageError !== null
+    ) {
+      return {
+        isError: true,
+        title: st.saveFailedUnsaved,
+        detail:
+          storageErrorRolledBack || caseHook.storageError?.rolledBack
+            ? st.rollbackNotice
+            : undefined,
+        badge:
+          hasUnsavedSessionChanges || caseHook.hasUnsavedChanges
+            ? st.unsavedChangesBadge
+            : undefined,
+        actionLabel: st.retrySaveBtn,
+      };
+    }
+    return null;
+  }, [
+    t.wf04Phase2a.storage,
+    restoreStatus,
+    cleanupPending,
+    restoreErrorCode,
+    storageErrorCode,
+    storageFailureKind,
+    storageErrorRolledBack,
+    hasUnsavedSessionChanges,
+    caseHook.hasUnsavedChanges,
+    caseHook.storageError,
+  ]);
+
   return (
     <ToastProvider>
       <div className={styles.root} data-theme={theme}>
@@ -751,7 +1754,13 @@ function FraudGuardDashboardContent({
           onToggleCollapse={handleToggleSidebar}
         />
         <div className={styles.workspace}>
-          <ProductHeader users={users} notificationTransactions={enterpriseTransactions} onOpenNotification={handleReview}
+          <ProductHeader
+            users={users}
+            notificationTransactions={enterpriseTransactions}
+            onOpenNotification={handleReview}
+            investigationCases={caseHook.cases}
+            legacyCaseArchive={legacyCaseArchive}
+            onOpenInvestigationCase={handleOpenInvestigationCase}
             enterprises={enterprises}
             activeViewTitle={currentViewTitle}
             theme={theme}
@@ -761,12 +1770,77 @@ function FraudGuardDashboardContent({
             onNavigate={setActiveNavItem}
           />
           <main className={styles.main}>
-            {storageError && <p className={styles.muted} role="alert">{language === 'vi' ? 'Không thể lưu thay đổi trên trình duyệt.' : 'Browser storage is unavailable.'}</p>}
+            {storageBanner && (
+              <div
+                className={storageBanner.isError ? styles.modalErrorBanner : styles.storageInlineBanner}
+                role="alert"
+              >
+                <div className={styles.toolbarGroup}>
+                  <strong>{storageBanner.title}</strong>
+                  {storageBanner.badge && (
+                    <span className={styles.categoryBadge}>{storageBanner.badge}</span>
+                  )}
+                  {storageBanner.detail && <span>{storageBanner.detail}</span>}
+                </div>
+                <button type="button" className={styles.button} onClick={handleRetryStorage}>
+                  {storageBanner.actionLabel}
+                </button>
+              </div>
+            )}
+            {devSampleToolsEnabled && (
+              <div
+                className={styles.storageInlineBanner}
+                data-testid="wf04-dev-sample-tools"
+                role="region"
+                aria-label={t.wf04Phase2a.demo.contextLabel}
+              >
+                <div className={styles.toolbarGroup}>
+                  <strong>{t.wf04Phase2a.demo.contextLabel}</strong>
+                  <span className={styles.categoryBadge}>
+                    {wf04DemoActive
+                      ? t.wf04Phase2a.demo.activeBadge
+                      : t.wf04Phase2a.demo.inactiveBadge}
+                  </span>
+                </div>
+                <div className={styles.toolbarGroup}>
+                  {!wf04DemoActive && (
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      onClick={handleLoadWf04Demo}
+                    >
+                      {t.wf04Phase2a.demo.loadDemoBtn}
+                    </button>
+                  )}
+                  {wf04DemoActive && (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        onClick={handleLoadWf04Demo}
+                      >
+                        {t.wf04Phase2a.demo.addReviewSamplesBtn}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        onClick={handleRestorePreDemo}
+                      >
+                        {t.wf04Phase2a.demo.restorePreviousBtn}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
             {legacyUnassigned.length > 0 && currentUser.role === 'Platform Admin' && <details className={styles.panel}><summary>{language === 'vi' ? 'Tập rule cũ chưa xác định doanh nghiệp' : 'Unassigned legacy sets'} ({legacyUnassigned.length})</summary><pre className={styles.sandboxJson}>{JSON.stringify(legacyUnassigned, null, 2)}</pre></details>}{renderView()}
           </main>
         </div>
 
-        <AlertCaseDrawer investigators={users.filter(u => u.enterpriseId === currentUser.enterpriseId && u.role === "Investigator").map(u => u.name)}
+        <AlertCaseDrawer
+          investigators={users
+            .filter(u => u.enterpriseId === currentUser.enterpriseId && u.role === "Investigator")
+            .map(u => u.name)}
           transaction={selectedTransaction}
           open={drawerOpen}
           onClose={handleCloseDrawer}
@@ -775,7 +1849,12 @@ function FraudGuardDashboardContent({
           currentRole={currentUser.role}
           currentUserName={currentUser.name}
           currentUserId={currentUser.id}
-
+          investigationCases={caseHook.cases}
+          legacyCaseArchive={legacyCaseArchive}
+          users={users}
+          currentUser={currentUser}
+          onOpenInvestigationCase={handleOpenInvestigationCase}
+          wf04Managed={true}
         />
       </div>
     </ToastProvider>

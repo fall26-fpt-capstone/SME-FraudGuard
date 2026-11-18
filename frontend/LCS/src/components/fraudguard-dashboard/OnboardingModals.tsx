@@ -185,8 +185,8 @@ export function OnboardingModals({
                   </div>
                   <p style={{ margin: "8px 0 0", fontSize: "13px", lineHeight: 1.5 }}>
                     {vi
-                      ? `Hệ thống không tạo nội dung xem trước giả đối với tệp nhị phân (${previewDoc.name}). Dữ liệu tệp gốc đã được bảo toàn nguyên vẹn — vui lòng bấm "Tải tệp này" bên dưới để tải về máy và mở bằng ứng dụng tương ứng.`
-                      : `No simulated preview is generated for binary file '${previewDoc.name}'. Original file bytes are preserved — please click "Download file" below to inspect it locally.`}
+                      ? `Hệ thống không tạo nội dung xem trước giả đối với tệp nhị phân (${previewDoc.name}). Dữ liệu tệp gốc đã được bảo toàn nguyên vẹn; vui lòng bấm "Tải tệp này" bên dưới để tải về máy và mở bằng ứng dụng tương ứng.`
+                      : `No simulated preview is generated for binary file '${previewDoc.name}'. Original file bytes are preserved; please click "Download file" below to inspect it locally.`}
                   </p>
                 </div>
               )}
@@ -232,8 +232,8 @@ export function OnboardingModals({
               <div>
                 <h2 id="snapshot-modal-title">
                   {vi
-                    ? `Nội dung bản đặc tả ${snapshotModalData.version} — ${selectedEnterprise.name}`
-                    : `Specification Snapshot ${snapshotModalData.version} — ${selectedEnterprise.name}`}
+                    ? `Nội dung bản đặc tả ${snapshotModalData.version} · ${selectedEnterprise.name}`
+                    : `Specification Snapshot ${snapshotModalData.version} · ${selectedEnterprise.name}`}
                 </h2>
                 <p className={styles.onboardingCardSub}>
                   {vi
@@ -316,8 +316,8 @@ export function OnboardingModals({
               <div>
                 <h2 id="supplement-modal-title">
                   {vi
-                    ? `Ghi nhận yêu cầu bổ sung — ${selectedEnterprise.name}`
-                    : `Record Supplement Request — ${selectedEnterprise.name}`}
+                    ? `Ghi nhận yêu cầu bổ sung · ${selectedEnterprise.name}`
+                    : `Record Supplement Request · ${selectedEnterprise.name}`}
                 </h2>
                 <p className={styles.onboardingCardSub}>
                   {vi
@@ -472,7 +472,7 @@ export function OnboardingModals({
               <div className={styles.onboardingFieldLabel}>
                 <span>
                   {vi
-                    ? "Tệp mẫu tham khảo theo đặc tả của doanh nghiệp (tùy chọn — không áp đặt một schema cố định cho mọi doanh nghiệp)"
+                    ? "Tệp mẫu tham khảo theo đặc tả của doanh nghiệp (tùy chọn, không áp đặt một schema cố định cho mọi doanh nghiệp)"
                     : "Optional sample file tailored to this enterprise (no mandatory fixed schema)"}
                 </span>
                 <div
@@ -574,8 +574,8 @@ export function OnboardingModals({
               <div>
                 <h2 id="receive-modal-title">
                   {vi
-                    ? `Ghi nhận đã nhận thông tin bổ sung — ${selectedEnterprise.name}`
-                    : `Record Received Supplement Info — ${selectedEnterprise.name}`}
+                    ? `Ghi nhận đã nhận thông tin bổ sung · ${selectedEnterprise.name}`
+                    : `Record Received Supplement Info · ${selectedEnterprise.name}`}
                 </h2>
                 <p className={styles.onboardingCardSub}>
                   {vi
@@ -615,8 +615,8 @@ export function OnboardingModals({
               <div className={styles.onboardingFieldLabel}>
                 <span>
                   {vi
-                    ? "Đính kèm tệp tài liệu bổ sung nhận được (.docx, .xlsx, .pdf, .txt, .csv, .json, .md — tùy chọn)"
-                    : "Attach received document (.docx, .xlsx, .pdf, .txt, .csv, .json, .md — optional)"}
+                    ? "Đính kèm tệp tài liệu bổ sung nhận được (.docx, .xlsx, .pdf, .txt, .csv, .json, .md; tùy chọn)"
+                    : "Attach received document (.docx, .xlsx, .pdf, .txt, .csv, .json, .md; optional)"}
                 </span>
                 <div
                   style={{
@@ -715,8 +715,8 @@ export function OnboardingModals({
               <div>
                 <h2 id="confirm-modal-title">
                   {vi
-                    ? `Ghi nhận doanh nghiệp đã xác nhận đặc tả — ${selectedEnterprise.name}`
-                    : `Record Enterprise Specification Confirmation — ${selectedEnterprise.name}`}
+                    ? `Ghi nhận doanh nghiệp đã xác nhận đặc tả · ${selectedEnterprise.name}`
+                    : `Record Enterprise Specification Confirmation · ${selectedEnterprise.name}`}
                 </h2>
                 <p className={styles.onboardingCardSub}>
                   {vi

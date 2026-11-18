@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, type Dispatch, type SetStateAction } from "react";
+import { Search } from "lucide-react";
 import type {
   FraudGuardFilters,
   PaginationState,
@@ -10,7 +11,11 @@ import type {
   SortState,
   TableTab,
   TransactionRisk,
+  UserProfile,
 } from "@/types/fraudguard";
+import type { InvestigationCase } from "@/types/investigation-case";
+import type { LegacyCaseArchiveLike } from "@/utils/permissions";
+import { resolveTransactionCaseSummary } from "@/utils/export-csv";
 import { RiskLevelBadge } from "./RiskLevelBadge";
 import { ScoringSourceBadge } from "./ScoringSourceBadge";
 import { useLanguage } from "@/context/LanguageContext";
@@ -37,7 +42,9 @@ interface TransactionRiskTableProps {
   pagination: PaginationState;
   onPaginationChange: (pagination: PaginationState) => void;
   onReview: (transaction: TransactionRisk) => void;
-
+  investigationCases?: readonly InvestigationCase[];
+  legacyCaseArchive?: readonly LegacyCaseArchiveLike[];
+  currentUser?: UserProfile;
 }
 
 const RISK_ORDER: Record<RiskLevel, number> = {
@@ -122,10 +129,37 @@ export function TransactionRiskTable({
   pagination,
   onPaginationChange,
   onReview,
-
+  investigationCases,
+  legacyCaseArchive,
+  currentUser,
 }: TransactionRiskTableProps) {
   const { t, language } = useLanguage();
   const dateLocale = language === "vi" ? "vi-VN" : "en-US";
+  const wf04Mode =
+    investigationCases !== undefined ||
+    legacyCaseArchive !== undefined ||
+    currentUser !== undefined;
+
+  const caseTransactions = useMemo(
+    () =>
+      transactions.filter((tx) =>
+        wf04Mode
+          ? Boolean(
+              resolveTransactionCaseSummary(
+                tx,
+                investigationCases,
+                legacyCaseArchive,
+                currentUser,
+              ).caseId,
+            )
+          : Boolean(
+              tx.caseId &&
+                tx.scoringSource === "AI" &&
+                tx.riskLevel === "Abnormal",
+            ),
+      ),
+    [transactions, wf04Mode, investigationCases, legacyCaseArchive, currentUser],
+  );
 
   const patch = (next: Partial<FraudGuardFilters>) =>
     onFiltersChange((current) => ({ ...current, ...next }));
@@ -136,11 +170,11 @@ export function TransactionRiskTable({
       case "alerts":
         return transactions.filter((t) => t.alertId);
       case "cases":
-        return transactions.filter((t) => t.caseId && t.scoringSource === "AI" && t.riskLevel === "Abnormal");
+        return caseTransactions;
       default:
         return transactions;
     }
-  }, [transactions, activeTab]);
+  }, [transactions, caseTransactions, activeTab]);
 
   // Sort
   const sorted = useMemo(
@@ -164,7 +198,7 @@ export function TransactionRiskTable({
     {
       id: "cases",
       label: t.table.tabs.cases,
-      count: transactions.filter((t) => t.caseId && t.scoringSource === "AI" && t.riskLevel === "Abnormal").length,
+      count: caseTransactions.length,
     },
   ];
 
@@ -180,7 +214,7 @@ export function TransactionRiskTable({
         </span>
       </div>
 
-      <div className={styles.tableControls}>
+      <div className={styles.tableControls} style={{ alignItems: "flex-end" }}>
         <div
           className={styles.tabs}
           role="tablist"
@@ -200,37 +234,51 @@ export function TransactionRiskTable({
               aria-selected={activeTab === tab.id}
               type="button"
             >
-              {tab.label} ({tab.count})
+              <span>{tab.label}</span>
+              <span className={styles.tabCount}>{tab.count}</span>
             </button>
           ))}
         </div>
 
-        <div className={styles.toolbarGroup}>
-          <input
-            className={styles.searchInput}
-            type="search"
-            aria-label={t.table.searchPlaceholder}
-            placeholder={t.table.searchPlaceholder}
-            value={filters.query}
-            onChange={(event) => patch({ query: event.target.value })}
-          />
+        <div className={styles.toolbarGroup} style={{ alignItems: "flex-end" }}>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>
+              {language === "vi" ? "Tìm kiếm" : "Search"}
+            </span>
+            <div className={styles.searchFieldWrap}>
+              <Search size={15} className={styles.searchFieldIcon} aria-hidden="true" />
+              <input
+                className={styles.searchInput}
+                type="search"
+                aria-label={t.table.searchPlaceholder}
+                placeholder={t.table.searchPlaceholder}
+                value={filters.query}
+                onChange={(event) => patch({ query: event.target.value })}
+              />
+            </div>
+          </label>
 
-          <select
-            className={styles.control}
-            aria-label={t.table.filterRisk}
-            value={filters.riskLevel}
-            onChange={(event) =>
-              patch({
-                riskLevel: event.target
-                  .value as FraudGuardFilters["riskLevel"],
-              })
-            }
-          >
-            <option value="all">{t.table.filterAllRisk}</option>
-            <option value="Abnormal">{t.table.filterAnomaly}</option>
-            <option value="Normal">{t.table.filterNormal}</option>
-            <option value="Undetermined">{language === "vi" ? "Chưa thể kết luận" : "Undetermined"}</option>
-          </select>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>
+              {t.table.filterRisk}
+            </span>
+            <select
+              className={styles.control}
+              aria-label={t.table.filterRisk}
+              value={filters.riskLevel}
+              onChange={(event) =>
+                patch({
+                  riskLevel: event.target
+                    .value as FraudGuardFilters["riskLevel"],
+                })
+              }
+            >
+              <option value="all">{t.table.filterAllRisk}</option>
+              <option value="Abnormal">{t.table.filterAnomaly}</option>
+              <option value="Normal">{t.table.filterNormal}</option>
+              <option value="Undetermined">{language === "vi" ? "Chưa thể kết luận" : "Undetermined"}</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -298,8 +346,8 @@ export function TransactionRiskTable({
                   <td>
                     <ScoringSourceBadge source={transaction.scoringSource} />
                   </td>
-                  <td>{transaction.ruleEvaluation ? transaction.ruleEvaluation.matched + '/' + transaction.ruleEvaluation.evaluated : '—'}</td>
-                  <td>{transaction.ruleEvaluation ? (language === 'vi' ? ({ Complete: 'Hoàn tất', Incomplete: 'Chưa hoàn tất', NotEvaluated: 'Chưa đánh giá' }[transaction.ruleEvaluation.status]) : transaction.ruleEvaluation.status) + ' (' + transaction.ruleEvaluation.evaluated + '/' + transaction.ruleEvaluation.applicable + ')' : '—'}</td>
+                  <td>{transaction.ruleEvaluation ? transaction.ruleEvaluation.matched + '/' + transaction.ruleEvaluation.evaluated : '-'}</td>
+                  <td>{transaction.ruleEvaluation ? (language === 'vi' ? ({ Complete: 'Hoàn tất', Incomplete: 'Chưa hoàn tất', NotEvaluated: 'Chưa đánh giá' }[transaction.ruleEvaluation.status]) : transaction.ruleEvaluation.status) + ' (' + transaction.ruleEvaluation.evaluated + '/' + transaction.ruleEvaluation.applicable + ')' : '-'}</td>
                   <td>{formatDate(transaction.processedAt, dateLocale)}</td>
                   <td>
                     <button

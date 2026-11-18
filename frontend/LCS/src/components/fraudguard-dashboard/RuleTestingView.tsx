@@ -203,7 +203,7 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
         <button id="sandbox-single-mode" type="button" className={`${styles.tab} ${mode === 'single' ? styles.tabActive : ''}`} aria-pressed={mode === 'single'} onClick={() => setMode('single')}>{language === 'vi' ? 'Kiểm thử & phát hành từng rule' : 'Single rule testing & publication'}</button>
       </div>}
       {onOpenDraft && enterprise && <section className={styles.panel}><h2>{language === 'vi' ? 'Chuẩn bị phiên bản mới' : 'Prepare a new release'}</h2><p>{language === 'vi' ? 'Kết quả thử trên trang này không dùng để phát hành. Mở tập quy tắc để chọn thành phần, kiểm thử và review bản nháp.' : 'Tests on this page do not authorize publication. Open the rule set to select members, test and review the draft.'}</p><button className={styles.button} onClick={() => onOpenDraft(enterprise.id)}>{language === 'vi' ? 'Mở tập quy tắc để kiểm thử bản nháp' : 'Open rule set to test the draft'}</button></section>}
-      {mode === 'set' ? <><label className={styles.drawerLabel}>{language === 'vi' ? 'Doanh nghiệp' : 'Enterprise'}<select className={styles.control} value={enterpriseId} onChange={e => setEnterpriseId(e.target.value)}>{enterprises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>{enterprise ? <RuleSetTestingView key={enterprise.id} validationSchema={schemasByEnterprise?.[enterprise.id]} projects={projects?.filter(p => enterprise.projectIds.includes(p.id))} allowedProjectIds={enterprise.projectIds} enterpriseLabel={enterprise.name} rules={enterpriseRules} setContext={setContext} onAddDemoTransactions={onAddDemoTransactions} /> : <p>{language === 'vi' ? 'Chưa được phân công doanh nghiệp.' : 'No enterprise assigned.'}</p>}</> : <>
+      {mode === 'set' ? <><div className={styles.scopeBar}><label className={styles.filterField}><span className={styles.filterLabel}>{language === 'vi' ? 'Doanh nghiệp' : 'Enterprise'}</span><select className={styles.control} value={enterpriseId} onChange={e => setEnterpriseId(e.target.value)}>{enterprises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label></div>{enterprise ? <RuleSetTestingView key={enterprise.id} validationSchema={schemasByEnterprise?.[enterprise.id]} projects={projects?.filter(p => enterprise.projectIds.includes(p.id))} allowedProjectIds={enterprise.projectIds} enterpriseLabel={enterprise.name} rules={enterpriseRules} setContext={setContext} onAddDemoTransactions={onAddDemoTransactions} /> : <p>{language === 'vi' ? 'Chưa được phân công doanh nghiệp.' : 'No enterprise assigned.'}</p>}</> : <>
       {/* Overview Grid */}
       <div className={styles.metricsGrid} style={{ marginTop: 20 }}>
         <article className={styles.statCard}>
@@ -275,7 +275,7 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
             const next = [...(expectations[selectedRuleId] ?? EXPECTED_BY_RULE[selectedRuleId] ?? [])];
             next[index] = event.target.value === "true";
             setExpectations(previous => ({ ...previous, [selectedRuleId]: next })); setTestedSignature(null);
-          }}><option value="" disabled>—</option><option value="false">{t.risk.normal}</option><option value="true">{t.risk.anomaly}</option></select>
+          }}><option value="" disabled>-</option><option value="false">{t.risk.normal}</option><option value="true">{t.risk.anomaly}</option></select>
         </label>)}
       </div>
       <details className={styles.panel} style={{ padding: 16, marginTop: 12 }}>
@@ -378,8 +378,8 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
       </section>}
       <p className={styles.muted}>
         {language === "vi"
-          ? "Thử riêng rule đã chọn trên dữ liệu mẫu, kể cả rule đang tắt. Rule khớp trả về bất thường; không khớp trả về bình thường. Nhãn kỳ vọng do người kiểm thử xác định; dấu — nghĩa là chưa có nhãn kiểm chứng. Chỉ phát hành trong demo khi tất cả mẫu đạt."
-          : "Test only the selected rule on 5 sample ABC Fashion payments, including disabled rules. A matching rule returns Abnormal; otherwise Normal. Expected labels are fixed per rule; — means no verification label is available. Publishing in the demo requires all samples to pass."}
+          ? "Thử riêng rule đã chọn trên dữ liệu mẫu, kể cả rule đang tắt. Rule khớp trả về bất thường; không khớp trả về bình thường. Nhãn kỳ vọng do người kiểm thử xác định; dấu - nghĩa là chưa có nhãn kiểm chứng. Chỉ phát hành trong demo khi tất cả mẫu đạt."
+          : "Test only the selected rule on 5 sample ABC Fashion payments, including disabled rules. A matching rule returns Abnormal; otherwise Normal. Expected labels are fixed per rule; - means no verification label is available. Publishing in the demo requires all samples to pass."}
       </p>
       {!selectedRule && <p role="status">{language === "vi" ? "Chưa có rule để kiểm thử." : "No rules available to test."}</p>}
       {selectedRule && !nextVersion && <p role="alert">{language === "vi" ? "Phiên bản rule không hợp lệ. Không thể phát hành." : "Invalid rule version. Publishing is unavailable."}</p>}
@@ -431,12 +431,12 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                     </strong>
                   </td>
                   <td>
-                    <div style={{ fontSize: 11 }}>
+                    <div style={{ fontSize: 12 }}>
                       {item.fields ? JSON.stringify(item.fields) : `${item.amount.toLocaleString(dateLocale)} VND · ${item.channel}`}
                     </div>
                     <div
                       style={{
-                        fontSize: 10,
+                        fontSize: 12,
                         color: "var(--security-subtle)",
                       }}
                     >
@@ -448,15 +448,19 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                     <span
                       className={styles.badge}
                       style={{
-                        background: item.expectedAnomaly
-                          ? "var(--critical-bg)"
-                          : "rgba(120, 201, 172, 0.15)",
-                        color: item.expectedAnomaly
-                          ? "var(--critical-text)"
-                          : "var(--security-green)",
+                        background: item.expectedAnomaly == null
+                          ? "var(--security-control)"
+                          : item.expectedAnomaly
+                            ? "var(--critical-bg)"
+                            : "var(--low-bg)",
+                        color: item.expectedAnomaly == null
+                          ? "var(--security-text-secondary)"
+                          : item.expectedAnomaly
+                            ? "var(--critical-text)"
+                            : "var(--low-text)",
                       }}
                     >
-                      {item.expectedAnomaly == null ? "—" : item.expectedAnomaly ? t.risk.anomaly : t.risk.normal}
+                      {item.expectedAnomaly == null ? "-" : item.expectedAnomaly ? t.risk.anomaly : t.risk.normal}
                     </span>
                   </td>
                   <td>
@@ -476,7 +480,7 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                       </div>
                     ) : (
                       <span
-                        style={{ color: "var(--security-muted)", fontSize: 11 }}
+                        style={{ color: "var(--security-muted)", fontSize: 12 }}
                       >
                         {t.ruleTestingView.results.notTested}
                       </span>
@@ -489,7 +493,7 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                           <span
                             key={trg}
                             className={styles.ruleTag}
-                            style={{ fontSize: 9 }}
+                            style={{ fontSize: 12 }}
                           >
                             {trg}
                           </span>
@@ -497,7 +501,7 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                       </div>
                     ) : (
                       <span
-                        style={{ color: "var(--security-subtle)", fontSize: 10 }}
+                        style={{ color: "var(--security-subtle)", fontSize: 12 }}
                       >
                         None
                       </span>
@@ -508,8 +512,8 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                       <span
                         className={styles.badge}
                         style={{
-                          background: "rgba(120, 201, 172, 0.15)",
-                          color: "var(--security-green)",
+                          background: "var(--low-bg)",
+                          color: "var(--low-text)",
                         }}
                       >
                         {t.ruleTestingView.results.passed}
@@ -526,7 +530,7 @@ export function RuleTestingView({ rules, enterprises = [], schemasByEnterprise, 
                       </span>
                     ) : (
                       <span
-                        style={{ color: "var(--security-subtle)", fontSize: 11 }}
+                        style={{ color: "var(--security-subtle)", fontSize: 12 }}
                       >
                         {t.ruleTestingView.results.pending}
                       </span>

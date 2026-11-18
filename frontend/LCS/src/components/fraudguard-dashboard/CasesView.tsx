@@ -1,1139 +1,1688 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { isCaseAssignee } from '@/utils/case-workflow';
+import { useEffect, useMemo, useState } from "react";
+import {
+  Eye,
+  RotateCcw,
+  Search,
+  ShieldAlert,
+  UserCheck,
+  UserPlus,
+} from "lucide-react";
+import type { Enterprise } from "@/types/enterprise";
 import type {
-  CaseStatus,
-  InvestigationFinding,
   RolePermissions,
   TransactionRisk,
+  UserProfile,
   UserRole,
 } from "@/types/fraudguard";
-import { RiskLevelBadge } from "./RiskLevelBadge";
-import { useToast } from "@/context/ToastProvider";
-import styles from "./SecurityDashboard.module.css";
+import type {
+  ConfirmedInvestigationReportView,
+  InvestigationCase,
+  InvestigationCaseEvent,
+  InvestigationCaseStatus,
+} from "@/types/investigation-case";
+import type { InvestigationReportFeedback } from "@/types/report-feedback";
+import type {
+  ConfirmInvestigationReportCommandArgs,
+  InvestigationActionOutcome,
+  RequestInvestigationRevisionCommandArgs,
+  SubmitConfirmedReportFeedbackCommandArgs,
+  SubmitFeedbackOutcome,
+  SubmitInvestigationReportCommandArgs,
+} from "@/hooks/useInvestigationCases";
+import { type LegacyCaseArchiveEntry } from "@/utils/case-migration";
 import {
-  UserCheck,
-  Clock,
-  FileCheck2,
-  AlertTriangle,
-  ShieldCheck,
-  Play,
-  Eye,
-  Send,
-} from "lucide-react";
-
+  readConfirmedInvestigationReport,
+  readInternalInvestigationCase,
+} from "@/utils/investigation-case";
+import { findFeedbackForConfirmedReport } from "@/utils/report-feedback";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { useLanguage } from "@/context/LanguageContext";
+import { useToast } from "@/context/ToastProvider";
 import type { TranslationKey } from "@/config/translations";
+import {
+  buildReportDraftBaseline,
+  buildReportDraftScopeKey,
+  CaseReportWorkflowPanel,
+  isReportDraftDirty,
+  mapPhase2bErrorMessage,
+  type PendingModalLeaveAction,
+  type ReportDraftState,
+} from "./CaseReportWorkflowPanel";
+import { ReportFeedbackModal } from "./ReportFeedbackModal";
+import { RiskLevelBadge } from "./RiskLevelBadge";
+import { ScoringSourceBadge } from "./ScoringSourceBadge";
+import styles from "./SecurityDashboard.module.css";
 
-interface CasesViewProps {
+type QueueStatusFilter = "all" | InvestigationCaseStatus;
+
+export interface CasesViewProps {
+  investigationCases?: readonly InvestigationCase[];
+  legacyCaseArchive?: readonly LegacyCaseArchiveEntry[];
   transactions: TransactionRisk[];
+  enterprises?: readonly Enterprise[];
+  investigatorUsers?: readonly UserProfile[];
+  users?: readonly UserProfile[];
   investigators?: string[];
-  onUpdateTransaction: (updated: TransactionRisk) => void;
-  onReview: (transaction: TransactionRisk) => void;
   permissions?: RolePermissions;
+  currentUser?: UserProfile;
   currentRole?: UserRole;
   currentUserName?: string;
   currentUserId?: string;
-
+  selectedCaseId?: string | null;
+  onSelectCaseId?: (caseId: string | null) => void;
+  onAssignInvestigator?: (
+    caseId: string,
+    assigneeId: string,
+  ) => InvestigationActionOutcome;
+  onSelfAssignCase?: (caseId: string) => InvestigationActionOutcome;
+  onSubmitReport?: (
+    args: SubmitInvestigationReportCommandArgs,
+  ) => InvestigationActionOutcome;
+  onRequestRevision?: (
+    args: RequestInvestigationRevisionCommandArgs,
+  ) => InvestigationActionOutcome;
+  onConfirmAndCloseReport?: (
+    args: ConfirmInvestigationReportCommandArgs,
+  ) => InvestigationActionOutcome;
+  reportFeedbacks?: readonly InvestigationReportFeedback[];
+  onSubmitReportFeedback?: (
+    args: SubmitConfirmedReportFeedbackCommandArgs,
+  ) => SubmitFeedbackOutcome;
+  onReviewTransaction?: (tx: TransactionRisk) => void;
+  onReview?: (tx: TransactionRisk) => void;
+  onUpdateTransaction?: (updated: TransactionRisk) => void;
+  wf04DemoActive?: boolean;
+  onLoadWf04Demo?: () => void;
+  onRestorePreDemo?: () => void;
 }
 
-const STATUS_BADGE_STYLE: Record<
-  CaseStatus,
-  { bg: string; text: string; border: string; labelKey: keyof TranslationKey["caseStatus"] }
-> = {
-  Open: {
-    bg: "rgba(237, 167, 101, 0.15)",
-    text: "var(--security-orange)",
-    border: "var(--high-border)",
-    labelKey: "open",
-  },
-  Assigned: {
-    bg: "rgba(113, 185, 244, 0.15)",
-    text: "var(--security-blue)",
-    border: "var(--security-border-strong)",
-    labelKey: "assigned",
-  },
-  Investigating: {
-    bg: "rgba(173, 138, 243, 0.15)",
-    text: "var(--security-purple)",
-    border: "var(--medium-border)",
-    labelKey: "investigating",
-  },
-  Reported: {
-    bg: "var(--high-bg)",
-    text: "var(--high-text)",
-    border: "var(--high-border)",
-    labelKey: "reported",
-  },
-  "Confirmed Fraud": {
-    bg: "var(--critical-bg)",
-    text: "var(--critical-text)",
-    border: "var(--critical-border)",
-    labelKey: "confirmedFraud",
-  },
-  "False Alarm": {
-    bg: "rgba(120, 201, 172, 0.15)",
-    text: "var(--security-green)",
-    border: "var(--low-border)",
-    labelKey: "falseAlarm",
-  },
-  Resolved: {
-    bg: "rgba(120, 201, 172, 0.15)",
-    text: "var(--security-green)",
-    border: "var(--low-border)",
-    labelKey: "resolved",
-  },
-};
+function getCaseStatusBadgeClass(status: InvestigationCaseStatus): string {
+  switch (status) {
+    case "Open":
+      return styles.caseStatusBadgeOpen;
+    case "Investigating":
+      return styles.caseStatusBadgeInvestigating;
+    case "Pending Review":
+      return styles.caseStatusBadgePendingReview;
+    case "Closed":
+      return styles.caseStatusBadgeClosed;
+  }
+}
 
-type OperationQueueTab = "all" | "unassigned" | "in-field" | "reported" | "completed";
-type InvestigatorTaskTab = "all" | "todo" | "investigating" | "reported" | "completed";
+function getCaseStatusLabel(
+  status: InvestigationCaseStatus,
+  t: TranslationKey,
+): string {
+  switch (status) {
+    case "Open":
+      return t.wf04Phase2a.caseQueue.statuses.open;
+    case "Investigating":
+      return t.wf04Phase2a.caseQueue.statuses.investigating;
+    case "Pending Review":
+      return t.wf04Phase2a.caseQueue.statuses.pendingReview;
+    case "Closed":
+      return t.wf04Phase2a.caseQueue.statuses.closed;
+  }
+}
+
+function getTimelineEventLabel(
+  event: InvestigationCaseEvent,
+  t: TranslationKey,
+): string {
+  switch (event.type) {
+    case "CASE_CREATED":
+      return t.wf04Phase2a.auditActions.caseCreated;
+    case "INVESTIGATOR_ASSIGNED":
+      return t.wf04Phase2a.auditActions.investigatorAssigned;
+    case "OPERATOR_SELF_ASSIGNED":
+      return t.wf04Phase2a.auditActions.operatorSelfAssigned;
+    case "REPORT_SUBMITTED":
+      return t.wf04Phase2b.versionViewer.eventReportSubmitted.replace(
+        "{version}",
+        String(event.reportVersion ?? 1),
+      );
+    case "REVISION_REQUESTED":
+      return t.wf04Phase2b.versionViewer.eventRevisionRequested.replace(
+        "{version}",
+        String(event.reportVersion ?? 1),
+      );
+    case "REPORT_CONFIRMED_AND_CLOSED":
+      return t.wf04Phase2b.versionViewer.eventConfirmedClosed.replace(
+        "{version}",
+        String(event.reportVersion ?? 1),
+      );
+    default:
+      return t.wf04Phase2a.auditActions.caseStatusUpdated;
+  }
+}
+
+function formatDateTime(iso: string | undefined, locale: string): string {
+  if (!iso) return "-";
+  const parsed = Date.parse(iso);
+  if (!Number.isFinite(parsed)) return iso;
+  return new Date(parsed).toLocaleString(locale);
+}
+
+export interface CaseProcessingHistoryRow {
+  readonly eventId: string;
+  readonly eventLabel: string;
+  readonly actorName: string;
+  readonly dateTimeText: string;
+  readonly reason?: string;
+  readonly note?: string;
+}
+
+const HISTORY_INLINE_DETAIL_MAX_LENGTH = 140;
+
+export function buildCaseProcessingHistoryRows(args: {
+  readonly history: readonly InvestigationCaseEvent[];
+  readonly resolveActorName: (actorRef?: { actorId: string; name?: string }) => string;
+  readonly dateLocale: string;
+  readonly t: TranslationKey;
+}): CaseProcessingHistoryRow[] {
+  const { history, resolveActorName, dateLocale, t } = args;
+  const sorted = history
+    .map((evt, originalIndex) => ({
+      evt,
+      originalIndex,
+      parsedMs: Date.parse(evt.at),
+    }))
+    .sort((a, b) => {
+      const aValid = Number.isFinite(a.parsedMs);
+      const bValid = Number.isFinite(b.parsedMs);
+      if (aValid && bValid && a.parsedMs !== b.parsedMs) {
+        return a.parsedMs - b.parsedMs;
+      }
+      return a.originalIndex - b.originalIndex;
+    });
+
+  return sorted.map(({ evt, parsedMs }) => {
+    let dateTimeText = "-";
+    if (Number.isFinite(parsedMs)) {
+      const dateObj = new Date(parsedMs);
+      const dateText = dateObj.toLocaleDateString(dateLocale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const timeText = dateObj.toLocaleTimeString(dateLocale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+      dateTimeText = `${dateText} ${timeText}`;
+    } else if (evt.at) {
+      dateTimeText = evt.at;
+    }
+
+    const reason = evt.reason?.trim() || undefined;
+    const note = evt.note?.trim() || undefined;
+
+    return {
+      eventId: evt.eventId,
+      eventLabel: getTimelineEventLabel(evt, t),
+      actorName: evt.actor ? resolveActorName(evt.actor) : "-",
+      dateTimeText,
+      ...(reason ? { reason } : {}),
+      ...(note ? { note } : {}),
+    };
+  });
+}
 
 export function CasesView({
-  investigators = [],
+  investigationCases = [],
   transactions,
-  onUpdateTransaction,
-  onReview,
+  enterprises = [],
+  investigatorUsers = [],
+  users = [],
   permissions,
-  currentRole = "Operator",
-  currentUserName = "Trần Mai Anh",
+  currentUser,
+  currentRole,
+  currentUserName,
   currentUserId,
-
+  selectedCaseId,
+  onSelectCaseId,
+  onAssignInvestigator,
+  onSelfAssignCase,
+  onSubmitReport,
+  onRequestRevision,
+  onConfirmAndCloseReport,
+  reportFeedbacks = [],
+  onSubmitReportFeedback,
+  onReviewTransaction,
+  onReview,
 }: CasesViewProps) {
   const { t, language } = useLanguage();
   const { toast } = useToast();
-  const [opTab, setOpTab] = useState<OperationQueueTab>("all");
-  const [invTab, setInvTab] = useState<InvestigatorTaskTab>("all");
-  const [filterProject, setFilterProject] = useState<string>("all");
+  const dateLocale = language === "vi" ? "vi-VN" : "en-US";
 
-  const getBadgeLabel = (status?: CaseStatus) => {
-    const item = STATUS_BADGE_STYLE[status || "Open"];
-    return item ? t.caseStatus[item.labelKey] : status || "";
-  };
+  const [statusFilter, setStatusFilter] = useState<QueueStatusFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [assigneeDraftByCase, setAssigneeDraftByCase] = useState<Record<string, string>>({});
+  const [internalSelectedCaseId, setInternalSelectedCaseId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyCaseId, setBusyCaseId] = useState<string | null>(null);
+  const [draftsByScopeKey, setDraftsByScopeKey] = useState<
+    Record<string, ReportDraftState>
+  >({});
+  const [pendingLeaveAction, setPendingLeaveAction] =
+    useState<PendingModalLeaveAction | null>(null);
+  const [feedbackModalCaseId, setFeedbackModalCaseId] = useState<string | null>(null);
 
-  const getFindingLabel = (finding?: InvestigationFinding) => {
-    switch (finding) {
-      case "Suspicious":
-        return t.findings.suspicious;
-      case "Legitimate":
-        return t.findings.legitimate;
-      case "Need More Info":
-        return t.findings.needMoreInfo;
-      default:
-        return finding || "";
+  const openAlertInspection = onReviewTransaction ?? onReview;
+  const activeCaseId =
+    selectedCaseId !== undefined ? selectedCaseId : internalSelectedCaseId;
+
+  const setActiveCaseId = (caseId: string | null) => {
+    setActionError(null);
+    if (onSelectCaseId) {
+      onSelectCaseId(caseId);
+    } else {
+      setInternalSelectedCaseId(caseId);
     }
   };
 
-  const isInvestigator = currentRole === "Investigator";
-  const canOperate = currentRole === 'Operator' && permissions?.canManageCases !== false;
-  const investigatorName = currentUserName || "Nguyễn Văn An";
+  const mergedUsers = useMemo(() => {
+    const map = new Map<string, UserProfile>();
+    for (const u of users) map.set(u.id, u);
+    for (const u of investigatorUsers) map.set(u.id, u);
+    return Array.from(map.values());
+  }, [users, investigatorUsers]);
 
-  // All valid cases across the system
-  const allCases = useMemo(() => {
-    return transactions.filter((t) => t.caseId && t.scoringSource === "AI" && t.riskLevel === "Abnormal");
+  const effectiveActor = useMemo<UserProfile | undefined>(() => {
+    if (currentUser) return currentUser;
+    if (currentUserId) {
+      const matched = mergedUsers.find((u) => u.id === currentUserId);
+      if (matched) return matched;
+    }
+    if (!currentRole) return undefined;
+    return {
+      id: currentUserId ?? "",
+      name: currentUserName ?? "",
+      email: "",
+      role: currentRole,
+      title: "",
+      avatarLetter: "",
+      avatarBg: "",
+      description: "",
+    };
+  }, [currentUser, currentUserId, currentUserName, currentRole, mergedUsers]);
+
+  const userById = useMemo(() => {
+    return new Map(mergedUsers.map((u) => [u.id, u]));
+  }, [mergedUsers]);
+
+  const enterpriseNameById = useMemo(() => {
+    return new Map(enterprises.map((e) => [e.id, e.name]));
+  }, [enterprises]);
+
+  const txLookup = useMemo(() => {
+    const byId = new Map<string, TransactionRisk>();
+    const byAlertId = new Map<string, TransactionRisk>();
+    for (const tx of transactions) {
+      byId.set(tx.id, tx);
+      if (tx.alertId) byAlertId.set(tx.alertId, tx);
+    }
+    return { byId, byAlertId };
   }, [transactions]);
 
-  // Projects list for filtering
-  const projects = useMemo(() => {
-    const map = new Map<string, string>();
-    allCases.forEach((t) => map.set(t.projectId, t.projectName));
-    return Array.from(map, ([id, name]) => ({ id, name }));
-  }, [allCases]);
+  const resolveActorDisplayName = (actorRef?: { actorId: string; name?: string }): string => {
+    if (!actorRef) return t.wf04Phase2a.caseQueue.unassignedLabel;
+    return userById.get(actorRef.actorId)?.name || actorRef.name || actorRef.actorId;
+  };
 
-  /* ─────────────────────────────────────────────────────────────
-     INVESTIGATOR ACTIONS & STATS
-  ───────────────────────────────────────────────────────────── */
-  const myAssignedCases = useMemo(() => {
-    return allCases.filter(
-      (t) =>
-        isCaseAssignee(t, { id: currentUserId, name: investigatorName }),
-    );
-  }, [allCases, investigatorName, currentUserId]);
+  const isNoAccessRole =
+    !effectiveActor ||
+    !effectiveActor.enterpriseId ||
+    ["Platform Admin", "Implementation Staff", "Viewer"].includes(effectiveActor.role);
 
-  const investigatorStats = useMemo(() => {
-    const total = myAssignedCases.length;
-    const assigned = myAssignedCases.filter((t) => t.caseStatus === "Assigned").length;
-    const investigating = myAssignedCases.filter((t) => t.caseStatus === "Investigating").length;
-    const reported = myAssignedCases.filter((t) => t.caseStatus === "Reported").length;
-    const completed = myAssignedCases.filter(
-      (t) =>
-        t.caseStatus === "Confirmed Fraud" ||
-        t.caseStatus === "False Alarm" ||
-        t.caseStatus === "Resolved",
-    ).length;
-    const urgent = myAssignedCases.filter(
-      (t) =>
-        (t.caseStatus === "Assigned" || t.caseStatus === "Investigating") &&
-        t.riskLevel === "Abnormal",
-    ).length;
+  const isSmeAdmin = !isNoAccessRole && effectiveActor?.role === "SME Admin";
+  const isOperator =
+    !isNoAccessRole &&
+    effectiveActor?.role === "Operator" &&
+    permissions?.canManageCases !== false;
+  const isInvestigator = !isNoAccessRole && effectiveActor?.role === "Investigator";
 
-    return { total, assigned, investigating, reported, completed, urgent };
-  }, [myAssignedCases]);
-
-  const filteredInvestigatorCases = useMemo(() => {
-    return myAssignedCases
-      .filter((t) => {
-        if (invTab === "todo") return t.caseStatus === "Assigned";
-        if (invTab === "investigating") return t.caseStatus === "Investigating";
-        if (invTab === "reported") return t.caseStatus === "Reported";
-        if (invTab === "completed") {
-          return (
-            t.caseStatus === "Confirmed Fraud" ||
-            t.caseStatus === "False Alarm" ||
-            t.caseStatus === "Resolved"
-          );
-        }
-        return true;
-      })
-      .filter((t) => filterProject === "all" || t.projectId === filterProject)
-      .sort((a, b) => {
-        const order: Record<string, number> = {
-          Assigned: 0,
-          Investigating: 1,
-          Reported: 2,
-          "Confirmed Fraud": 3,
-          "False Alarm": 4,
-          Resolved: 5,
-        };
-        return (order[a.caseStatus || ""] ?? 6) - (order[b.caseStatus || ""] ?? 6);
+  const authorizedInternalCases = useMemo<InvestigationCase[]>(() => {
+    if (isNoAccessRole || isSmeAdmin || !effectiveActor) return [];
+    const list: InvestigationCase[] = [];
+    for (const c of investigationCases) {
+      const res = readInternalInvestigationCase({
+        investigationCase: c,
+        actor: effectiveActor,
       });
-  }, [myAssignedCases, invTab, filterProject]);
+      if (res.ok) list.push(res.investigationCase);
+    }
+    return list.sort(
+      (a, b) =>
+        (Date.parse(b.updatedAt || b.createdAt) || 0) -
+        (Date.parse(a.updatedAt || a.createdAt) || 0),
+    );
+  }, [isNoAccessRole, isSmeAdmin, effectiveActor, investigationCases]);
 
-  const handleAcceptCase = (tx: TransactionRisk) => {
-    if (!isCaseAssignee(tx, { id: currentUserId, name: investigatorName }) || tx.caseStatus !== "Assigned") return;
-    const updated: TransactionRisk = {
-      ...tx,
-      caseStatus: "Investigating",
-      investigationNotes: [
-        ...(tx.investigationNotes || []),
-        {
-          text:
-            language === "vi"
-              ? `Điều tra viên ${investigatorName} đã tiếp nhận hồ sơ và bắt đầu xác minh hiện trường.`
-              : `Investigator ${investigatorName} accepted case and started field investigation.`,
-          time: new Date().toLocaleTimeString(language === "vi" ? "vi-VN" : "en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          author: investigatorName,
-        },
-      ],
+  const authorizedConfirmedReports = useMemo<ConfirmedInvestigationReportView[]>(() => {
+    if (isNoAccessRole || !isSmeAdmin || !effectiveActor) return [];
+    const list: ConfirmedInvestigationReportView[] = [];
+    for (const c of investigationCases) {
+      const res = readConfirmedInvestigationReport({
+        investigationCase: c,
+        actor: effectiveActor,
+      });
+      if (res.ok) list.push(res.view);
+    }
+    return list.sort(
+      (a, b) =>
+        (Date.parse(b.closedAt || b.updatedAt) || 0) -
+        (Date.parse(a.closedAt || a.updatedAt) || 0),
+    );
+  }, [isNoAccessRole, isSmeAdmin, effectiveActor, investigationCases]);
+
+  const authorizedDetail = useMemo<
+    | { mode: "internal"; item: InvestigationCase }
+    | { mode: "confirmed"; item: ConfirmedInvestigationReportView }
+    | null
+  >(() => {
+    if (!activeCaseId || isNoAccessRole || !effectiveActor) return null;
+    if (isSmeAdmin) {
+      const match = authorizedConfirmedReports.find((v) => v.caseId === activeCaseId);
+      return match ? { mode: "confirmed", item: match } : null;
+    }
+    const match = authorizedInternalCases.find((c) => c.caseId === activeCaseId);
+    return match ? { mode: "internal", item: match } : null;
+  }, [
+    activeCaseId,
+    isNoAccessRole,
+    effectiveActor,
+    isSmeAdmin,
+    authorizedConfirmedReports,
+    authorizedInternalCases,
+  ]);
+
+  const activeInternalCase =
+    authorizedDetail?.mode === "internal" ? authorizedDetail.item : null;
+  const isAuthorableActiveCase = Boolean(
+    activeInternalCase &&
+      effectiveActor &&
+      activeInternalCase.status === "Investigating" &&
+      activeInternalCase.enterpriseId === effectiveActor.enterpriseId &&
+      activeInternalCase.assignee?.actorId === effectiveActor.id &&
+      (effectiveActor.role === "Investigator" || effectiveActor.role === "Operator"),
+  );
+  const activeLatestReport =
+    activeInternalCase && activeInternalCase.reports.length > 0
+      ? activeInternalCase.reports[activeInternalCase.reports.length - 1]
+      : undefined;
+  const activeBaseVersion = activeLatestReport ? activeLatestReport.version : 0;
+  const activeScopeKey =
+    activeInternalCase && effectiveActor
+      ? buildReportDraftScopeKey(
+          activeInternalCase.caseId,
+          effectiveActor.id,
+          activeBaseVersion,
+        )
+      : null;
+  const isActiveDraftDirty = Boolean(
+    isAuthorableActiveCase &&
+      activeInternalCase &&
+      activeScopeKey &&
+      isReportDraftDirty(draftsByScopeKey[activeScopeKey], activeInternalCase),
+  );
+
+  // Isolate drafts strictly by actor/role/enterprise and drop immediately when role/tenant switches.
+  useEffect(() => {
+    setDraftsByScopeKey({});
+    setPendingLeaveAction(null);
+    setActionError(null);
+    setFeedbackModalCaseId(null);
+  }, [effectiveActor?.id, effectiveActor?.role, effectiveActor?.enterpriseId]);
+
+  useEffect(() => {
+    if (!isSmeAdmin || !activeCaseId) {
+      setFeedbackModalCaseId(null);
+    }
+  }, [isSmeAdmin, activeCaseId]);
+
+  useEffect(() => {
+    if (!isAuthorableActiveCase) {
+      setPendingLeaveAction(null);
+    }
+  }, [isAuthorableActiveCase]);
+
+  // Clear modal immediately if role/user/tenant switches away from authorized scope.
+  useEffect(() => {
+    if (activeCaseId && !authorizedDetail) {
+      if (onSelectCaseId) {
+        onSelectCaseId(null);
+      } else {
+        setInternalSelectedCaseId(null);
+      }
+      setPendingLeaveAction(null);
+      setActionError(null);
+    }
+  }, [activeCaseId, authorizedDetail, onSelectCaseId]);
+
+  const handleCloseModal = () => {
+    if (isAuthorableActiveCase && isActiveDraftDirty) {
+      setPendingLeaveAction({ type: "close" });
+      return;
+    }
+    setPendingLeaveAction(null);
+    setActiveCaseId(null);
+  };
+
+  const requestOpenCaseId = (targetCaseId: string) => {
+    if (
+      activeCaseId &&
+      activeCaseId !== targetCaseId &&
+      isAuthorableActiveCase &&
+      isActiveDraftDirty
+    ) {
+      setPendingLeaveAction({ type: "switch", caseId: targetCaseId });
+      return;
+    }
+    setPendingLeaveAction(null);
+    setActiveCaseId(targetCaseId);
+  };
+
+  const handleConfirmLeaveWithDiscard = (scopeKeyToClear: string) => {
+    const leaveAction = pendingLeaveAction;
+    setDraftsByScopeKey((prev) => {
+      if (!(scopeKeyToClear in prev)) return prev;
+      const next = { ...prev };
+      delete next[scopeKeyToClear];
+      return next;
+    });
+    setPendingLeaveAction(null);
+    setActionError(null);
+    if (leaveAction?.type === "switch") {
+      setActiveCaseId(leaveAction.caseId);
+    } else {
+      setActiveCaseId(null);
+    }
+  };
+
+  const detailModalRef = useDialogFocus(Boolean(authorizedDetail), handleCloseModal);
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredInternalCases = useMemo(() => {
+    return authorizedInternalCases.filter((c) => {
+      if (statusFilter !== "all" && c.status !== statusFilter) return false;
+      if (!normalizedQuery) return true;
+      const assigneeText = resolveActorDisplayName(c.assignee).toLowerCase();
+      const enterpriseText = (enterpriseNameById.get(c.enterpriseId) ?? c.enterpriseId).toLowerCase();
+      const alertText = c.alerts
+        .map((a) => `${a.alertId} ${a.transactionReference}`)
+        .join(" ")
+        .toLowerCase();
+      return (
+        c.caseId.toLowerCase().includes(normalizedQuery) ||
+        assigneeText.includes(normalizedQuery) ||
+        enterpriseText.includes(normalizedQuery) ||
+        alertText.includes(normalizedQuery)
+      );
+    });
+  }, [authorizedInternalCases, statusFilter, normalizedQuery, enterpriseNameById, userById, t]);
+
+  const filteredConfirmedReports = useMemo(() => {
+    return authorizedConfirmedReports.filter((view) => {
+      if (!normalizedQuery) return true;
+      const enterpriseText = (
+        enterpriseNameById.get(view.enterpriseId) ?? view.enterpriseId
+      ).toLowerCase();
+      const alertText = view.alerts
+        .map((a) => `${a.alertId} ${a.transactionReference}`)
+        .join(" ")
+        .toLowerCase();
+      return (
+        view.caseId.toLowerCase().includes(normalizedQuery) ||
+        view.conclusion.summary.toLowerCase().includes(normalizedQuery) ||
+        enterpriseText.includes(normalizedQuery) ||
+        alertText.includes(normalizedQuery)
+      );
+    });
+  }, [authorizedConfirmedReports, normalizedQuery, enterpriseNameById]);
+
+  const internalCounts = useMemo(() => {
+    return {
+      all: authorizedInternalCases.length,
+      open: authorizedInternalCases.filter((c) => c.status === "Open").length,
+      investigating: authorizedInternalCases.filter((c) => c.status === "Investigating").length,
+      pendingReview: authorizedInternalCases.filter((c) => c.status === "Pending Review").length,
+      closed: authorizedInternalCases.filter((c) => c.status === "Closed").length,
     };
-    onUpdateTransaction(updated);
-    toast(
-      "success",
-      language === "vi"
-        ? `Đã tiếp nhận hồ sơ ${tx.caseId}. Trạng thái chuyển sang: Đang thẩm định`
-        : `Accepted case ${tx.caseId}. Status changed to: Investigating`,
+  }, [authorizedInternalCases]);
+
+  const getTenantInvestigators = (enterpriseId: string): UserProfile[] => {
+    const source = investigatorUsers.length > 0 ? investigatorUsers : mergedUsers;
+    return source.filter(
+      (u) => u.role === "Investigator" && u.enterpriseId === enterpriseId,
     );
   };
 
-  /* ─────────────────────────────────────────────────────────────
-     OPERATION DISPATCH QUEUE ACTIONS & STATS
-  ───────────────────────────────────────────────────────────── */
-  const operationStats = useMemo(() => {
-    const total = allCases.length;
-    const unassigned = allCases.filter(
-      (t) => t.caseStatus === "Open" && !t.assignedInvestigator,
-    ).length;
-    const inField = allCases.filter(
-      (t) => t.caseStatus === "Assigned" || t.caseStatus === "Investigating",
-    ).length;
-    const reported = allCases.filter((t) => t.caseStatus === "Reported").length;
-    const completed = allCases.filter(
-      (t) =>
-        t.caseStatus === "Confirmed Fraud" ||
-        t.caseStatus === "False Alarm" ||
-        t.caseStatus === "Resolved",
-    ).length;
-
-    return { total, unassigned, inField, reported, completed };
-  }, [allCases]);
-
-  const filteredOperationCases = useMemo(() => {
-    return allCases
-      .filter((t) => {
-        if (opTab === "unassigned") return t.caseStatus === "Open" && !t.assignedInvestigator;
-        if (opTab === "in-field") {
-          return t.caseStatus === "Assigned" || t.caseStatus === "Investigating";
-        }
-        if (opTab === "reported") return t.caseStatus === "Reported";
-        if (opTab === "completed") {
-          return (
-            t.caseStatus === "Confirmed Fraud" ||
-            t.caseStatus === "False Alarm" ||
-            t.caseStatus === "Resolved"
-          );
-        }
-        return true;
-      })
-      .filter((t) => filterProject === "all" || t.projectId === filterProject)
-      .sort((a, b) => {
-        const order: Record<string, number> = {
-          Reported: 0,
-          Open: 1,
-          Assigned: 2,
-          Investigating: 3,
-          "Confirmed Fraud": 4,
-          "False Alarm": 5,
-          Resolved: 6,
-        };
-        return (order[a.caseStatus || ""] ?? 7) - (order[b.caseStatus || ""] ?? 7);
-      });
-  }, [allCases, opTab, filterProject]);
-
-  const handleQuickAssign = (tx: TransactionRisk, assignTarget: string) => {
-    if (!canOperate) return;
-    const updated: TransactionRisk = {
-      ...tx,
-      assignedInvestigator: assignTarget,
-      assignedAt: new Date().toISOString(),
-      caseStatus: "Assigned",
-    };
-    onUpdateTransaction(updated);
+  const handleAssignSubmit = (caseId: string) => {
+    if (!onAssignInvestigator) return;
+    const targetAssigneeId = assigneeDraftByCase[caseId];
+    if (!targetAssigneeId) return;
+    setBusyCaseId(caseId);
+    setActionError(null);
+    const outcome = onAssignInvestigator(caseId, targetAssigneeId);
+    setBusyCaseId(null);
+    if (!outcome.ok) {
+      const msg = mapPhase2bErrorMessage(outcome.code, outcome.error, t);
+      setActionError(msg);
+      toast("error", msg);
+      return;
+    }
     toast(
       "success",
       language === "vi"
-        ? `Đã phân công hồ sơ ${tx.caseId} cho điều tra viên ${assignTarget}`
-        : `Assigned case ${tx.caseId} to investigator ${assignTarget}`,
+        ? `Đã phân công hồ sơ ${caseId} và chuyển sang Đang điều tra.`
+        : `Assigned case ${caseId} and moved to Investigating.`,
     );
   };
 
-  /* ─────────────────────────────────────────────────────────────
-     VIEW 1: INVESTIGATOR PERSONAL WORKBENCH (Bàn thẩm định)
-  ───────────────────────────────────────────────────────────── */
-  if (isInvestigator) {
+  const handleSelfAssignSubmit = (caseId: string) => {
+    if (!onSelfAssignCase) return;
+    setBusyCaseId(caseId);
+    setActionError(null);
+    const outcome = onSelfAssignCase(caseId);
+    setBusyCaseId(null);
+    if (!outcome.ok) {
+      const msg = mapPhase2bErrorMessage(outcome.code, outcome.error, t);
+      setActionError(msg);
+      toast("error", msg);
+      return;
+    }
+    toast(
+      "success",
+      language === "vi"
+        ? `Đã tự nhận hồ sơ ${caseId} để điều tra.`
+        : `Self-assigned case ${caseId} to start investigation.`,
+    );
+  };
+
+  if (isNoAccessRole) {
     return (
       <>
         <div className={styles.pageHeading}>
           <div>
-            <h1>{t.caseQueue.invTitle}</h1>
-            <p>{t.caseQueue.invSubtitle}</p>
+            <h1>{t.caseQueue.opTitle}</h1>
+            <p>{t.caseQueue.opSubtitle}</p>
           </div>
         </div>
 
-        {/* Investigator Personal KPIs */}
-        <section className={`${styles.metricsGrid} ${styles.caseMetricsGrid}`} style={{ marginTop: 20 }}>
-          <article
-            className={`${styles.statCard} ${investigatorStats.assigned > 0 ? styles.statWarning : ""}`}
-          >
-            <div className={styles.statLabel}>{t.caseQueue.kpis.newAssigned}</div>
-            <strong className={styles.statValue} style={{ color: "var(--security-blue)" }}>
-              {investigatorStats.assigned}
-            </strong>
-            <span className={styles.statDescription}>{t.caseQueue.kpis.newAssignedDesc}</span>
-          </article>
-
-          <article className={styles.statCard}>
-            <div className={styles.statLabel}>{t.caseQueue.kpis.inProgress}</div>
-            <strong className={styles.statValue} style={{ color: "var(--security-purple)" }}>
-              {investigatorStats.investigating}
-            </strong>
-            <span className={styles.statDescription}>{t.caseQueue.kpis.inProgressDesc}</span>
-          </article>
-
-          <article className={styles.statCard} style={{ borderColor: "var(--high-border)" }}>
-            <div className={styles.statLabel}>{t.caseQueue.kpis.awaitingReview}</div>
-            <strong className={styles.statValue} style={{ color: "var(--high-text)" }}>
-              {investigatorStats.reported}
-            </strong>
-            <span className={styles.statDescription}>{t.caseQueue.kpis.awaitingReviewDesc}</span>
-          </article>
-
-          <article
-            className={`${styles.statCard} ${investigatorStats.urgent > 0 ? styles.statCritical : ""}`}
-          >
-            <div className={styles.statLabel}>{t.caseQueue.kpis.urgentCases}</div>
-            <strong className={styles.statValue}>
-              {investigatorStats.urgent}
-            </strong>
-            <span className={styles.statDescription}>{t.caseQueue.kpis.urgentCasesDesc}</span>
-          </article>
-        </section>
-
-        {/* Investigator Task Tabs & Project Filter */}
         <div
-          className={styles.tableControls}
-          style={{ padding: "8px 0 16px", borderBottom: "1px solid var(--security-border)" }}
+          className={`${styles.roleNoticeBanner} ${
+            effectiveActor?.role === "Platform Admin"
+              ? styles.roleNoticePlatformAdmin
+              : effectiveActor?.role === "Implementation Staff"
+                ? styles.roleNoticeRiskStaff
+                : styles.roleNoticeViewer
+          }`}
         >
-          <div className={styles.tabs} role="tablist">
-            <button
-              className={`${styles.tab} ${invTab === "all" ? styles.tabActive : ""}`}
-              onClick={() => setInvTab("all")}
-              type="button"
-            >
-              {t.caseQueue.tabs.myAll} ({myAssignedCases.length})
-            </button>
-            <button
-              className={`${styles.tab} ${invTab === "todo" ? styles.tabActive : ""}`}
-              onClick={() => setInvTab("todo")}
-              type="button"
-            >
-              {t.caseQueue.tabs.myTodo} ({investigatorStats.assigned})
-            </button>
-            <button
-              className={`${styles.tab} ${invTab === "investigating" ? styles.tabActive : ""}`}
-              onClick={() => setInvTab("investigating")}
-              type="button"
-            >
-              {t.caseQueue.tabs.myInvestigating} ({investigatorStats.investigating})
-            </button>
-            <button
-              className={`${styles.tab} ${invTab === "reported" ? styles.tabActive : ""}`}
-              onClick={() => setInvTab("reported")}
-              type="button"
-            >
-              {t.caseQueue.tabs.myReported} ({investigatorStats.reported})
-            </button>
-            <button
-              className={`${styles.tab} ${invTab === "completed" ? styles.tabActive : ""}`}
-              onClick={() => setInvTab("completed")}
-              type="button"
-            >
-              {t.caseQueue.tabs.myCompleted} ({investigatorStats.completed})
-            </button>
-          </div>
-
-          <div className={styles.toolbarGroup}>
-            <select
-              className={styles.control}
-              aria-label={t.actions.allProjects}
-              value={filterProject}
-              onChange={(e) => setFilterProject(e.target.value)}
-            >
-              <option value="all">{t.actions.allProjects}</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Investigator Task Cards List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
-          {filteredInvestigatorCases.length === 0 ? (
-            <div className={styles.panel} style={{ padding: 40, textAlign: "center" }}>
-              <p className={styles.muted}>{t.caseQueue.emptyMessage}</p>
+          <div className={styles.roleNoticeLeft}>
+            <ShieldAlert size={18} className={styles.roleNoticeIcon} aria-hidden="true" />
+            <div>
+              <strong>{t.wf04Phase2a.caseQueue.noInternalAccessTitle}</strong>
+              <p style={{ margin: "4px 0 0" }}>
+                {t.wf04Phase2a.caseQueue.noInternalAccessDesc}
+              </p>
             </div>
-          ) : (
-            filteredInvestigatorCases.map((tx) => {
-              const badgeStyle = STATUS_BADGE_STYLE[tx.caseStatus || "Assigned"];
-              const isAssigned = tx.caseStatus === "Assigned";
-              const isInvestigating = tx.caseStatus === "Investigating";
-              const isReported = tx.caseStatus === "Reported";
-
-              return (
-                <article
-                  key={tx.id}
-                  className={styles.panel}
-                  style={{
-                    padding: "16px 20px",
-                    borderLeft: isAssigned
-                      ? "4px solid var(--security-blue)"
-                      : isInvestigating
-                        ? "4px solid var(--security-purple)"
-                        : isReported
-                          ? "4px solid var(--high-text)"
-                          : undefined,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: 16,
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {/* Top Badges Row */}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          marginBottom: 8,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span
-                          className={styles.badge}
-                          style={{
-                            background: badgeStyle.bg,
-                            color: badgeStyle.text,
-                            borderColor: badgeStyle.border,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {getBadgeLabel(tx.caseStatus)}
-                        </span>
-
-                        <RiskLevelBadge
-                          riskLevel={tx.riskLevel}
-
-                        />
-
-                        <span
-                          style={{
-                            color: "var(--security-muted)",
-                            fontSize: 11,
-                            fontFamily: "monospace",
-                          }}
-                        >
-                          {tx.caseId}
-                        </span>
-
-                        {tx.assignedAt && (
-                          <span
-                            style={{
-                              fontSize: 11,
-                              color: "var(--security-subtle)",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            <Clock size={12} />
-                            {t.caseQueue.assignedAtTime}: {new Date(tx.assignedAt).toLocaleTimeString(language === "vi" ? "vi-VN" : "en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })} (
-                            {new Date(tx.assignedAt).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US")})
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Transaction Title */}
-                      <div
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: "var(--security-text)",
-                          marginBottom: 4,
-                        }}
-                      >
-                        {tx.transactionReference} — {tx.projectName}
-                      </div>
-
-                      {/* Key Evidence & Field Facts */}
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "var(--security-muted)",
-                          marginBottom: 8,
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 12,
-                        }}
-                      >
-                        <span>
-                          <strong>{t.risk.amount}:</strong>{" "}
-                          <span style={{ color: "var(--security-text)" }}>
-                            {tx.amount != null
-                              ? `${tx.amount.toLocaleString(language === "vi" ? "vi-VN" : "en-US")} ${tx.currency || "VND"}`
-                              : "N/A"}
-                          </span>
-                        </span>
-                        <span>
-                          <strong>{t.risk.channel}:</strong> {tx.channel || tx.transactionType}
-                        </span>
-                        <span>
-                          <strong>{t.risk.device}:</strong> {tx.deviceId || t.risk.unidentifiedDevice}
-                        </span>
-                        <span>
-                          <strong>{t.risk.customer}:</strong> {tx.entityReference}
-                        </span>
-                      </div>
-
-                      {/* Triggered Rules Tag List */}
-                      {tx.triggeredRules.length > 0 && (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            flexWrap: "wrap",
-                            marginBottom: 10,
-                          }}
-                        >
-                          <span style={{ fontSize: 11, color: "var(--security-subtle)" }}>
-                            {t.risk.verificationSigns}:
-                          </span>
-                          {tx.triggeredRules.map((r) => (
-                            <span key={r} className={styles.ruleTag}>
-                              {r}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Investigator Field Progress Callout Box */}
-                      {isAssigned && (
-                        <div
-                          style={{
-                            padding: "8px 12px",
-                            borderRadius: 4,
-                            background: "rgba(113, 185, 244, 0.08)",
-                            border: "1px solid rgba(113, 185, 244, 0.3)",
-                            fontSize: 11,
-                            color: "var(--security-blue)",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <AlertTriangle size={14} />
-                          <span>{t.caseQueue.calloutNew}</span>
-                        </div>
-                      )}
-
-                      {isInvestigating && (
-                        <div
-                          style={{
-                            padding: "8px 12px",
-                            borderRadius: 4,
-                            background: "rgba(173, 138, 243, 0.08)",
-                            border: "1px solid rgba(173, 138, 243, 0.3)",
-                            fontSize: 11,
-                            color: "var(--security-purple)",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <Clock size={14} />
-                          <span>{t.caseQueue.calloutInvestigating}</span>
-                        </div>
-                      )}
-
-                      {isReported && tx.investigationReport && (
-                        <div
-                          style={{
-                            padding: "8px 12px",
-                            borderRadius: 4,
-                            background: "var(--high-bg)",
-                            border: "1px solid var(--high-border)",
-                            fontSize: 11,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 12,
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <FileCheck2 size={15} style={{ color: "var(--high-text)" }} />
-                            <span style={{ color: "var(--high-text)" }}>
-                              <strong>{t.caseQueue.calloutReported}:</strong> {t.caseQueue.proposedFinding}{" "}
-                              <strong>
-                                {getFindingLabel(tx.investigationReport.finding)}
-                              </strong>{" "}
-                              — "{tx.investigationReport.notes}"
-                            </span>
-                          </div>
-                          <span style={{ color: "var(--security-muted)", fontSize: 11 }}>
-                            {t.caseQueue.calloutReportedPending}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Investigator Action Buttons */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                        flexShrink: 0,
-                        width: 165,
-                      }}
-                    >
-                      {isAssigned && (
-                        <button
-                          className={styles.btnPrimary}
-                          onClick={() => handleAcceptCase(tx)}
-                          type="button"
-                          style={{
-                            fontSize: 12,
-                            height: 32,
-                            minHeight: 32,
-                            padding: "6px 12px",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <Play size={13} />
-                          {t.actions.acceptInvestigation}
-                        </button>
-                      )}
-
-                      {isInvestigating && (
-                        <button
-                          className={styles.btnPrimary}
-                          onClick={() => onReview(tx)}
-                          type="button"
-                          style={{
-                            fontSize: 12,
-                            height: 32,
-                            minHeight: 32,
-                            padding: "6px 12px",
-                            background: "var(--security-purple)",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <Send size={13} />
-                          {t.actions.submitReport}
-                        </button>
-                      )}
-
-                      {isReported && (
-                        <button
-                          className={styles.button}
-                          onClick={() => onReview(tx)}
-                          type="button"
-                          style={{
-                            fontSize: 12,
-                            height: 32,
-                            minHeight: 32,
-                            padding: "6px 12px",
-                            borderColor: "var(--high-border)",
-                            color: "var(--high-text)",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 6,
-                          }}
-                        >
-                          <Eye size={13} />
-                          {t.actions.reviewReport}
-                        </button>
-                      )}
-
-                      <button
-                        className={styles.button}
-                        onClick={() => onReview(tx)}
-                        type="button"
-                        style={{
-                          fontSize: 12,
-                          height: 32,
-                          minHeight: 32,
-                          padding: "6px 12px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {t.actions.caseDetails}
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })
-          )}
+          </div>
         </div>
       </>
     );
   }
 
-  /* ─────────────────────────────────────────────────────────────
-     VIEW 2: OPERATION CENTRAL DISPATCH QUEUE (Bàn điều phối)
-  ───────────────────────────────────────────────────────────── */
+  const renderCaseDetailModal = () => {
+    if (!authorizedDetail) return null;
+
+    if (authorizedDetail.mode === "confirmed") {
+      const view = authorizedDetail.item;
+      const existingFeedback = findFeedbackForConfirmedReport({
+        feedbacks: reportFeedbacks,
+        enterpriseId: view.enterpriseId,
+        caseId: view.caseId,
+        reportId: view.conclusion.reportId,
+        reportVersion: view.conclusion.reportVersion,
+      });
+      return (
+        <div className={styles.builderOverlay}>
+          <div
+            ref={detailModalRef}
+            className={`${styles.builderModal} ${styles.caseDetailModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="wf04-case-detail-title"
+            tabIndex={-1}
+          >
+            <div className={styles.builderHeader}>
+              <div>
+                <h2 id="wf04-case-detail-title" className={styles.builderTitle}>
+                  {t.wf04Phase2a.caseQueue.detailModalTitle.replace("{code}", view.caseId)}
+                </h2>
+                <span className={styles.muted}>
+                  {enterpriseNameById.get(view.enterpriseId) ?? view.enterpriseId}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.drawerCloseBtn}
+                onClick={handleCloseModal}
+                aria-label={t.wf04Phase2a.caseQueue.closeModalBtn}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.builderBody}>
+              <div className={styles.roleNoticeBanner} style={{ marginBottom: 14 }}>
+                <div className={styles.roleNoticeLeft}>
+                  <span>{t.wf04Phase2a.caseQueue.smeAdminConfirmedOnlyNotice}</span>
+                </div>
+              </div>
+
+              <div className={styles.caseDetailSection}>
+                <h3 className={styles.drawerSectionTitle}>
+                  {t.wf04Phase2a.caseQueue.caseSummarySectionTitle}
+                </h3>
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerLabel}>
+                    {t.wf04Phase2a.caseQueue.caseCodeLabel}
+                  </span>
+                  <strong>{view.caseId}</strong>
+                </div>
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerLabel}>
+                    {t.wf04Phase2a.caseQueue.statusLabel}
+                  </span>
+                  <span className={`${styles.badge} ${getCaseStatusBadgeClass(view.status)}`}>
+                    {getCaseStatusLabel(view.status, t)}
+                  </span>
+                </div>
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerLabel}>
+                    {t.wf04Phase2a.caseQueue.updatedAtLabel}
+                  </span>
+                  <span>{formatDateTime(view.closedAt || view.updatedAt, dateLocale)}</span>
+                </div>
+              </div>
+
+              <div className={styles.caseDetailSection}>
+                <h3 className={styles.drawerSectionTitle}>
+                  {t.wf04Phase2a.caseQueue.linkedAlertsSectionTitle.replace(
+                    "{count}",
+                    String(view.alerts.length),
+                  )}
+                </h3>
+                <div className={styles.caseAlertChipList}>
+                  {view.alerts.map((alert) => {
+                    const matchedTx =
+                      txLookup.byId.get(alert.transactionId) ??
+                      txLookup.byAlertId.get(alert.alertId);
+                    return (
+                      <div key={alert.alertId} className={styles.noteItem}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 10,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <div>
+                            <strong>{alert.transactionReference}</strong>{" "}
+                            <span className={styles.muted}>({alert.alertId})</span>
+                            {matchedTx && (
+                              <div className={styles.muted} style={{ marginTop: 4 }}>
+                                {matchedTx.projectName} · {matchedTx.entityReference}
+                              </div>
+                            )}
+                          </div>
+                          {openAlertInspection && matchedTx && (
+                            <button
+                              type="button"
+                              className={styles.button}
+                              onClick={() => openAlertInspection(matchedTx)}
+                            >
+                              <Eye size={13} style={{ marginRight: 5 }} aria-hidden="true" />
+                              {t.wf04Phase2a.caseQueue.openSourceAlertBtn}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className={styles.caseDetailSection}>
+                <div className={styles.confirmReviewPanel}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                    <strong>{t.wf04Phase2b.confirmClose.closedBannerTitle}</strong>
+                    <span className={styles.reportVersionBadgeConfirmed}>
+                      {t.wf04Phase2b.versionViewer.confirmedTag} (v{view.conclusion.reportVersion})
+                    </span>
+                  </div>
+                  <p className={styles.muted} style={{ margin: 0 }}>
+                    {t.wf04Phase2b.confirmClose.closedReadOnlyNotice.replace(
+                      "{version}",
+                      String(view.conclusion.reportVersion),
+                    )}
+                  </p>
+                  <div className={styles.drawerRow}>
+                    <span className={styles.drawerLabel}>
+                      {t.wf04Phase2b.confirmClose.confirmedByLabel}
+                    </span>
+                    <strong>{resolveActorDisplayName(view.conclusion.confirmedBy)}</strong>
+                  </div>
+                  <div className={styles.drawerRow}>
+                    <span className={styles.drawerLabel}>
+                      {t.wf04Phase2b.confirmClose.confirmedAtLabel}
+                    </span>
+                    <span>
+                      {formatDateTime(view.conclusion.confirmedAt || view.closedAt, dateLocale)}
+                    </span>
+                  </div>
+                  <div className={styles.drawerRow}>
+                    <span className={styles.drawerLabel}>
+                      {t.wf04Phase2b.confirmClose.confirmedVersionLabel}
+                    </span>
+                    <span>
+                      v{view.conclusion.reportVersion} ({view.conclusion.reportId})
+                    </span>
+                  </div>
+                  <div>
+                    <p style={{ margin: "4px 0 4px", fontWeight: 600, fontSize: 13 }}>
+                      {t.wf04Phase2b.confirmClose.finalConclusionHeading}
+                    </p>
+                    <p style={{ margin: 0 }}>{view.conclusion.summary}</p>
+                  </div>
+                  <div className={styles.reportAlertList}>
+                    {view.conclusion.alertResults.map((item) => (
+                      <div key={item.alertId} className={styles.reportAlertResultRow}>
+                        <div>
+                          <strong>{item.transactionReference}</strong>
+                          <div className={styles.muted}>{item.alertId}</div>
+                        </div>
+                        <div>
+                          <div className={styles.muted} style={{ fontSize: 11 }}>
+                            {t.wf04Phase2b.reportsView.alertResultCol}
+                          </div>
+                          <div>{item.resultText}</div>
+                        </div>
+                        <div>
+                          <div className={styles.muted} style={{ fontSize: 11 }}>
+                            {t.wf04Phase2b.reportsView.alertEvidenceCol}
+                          </div>
+                          <div>{item.evidence}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.builderFooter}>
+              <div className={styles.feedbackActionRow}>
+                {existingFeedback ? (
+                  <>
+                    <span className={styles.feedbackCountBadge}>
+                      {t.wf04Phase2c.smeFeedback.sentBadge}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.button}
+                      onClick={() => setFeedbackModalCaseId(view.caseId)}
+                    >
+                      {t.wf04Phase2c.smeFeedback.viewSentBtn}
+                    </button>
+                  </>
+                ) : (
+                  onSubmitReportFeedback && (
+                    <button
+                      type="button"
+                      className={styles.btnPrimary}
+                      onClick={() => setFeedbackModalCaseId(view.caseId)}
+                    >
+                      {t.wf04Phase2c.smeFeedback.sendBtn}
+                    </button>
+                  )
+                )}
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={handleCloseModal}
+                >
+                  {t.wf04Phase2a.caseQueue.closeModalBtn}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const c = authorizedDetail.item;
+    const tenantInvestigators = getTenantInvestigators(c.enterpriseId);
+    const selectedAssigneeId = assigneeDraftByCase[c.caseId] ?? "";
+    const canAssignHere = isOperator && c.status === "Open";
+    const modalScopeKey = effectiveActor
+      ? buildReportDraftScopeKey(
+          c.caseId,
+          effectiveActor.id,
+          c.reports.length > 0 ? c.reports[c.reports.length - 1].version : 0,
+        )
+      : "";
+    const modalDraft =
+      (modalScopeKey ? draftsByScopeKey[modalScopeKey] : undefined) ??
+      buildReportDraftBaseline(c);
+    const hasUnsentModalDraft = Boolean(modalScopeKey && draftsByScopeKey[modalScopeKey]);
+
+    return (
+      <div className={styles.builderOverlay}>
+        <div
+          ref={detailModalRef}
+          className={`${styles.builderModal} ${styles.caseDetailModal}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="wf04-case-detail-title"
+          tabIndex={-1}
+        >
+          <div className={styles.builderHeader}>
+            <div>
+              <h2 id="wf04-case-detail-title" className={styles.builderTitle}>
+                {t.wf04Phase2a.caseQueue.detailModalTitle.replace("{code}", c.caseId)}
+              </h2>
+              <span className={styles.muted}>
+                {enterpriseNameById.get(c.enterpriseId) ?? c.enterpriseId}
+              </span>
+            </div>
+            <button
+              type="button"
+              className={styles.drawerCloseBtn}
+              onClick={handleCloseModal}
+              aria-label={t.wf04Phase2a.caseQueue.closeModalBtn}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className={styles.builderBody}>
+            {actionError && (
+              <div className={styles.modalErrorBanner} role="alert" style={{ marginBottom: 14 }}>
+                {actionError}
+              </div>
+            )}
+
+            {isInvestigator && !isAuthorableActiveCase && (
+              <div className={styles.drawerReadOnlyNotice} style={{ marginBottom: 14 }}>
+                {t.wf04Phase2a.caseQueue.readOnlyPermissionNotice}
+              </div>
+            )}
+
+            <div className={styles.caseDetailSection}>
+              <h3 className={styles.drawerSectionTitle}>
+                {t.wf04Phase2a.caseQueue.caseSummarySectionTitle}
+              </h3>
+              <div className={styles.drawerRow}>
+                <span className={styles.drawerLabel}>{t.wf04Phase2a.caseQueue.caseCodeLabel}</span>
+                <strong>{c.caseId}</strong>
+              </div>
+              <div className={styles.drawerRow}>
+                <span className={styles.drawerLabel}>{t.wf04Phase2a.caseQueue.statusLabel}</span>
+                <span className={`${styles.badge} ${getCaseStatusBadgeClass(c.status)}`}>
+                  {getCaseStatusLabel(c.status, t)}
+                </span>
+              </div>
+              <div className={styles.drawerRow}>
+                <span className={styles.drawerLabel}>{t.wf04Phase2a.caseQueue.createdAtLabel}</span>
+                <span>{formatDateTime(c.createdAt, dateLocale)}</span>
+              </div>
+              <div className={styles.drawerRow}>
+                <span className={styles.drawerLabel}>{t.wf04Phase2a.caseQueue.updatedAtLabel}</span>
+                <span>{formatDateTime(c.updatedAt, dateLocale)}</span>
+              </div>
+            </div>
+
+            <div className={styles.caseDetailSection}>
+              <h3 className={styles.drawerSectionTitle}>
+                {t.wf04Phase2a.caseQueue.assignmentSectionTitle}
+              </h3>
+              <div className={styles.drawerRow}>
+                <span className={styles.drawerLabel}>{t.wf04Phase2a.caseQueue.assigneeLabel}</span>
+                <strong>{resolveActorDisplayName(c.assignee)}</strong>
+              </div>
+              {c.assignedBy && (
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerLabel}>
+                    {t.wf04Phase2a.caseQueue.assignedByLabel}
+                  </span>
+                  <span>{resolveActorDisplayName(c.assignedBy)}</span>
+                </div>
+              )}
+              {c.assignedAt && (
+                <div className={styles.drawerRow}>
+                  <span className={styles.drawerLabel}>
+                    {t.wf04Phase2a.caseQueue.assignedAtLabel}
+                  </span>
+                  <span>{formatDateTime(c.assignedAt, dateLocale)}</span>
+                </div>
+              )}
+
+              {canAssignHere && (
+                <div className={styles.caseAssignRow} style={{ marginTop: 12 }}>
+                  <label className={styles.filterField} style={{ minWidth: 220 }}>
+                    <span className={styles.filterLabel}>
+                      {t.wf04Phase2a.caseQueue.assignInvestigatorLabel}
+                    </span>
+                    <select
+                      className={styles.control}
+                      aria-label={t.wf04Phase2a.caseQueue.assignInvestigatorLabel}
+                      value={selectedAssigneeId}
+                      onChange={(e) =>
+                        setAssigneeDraftByCase((prev) => ({
+                          ...prev,
+                          [c.caseId]: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">
+                        {t.wf04Phase2a.caseQueue.selectInvestigatorPlaceholder}
+                      </option>
+                      {tenantInvestigators.map((inv) => (
+                        <option key={inv.id} value={inv.id}>
+                          {inv.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    disabled={!selectedAssigneeId || busyCaseId === c.caseId || !onAssignInvestigator}
+                    onClick={() => handleAssignSubmit(c.caseId)}
+                  >
+                    <UserCheck size={14} style={{ marginRight: 6 }} aria-hidden="true" />
+                    {busyCaseId === c.caseId
+                      ? t.wf04Phase2a.caseQueue.assigningBtn
+                      : t.wf04Phase2a.caseQueue.assignBtn}
+                  </button>
+
+                  {onSelfAssignCase && (
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      disabled={busyCaseId === c.caseId}
+                      onClick={() => handleSelfAssignSubmit(c.caseId)}
+                    >
+                      <UserPlus size={14} style={{ marginRight: 6 }} aria-hidden="true" />
+                      {t.wf04Phase2a.caseQueue.selfAssignBtn}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.caseDetailSection}>
+              <h3 className={styles.drawerSectionTitle}>
+                {t.wf04Phase2a.caseQueue.linkedAlertsSectionTitle.replace(
+                  "{count}",
+                  String(c.alerts.length),
+                )}
+              </h3>
+              <div className={styles.caseAlertChipList}>
+                {c.alerts.map((alert) => {
+                  const matchedTx =
+                    txLookup.byId.get(alert.transactionId) ??
+                    txLookup.byAlertId.get(alert.alertId);
+                  return (
+                    <div key={alert.alertId} className={styles.noteItem}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div>
+                          <strong>{alert.transactionReference}</strong>{" "}
+                          <span className={styles.muted}>({alert.alertId})</span>
+                          {matchedTx && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                                marginTop: 6,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <RiskLevelBadge riskLevel={matchedTx.riskLevel} />
+                              <ScoringSourceBadge source={matchedTx.scoringSource} />
+                              <span className={styles.muted}>
+                                {matchedTx.projectName} · {matchedTx.entityReference}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {openAlertInspection && matchedTx && (
+                          <button
+                            type="button"
+                            className={styles.button}
+                            onClick={() => openAlertInspection(matchedTx)}
+                          >
+                            <Eye size={13} style={{ marginRight: 5 }} aria-hidden="true" />
+                            {t.wf04Phase2a.caseQueue.openSourceAlertBtn}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {effectiveActor && (
+              <CaseReportWorkflowPanel
+                investigationCase={c}
+                effectiveActor={effectiveActor}
+                dateLocale={dateLocale}
+                txLookup={txLookup}
+                resolveActorDisplayName={resolveActorDisplayName}
+                draftState={modalDraft}
+                hasExistingUnsentDraft={hasUnsentModalDraft}
+                isDirty={isActiveDraftDirty}
+                pendingLeaveAction={pendingLeaveAction}
+                onDraftChange={(key, nextDraft) =>
+                  setDraftsByScopeKey((prev) => ({ ...prev, [key]: nextDraft }))
+                }
+                onClearDraft={(key) =>
+                  setDraftsByScopeKey((prev) => {
+                    if (!(key in prev)) return prev;
+                    const next = { ...prev };
+                    delete next[key];
+                    return next;
+                  })
+                }
+                onCancelLeave={() => setPendingLeaveAction(null)}
+                onConfirmLeave={handleConfirmLeaveWithDiscard}
+                onSubmitReport={onSubmitReport}
+                onRequestRevision={onRequestRevision}
+                onConfirmAndCloseReport={onConfirmAndCloseReport}
+                onOpenSourceAlert={openAlertInspection}
+                onActionError={setActionError}
+              />
+            )}
+
+            <div className={styles.caseDetailSection}>
+              <h3 className={styles.drawerSectionTitle}>
+                {t.wf04Phase2a.caseQueue.timelineSectionTitle}
+              </h3>
+              {c.history.length === 0 ? (
+                <p className={styles.muted}>{t.wf04Phase2a.caseQueue.timelineEmpty}</p>
+              ) : (
+                <div className={styles.caseHistoryTableWrap}>
+                  <table className={styles.caseHistoryTable}>
+                    <thead>
+                      <tr>
+                        <th scope="col">{t.wf04Phase2a.caseQueue.timelineColEvent}</th>
+                        <th scope="col">{t.wf04Phase2a.caseQueue.timelineColPerformedBy}</th>
+                        <th scope="col">{t.wf04Phase2a.caseQueue.timelineColDateTime}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {buildCaseProcessingHistoryRows({
+                        history: c.history,
+                        resolveActorName: resolveActorDisplayName,
+                        dateLocale,
+                        t,
+                      }).map((row) => {
+                        const detailLength =
+                          (row.reason?.length ?? 0) + (row.note?.length ?? 0);
+                        const hasExtraText = Boolean(row.reason || row.note);
+                        const extraContent = hasExtraText ? (
+                          <div className={styles.caseHistoryDetailBox}>
+                            {row.reason && (
+                              <p className={styles.caseTimelineNote}>
+                                <strong>{t.wf04Phase2b.versionViewer.revisionReasonLabel}:</strong>{" "}
+                                {row.reason}
+                              </p>
+                            )}
+                            {row.note && (
+                              <p className={styles.caseTimelineNote}>
+                                <strong>{t.wf04Phase2a.caseQueue.timelineNoteLabel}:</strong>{" "}
+                                {row.note}
+                              </p>
+                            )}
+                          </div>
+                        ) : null;
+
+                        return (
+                          <tr key={row.eventId}>
+                            <td className={styles.caseHistoryEventCell}>
+                              <strong className={styles.caseHistoryEventTitle}>
+                                {row.eventLabel}
+                              </strong>
+                              {hasExtraText &&
+                                (detailLength > HISTORY_INLINE_DETAIL_MAX_LENGTH ? (
+                                  <details className={styles.caseHistoryDetails}>
+                                    <summary className={styles.caseHistorySummary}>
+                                      {t.wf04Phase2a.caseQueue.timelineExpandDetailsLabel}
+                                    </summary>
+                                    {extraContent}
+                                  </details>
+                                ) : (
+                                  extraContent
+                                ))}
+                            </td>
+                            <td className={styles.caseHistoryActorCell}>{row.actorName}</td>
+                            <td className={styles.caseHistoryDateTimeCell}>{row.dateTimeText}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.builderFooter}>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleCloseModal}
+            >
+              {t.wf04Phase2a.caseQueue.closeModalBtn}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (isSmeAdmin) {
+    const hasSearch = normalizedQuery.length > 0;
+    return (
+      <>
+        <div className={styles.pageHeading}>
+          <div>
+            <h1>{t.caseQueue.opTitle}</h1>
+            <p>{t.caseQueue.opSubtitle}</p>
+          </div>
+        </div>
+
+        <div className={styles.roleNoticeBanner} style={{ marginBottom: 18 }}>
+          <div className={styles.roleNoticeLeft}>
+            <span>{t.wf04Phase2a.caseQueue.smeAdminConfirmedOnlyNotice}</span>
+          </div>
+        </div>
+
+        <section className={styles.caseMetricsGrid} style={{ marginBottom: 18 }}>
+          <article className={styles.statCard}>
+            <div className={styles.statLabel}>{t.wf04Phase2a.caseQueue.statuses.closed}</div>
+            <strong className={styles.statValue}>{authorizedConfirmedReports.length}</strong>
+            <span className={styles.statDescription}>
+              {t.wf04Phase2a.caseQueue.confirmedCasesMetricDesc}
+            </span>
+          </article>
+        </section>
+
+        <section className={`${styles.panel} ${styles.tablePanel}`}>
+          <div className={`${styles.panelHeader} ${styles.tablePanelHeader}`}>
+            <div>
+              <h2>{t.caseQueue.opTitle}</h2>
+              <p className={styles.muted}>{t.wf04Phase2a.caseQueue.smeAdminConfirmedOnlyNotice}</p>
+            </div>
+          </div>
+
+          <div className={styles.tableControls}>
+            <div className={styles.toolbarGroup}>
+              <label className={styles.filterField}>
+                <span className={styles.filterLabel}>{t.wf04Phase2a.caseQueue.searchLabel}</span>
+                <div className={styles.searchFieldWrap}>
+                  <Search size={15} className={styles.searchFieldIcon} aria-hidden="true" />
+                  <input
+                    type="search"
+                    className={styles.searchInput}
+                    placeholder={t.wf04Phase2a.caseQueue.searchPlaceholder}
+                    aria-label={t.wf04Phase2a.caseQueue.searchLabel}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </label>
+              {hasSearch && (
+                <button
+                  type="button"
+                  className={styles.clearFilters}
+                  onClick={() => setSearchQuery("")}
+                >
+                  <RotateCcw size={13} style={{ marginRight: 5 }} aria-hidden="true" />
+                  {t.wf04Phase2a.caseQueue.resetFiltersBtn}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.tableScroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>{t.wf04Phase2a.caseQueue.caseCodeLabel}</th>
+                  <th>{t.wf04Phase2a.caseQueue.enterpriseLabel}</th>
+                  <th>{t.wf04Phase2a.caseQueue.alertCountLabel}</th>
+                  <th>{t.wf04Phase2a.caseQueue.statusLabel}</th>
+                  <th>{t.wf04Phase2a.caseQueue.reportConclusionLabel}</th>
+                  <th>{t.wf04Phase2a.caseQueue.updatedAtLabel}</th>
+                  <th style={{ textAlign: "right" }}>{t.wf04Phase2a.caseQueue.actionsLabel}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredConfirmedReports.length === 0 ? (
+                  <tr>
+                    <td className={styles.emptyState} colSpan={7}>
+                      <div>
+                        <p style={{ margin: "0 0 10px" }}>
+                          {authorizedConfirmedReports.length === 0
+                            ? t.wf04Phase2a.caseQueue.smeAdminEmptyConfirmed
+                            : t.wf04Phase2a.caseQueue.filterNoResults}
+                        </p>
+                        {hasSearch && (
+                          <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={() => setSearchQuery("")}
+                          >
+                            {t.wf04Phase2a.caseQueue.resetFiltersBtn}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredConfirmedReports.map((view) => {
+                    const rowFeedback = findFeedbackForConfirmedReport({
+                      feedbacks: reportFeedbacks,
+                      enterpriseId: view.enterpriseId,
+                      caseId: view.caseId,
+                      reportId: view.conclusion.reportId,
+                      reportVersion: view.conclusion.reportVersion,
+                    });
+                    return (
+                    <tr key={view.caseId}>
+                      <td>
+                        <strong>{view.caseId}</strong>
+                      </td>
+                      <td>{enterpriseNameById.get(view.enterpriseId) ?? view.enterpriseId}</td>
+                      <td>
+                        <span className={styles.ruleTag}>
+                          {t.wf04Phase2a.caseQueue.alertCountBadge.replace(
+                            "{count}",
+                            String(view.alertIds.length),
+                          )}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.badge} ${getCaseStatusBadgeClass(view.status)}`}>
+                          {getCaseStatusLabel(view.status, t)}
+                        </span>
+                        {rowFeedback && (
+                          <div style={{ marginTop: 6 }}>
+                            <span className={styles.feedbackCountBadge}>
+                              {t.wf04Phase2c.smeFeedback.sentBadge}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ maxWidth: 320, whiteSpace: "normal" }}>
+                        {view.conclusion.summary}
+                      </td>
+                      <td>{formatDateTime(view.closedAt || view.updatedAt, dateLocale)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <button
+                          type="button"
+                          className={styles.button}
+                          onClick={() => setActiveCaseId(view.caseId)}
+                        >
+                          <Eye size={13} style={{ marginRight: 5 }} aria-hidden="true" />
+                          {t.wf04Phase2a.caseQueue.openCaseDetailBtn}
+                        </button>
+                      </td>
+                    </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {renderCaseDetailModal()}
+        <ReportFeedbackModal
+          open={Boolean(feedbackModalCaseId && isSmeAdmin)}
+          caseId={feedbackModalCaseId}
+          actor={effectiveActor}
+          cases={investigationCases}
+          enterprises={enterprises}
+          users={mergedUsers}
+          feedbacks={reportFeedbacks}
+          onClose={() => setFeedbackModalCaseId(null)}
+          onSubmit={onSubmitReportFeedback}
+        />
+      </>
+    );
+  }
+
+  const hasFilters = statusFilter !== "all" || normalizedQuery.length > 0;
+  const resetQueueFilters = () => {
+    setStatusFilter("all");
+    setSearchQuery("");
+  };
+
+  const statusTabs: Array<{ key: QueueStatusFilter; label: string; count: number }> = [
+    { key: "all", label: t.wf04Phase2a.caseQueue.tabAll, count: internalCounts.all },
+    { key: "Open", label: t.wf04Phase2a.caseQueue.statuses.open, count: internalCounts.open },
+    {
+      key: "Investigating",
+      label: t.wf04Phase2a.caseQueue.statuses.investigating,
+      count: internalCounts.investigating,
+    },
+    {
+      key: "Pending Review",
+      label: t.wf04Phase2a.caseQueue.statuses.pendingReview,
+      count: internalCounts.pendingReview,
+    },
+    {
+      key: "Closed",
+      label: t.wf04Phase2a.caseQueue.statuses.closed,
+      count: internalCounts.closed,
+    },
+  ];
+
   return (
     <>
       <div className={styles.pageHeading}>
         <div>
-          <h1>{t.caseQueue.opTitle}</h1>
-          <p>{t.caseQueue.opSubtitle}</p>
+          <h1>{isInvestigator ? t.caseQueue.invTitle : t.caseQueue.opTitle}</h1>
+          <p>{isInvestigator ? t.caseQueue.invSubtitle : t.caseQueue.opSubtitle}</p>
         </div>
       </div>
 
-      {/* Operation Macro KPIs */}
-      <section className={`${styles.metricsGrid} ${styles.caseMetricsGrid}`} style={{ marginTop: 20 }}>
-        <article className={styles.statCard}>
-          <div className={styles.statLabel}>{t.caseQueue.kpis.totalQueue}</div>
-          <strong className={styles.statValue}>{operationStats.total}</strong>
-          <span className={styles.statDescription}>{t.caseQueue.kpis.totalQueueDesc}</span>
-        </article>
+      {actionError && (
+        <div className={styles.modalErrorBanner} role="alert" style={{ marginBottom: 16 }}>
+          {actionError}
+        </div>
+      )}
 
-        <article
-          className={`${styles.statCard} ${operationStats.unassigned > 0 ? styles.statWarning : ""}`}
-        >
-          <div className={styles.statLabel}>{t.caseQueue.kpis.unassigned}</div>
-          <strong
-            className={styles.statValue}
-            style={{ color: operationStats.unassigned > 0 ? "var(--security-orange)" : undefined }}
-          >
-            {operationStats.unassigned}
-          </strong>
-          <span className={styles.statDescription}>{t.caseQueue.kpis.unassignedDesc}</span>
-        </article>
-
+      <section className={styles.caseMetricsGrid} style={{ marginBottom: 20 }}>
         <article className={styles.statCard}>
-          <div className={styles.statLabel}>{t.caseQueue.kpis.inField}</div>
+          <div className={styles.statLabel}>{t.wf04Phase2a.caseQueue.tabAll}</div>
+          <strong className={styles.statValue}>{internalCounts.all}</strong>
+          <span className={styles.statDescription}>
+            {t.wf04Phase2a.caseQueue.allCasesMetricDesc}
+          </span>
+        </article>
+        <article className={`${styles.statCard} ${styles.statWarning}`}>
+          <div className={styles.statLabel}>{t.wf04Phase2a.caseQueue.statuses.open}</div>
+          <strong className={styles.statValue}>{internalCounts.open}</strong>
+          <span className={styles.statDescription}>
+            {t.wf04Phase2a.caseQueue.statuses.open}
+          </span>
+        </article>
+        <article className={styles.statCard}>
+          <div className={styles.statLabel}>
+            {t.wf04Phase2a.caseQueue.statuses.investigating}
+          </div>
           <strong className={styles.statValue} style={{ color: "var(--security-blue)" }}>
-            {operationStats.inField}
+            {internalCounts.investigating}
           </strong>
-          <span className={styles.statDescription}>{t.caseQueue.kpis.inFieldDesc}</span>
+          <span className={styles.statDescription}>
+            {t.wf04Phase2a.caseQueue.statuses.investigating}
+          </span>
         </article>
-
-        <article
-          className={styles.statCard}
-          style={{ borderColor: operationStats.reported > 0 ? "var(--high-border)" : undefined }}
-        >
-          <div className={styles.statLabel}>{t.caseQueue.kpis.awaitingReview}</div>
-          <strong className={styles.statValue} style={{ color: "var(--high-text)" }}>
-            {operationStats.reported}
-          </strong>
-          <span className={styles.statDescription}>{t.caseQueue.kpis.awaitingReviewDesc}</span>
-        </article>
-
         <article className={styles.statCard}>
-          <div className={styles.statLabel}>{t.caseQueue.kpis.completed}</div>
-          <strong className={styles.statValue} style={{ color: "var(--security-green)" }}>
-            {operationStats.completed}
+          <div className={styles.statLabel}>
+            {t.wf04Phase2a.caseQueue.statuses.pendingReview}
+          </div>
+          <strong className={styles.statValue} style={{ color: "var(--security-purple)" }}>
+            {internalCounts.pendingReview}
           </strong>
-          <span className={styles.statDescription}>{t.caseQueue.kpis.completedDesc}</span>
+          <span className={styles.statDescription}>
+            {t.wf04Phase2a.caseQueue.statuses.pendingReview}
+          </span>
+        </article>
+        <article className={styles.statCard}>
+          <div className={styles.statLabel}>{t.wf04Phase2a.caseQueue.statuses.closed}</div>
+          <strong className={styles.statValue} style={{ color: "var(--security-green)" }}>
+            {internalCounts.closed}
+          </strong>
+          <span className={styles.statDescription}>
+            {t.wf04Phase2a.caseQueue.statuses.closed}
+          </span>
         </article>
       </section>
 
-      {/* Operation Queue Tabs */}
-      <div
-        className={styles.tableControls}
-        style={{ padding: "8px 0 16px", borderBottom: "1px solid var(--security-border)" }}
-      >
-        <div className={styles.tabs} role="tablist">
-          <button
-            className={`${styles.tab} ${opTab === "all" ? styles.tabActive : ""}`}
-            onClick={() => setOpTab("all")}
-            type="button"
-          >
-            {t.caseQueue.tabs.allQueue} ({allCases.length})
-          </button>
-          <button
-            className={`${styles.tab} ${opTab === "unassigned" ? styles.tabActive : ""}`}
-            onClick={() => setOpTab("unassigned")}
-            type="button"
-          >
-            {t.caseQueue.tabs.unassigned} ({operationStats.unassigned})
-          </button>
-          <button
-            className={`${styles.tab} ${opTab === "in-field" ? styles.tabActive : ""}`}
-            onClick={() => setOpTab("in-field")}
-            type="button"
-          >
-            {t.caseQueue.tabs.inField} ({operationStats.inField})
-          </button>
-          <button
-            className={`${styles.tab} ${opTab === "reported" ? styles.tabActive : ""}`}
-            onClick={() => setOpTab("reported")}
-            type="button"
-          >
-            {t.caseQueue.tabs.awaitingReview} ({operationStats.reported})
-          </button>
-          <button
-            className={`${styles.tab} ${opTab === "completed" ? styles.tabActive : ""}`}
-            onClick={() => setOpTab("completed")}
-            type="button"
-          >
-            {t.caseQueue.tabs.completed} ({operationStats.completed})
-          </button>
-        </div>
-
-        <div className={styles.toolbarGroup}>
-          <select
-            className={styles.control}
-            aria-label={t.actions.allProjects}
-            value={filterProject}
-            onChange={(e) => setFilterProject(e.target.value)}
-          >
-            <option value="all">{t.actions.allProjects}</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Operation Dispatch Queue Cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
-        {filteredOperationCases.length === 0 ? (
-          <div className={styles.panel} style={{ padding: 40, textAlign: "center" }}>
-            <p className={styles.muted}>{t.caseQueue.emptyMessage}</p>
+      <section className={`${styles.panel} ${styles.tablePanel}`}>
+        <div className={`${styles.panelHeader} ${styles.tablePanelHeader}`}>
+          <div>
+            <h2>{isInvestigator ? t.caseQueue.invTitle : t.caseQueue.opTitle}</h2>
+            <p className={styles.muted}>{t.wf04Phase2b.reportsView.sectionSubtitle}</p>
           </div>
-        ) : (
-          filteredOperationCases.map((tx) => {
-            const badgeStyle = STATUS_BADGE_STYLE[tx.caseStatus || "Open"];
-            const isUnassigned = tx.caseStatus === "Open" && !tx.assignedInvestigator;
-            const isReported = tx.caseStatus === "Reported";
+        </div>
 
-            return (
-              <article
-                key={tx.id}
-                className={styles.panel}
-                style={{
-                  padding: "16px 18px",
-                  borderLeft: isReported
-                    ? "4px solid var(--high-text)"
-                    : isUnassigned
-                      ? "4px solid var(--security-orange)"
-                      : undefined,
-                }}
+        <div className={styles.tableControls}>
+          <div className={styles.tabs} role="tablist" aria-label={t.wf04Phase2a.caseQueue.statusLabel}>
+            {statusTabs.map((tabItem) => (
+              <button
+                key={tabItem.key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === tabItem.key}
+                className={`${styles.tab} ${statusFilter === tabItem.key ? styles.tabActive : ""}`}
+                onClick={() => setStatusFilter(tabItem.key)}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: 16,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* Status badges & Assignment Tag */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginBottom: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span
-                        className={styles.badge}
-                        style={{
-                          background: badgeStyle.bg,
-                          color: badgeStyle.text,
-                          borderColor: badgeStyle.border,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {getBadgeLabel(tx.caseStatus)}
-                      </span>
+                <span>{tabItem.label}</span>
+                <span className={styles.tabCount}>{tabItem.count}</span>
+              </button>
+            ))}
+          </div>
 
-                      <RiskLevelBadge
-                        riskLevel={tx.riskLevel}
+          <div className={styles.toolbarGroup}>
+            <label className={styles.filterField}>
+              <span className={styles.filterLabel}>{t.wf04Phase2a.caseQueue.searchLabel}</span>
+              <div className={styles.searchFieldWrap}>
+                <Search size={15} className={styles.searchFieldIcon} aria-hidden="true" />
+                <input
+                  type="search"
+                  className={styles.searchInput}
+                  placeholder={t.wf04Phase2a.caseQueue.searchPlaceholder}
+                  aria-label={t.wf04Phase2a.caseQueue.searchLabel}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </label>
+            {hasFilters && (
+              <button
+                type="button"
+                className={styles.clearFilters}
+                onClick={resetQueueFilters}
+              >
+                <RotateCcw size={13} style={{ marginRight: 5 }} aria-hidden="true" />
+                {t.wf04Phase2a.caseQueue.resetFiltersBtn}
+              </button>
+            )}
+          </div>
+        </div>
 
-                      />
-
-                      <span
-                        style={{
-                          color: "var(--security-muted)",
-                          fontSize: 11,
-                          fontFamily: "monospace",
-                        }}
-                      >
-                        {tx.caseId}
-                      </span>
-
-                      {/* Investigator Assignment Badge */}
-                      <span
-                        style={{
-                          fontSize: 11,
-                          padding: "2px 8px",
-                          borderRadius: 3,
-                          background: tx.assignedInvestigator
-                            ? "rgba(2, 132, 199, 0.15)"
-                            : "rgba(237, 167, 101, 0.15)",
-                          color: tx.assignedInvestigator ? "#38bdf8" : "var(--security-orange)",
-                          border: "1px solid",
-                          borderColor: tx.assignedInvestigator ? "#0284c7" : "var(--high-border)",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                        }}
-                      >
-                        <UserCheck size={12} />
-                        {tx.assignedInvestigator
-                          ? `${t.caseStatus.investigatorBadge}: ${tx.assignedInvestigator}`
-                          : t.caseStatus.unassignedBadge}
-                      </span>
-                    </div>
-
-                    {/* Transaction header */}
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "var(--security-text)",
-                        marginBottom: 4,
-                      }}
-                    >
-                      {tx.transactionReference} — {tx.projectName}
-                    </div>
-
-                    {/* Metadata line */}
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "var(--security-muted)",
-                        marginBottom: 6,
-                      }}
-                    >
-                      {tx.transactionType}
-                      {tx.channel && ` · ${t.risk.channel}: ${tx.channel}`}
-                      {tx.deviceId && ` · ${t.risk.device}: ${tx.deviceId}`}
-
-                      {tx.amount != null &&
-                        ` · ${tx.amount.toLocaleString(language === "vi" ? "vi-VN" : "en-US")} ${tx.currency || "VND"}`}
-                      {` · Entity: ${tx.entityReference}`}
-                    </div>
-
-                    {/* Triggered rules pills */}
-                    {tx.triggeredRules.length > 0 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 4,
-                          marginBottom: 8,
-                        }}
-                      >
-                        {tx.triggeredRules.map((r) => (
-                          <span key={r} className={styles.ruleTag}>
-                            {r}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Reported Notice Callout (Highlight for Operation Leader) */}
-                    {isReported && tx.investigationReport && (
-                      <div
-                        style={{
-                          marginTop: 8,
-                          padding: "8px 12px",
-                          borderRadius: 4,
-                          background: "var(--high-bg)",
-                          border: "1px solid var(--high-border)",
-                          fontSize: 11,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 12,
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <FileCheck2 size={15} style={{ color: "var(--high-text)" }} />
-                          <span style={{ color: "var(--high-text)" }}>
-                            <strong>{t.caseQueue.calloutReported}:</strong> {t.caseQueue.proposedFinding}{" "}
-                            <strong>
-                              {getFindingLabel(tx.investigationReport.finding)}
-                            </strong>{" "}
-                            {t.caseQueue.submittedBy} {tx.investigationReport.submittedBy}
-                          </span>
-                        </div>
-                        <span style={{ color: "var(--security-muted)", fontSize: 11 }}>
-                          {t.caseQueue.calloutReportedPending}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Operation Actions */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      flexShrink: 0,
-                      width: 165,
-                    }}
-                  >
-                    {canOperate && isUnassigned && (
-                      <select
-                        className={styles.control}
-                        value=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            handleQuickAssign(tx, e.target.value);
-                          }
-                        }}
-                        aria-label={t.actions.assignInvestigator}
-                        style={{
-                          fontSize: 12,
-                          height: 32,
-                          minHeight: 32,
-                          padding: "0 8px",
-                          borderRadius: 4,
-                          background: "var(--security-control)",
-                          color: "var(--security-blue)",
-                          border: "1px solid var(--security-blue)",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          width: "100%",
-                        }}
-                      >
-                        <option value="" disabled style={{ background: "var(--security-panel)", color: "var(--security-muted)" }}>
-                          {t.actions.assignInvestigator}
-                        </option>
-                        {investigators.map((inv) => (
-                          <option
-                            key={inv}
-                            value={inv}
-                            style={{ background: "var(--security-panel)", color: "var(--security-text)" }}
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>{t.wf04Phase2a.caseQueue.caseCodeLabel}</th>
+                <th>{t.wf04Phase2a.caseQueue.enterpriseLabel}</th>
+                <th>{t.wf04Phase2a.caseQueue.alertCountLabel}</th>
+                <th>{t.wf04Phase2a.caseQueue.statusLabel}</th>
+                <th>{t.wf04Phase2a.caseQueue.assigneeLabel}</th>
+                <th>{t.wf04Phase2a.caseQueue.createdAtLabel}</th>
+                <th>{t.wf04Phase2a.caseQueue.updatedAtLabel}</th>
+                <th style={{ textAlign: "right" }}>{t.wf04Phase2a.caseQueue.actionsLabel}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInternalCases.length === 0 ? (
+                <tr>
+                  <td className={styles.emptyState} colSpan={8}>
+                    <div>
+                      <p style={{ margin: "0 0 8px" }}>
+                        {authorizedInternalCases.length === 0
+                          ? t.wf04Phase2a.caseQueue.emptyQueue
+                          : t.wf04Phase2a.caseQueue.filterNoResults}
+                      </p>
+                      {authorizedInternalCases.length === 0 ? (
+                        <p className={styles.muted} style={{ margin: "0 0 12px" }}>
+                          {t.wf04Phase2a.caseQueue.emptyQueueActionHint}
+                        </p>
+                      ) : (
+                        hasFilters && (
+                          <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={resetQueueFilters}
                           >
-                            {inv}
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                            {t.wf04Phase2a.caseQueue.resetFiltersBtn}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredInternalCases.map((c) => {
+                  const tenantInvestigators = getTenantInvestigators(c.enterpriseId);
+                  const selectedAssigneeId = assigneeDraftByCase[c.caseId] ?? "";
+                  const canAssignRow = isOperator && c.status === "Open";
+                  const latestRep =
+                    c.reports.length > 0 ? c.reports[c.reports.length - 1] : undefined;
+                  const rowSummary = c.conclusion?.summary ?? latestRep?.summary;
 
-                    {canOperate && isReported && (
-                      <button
-                        className={styles.btnPrimary}
-                        onClick={() => onReview(tx)}
-                        type="button"
-                        style={{
-                          background: "var(--high-bg)",
-                          color: "var(--high-text)",
-                          fontWeight: 700,
-                          fontSize: 12,
-                          height: 32,
-                          minHeight: 32,
-                          padding: "6px 12px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <ShieldCheck size={13} />
-                        {t.actions.approveReport}
-                      </button>
-                    )}
+                  return (
+                    <tr key={c.caseId}>
+                      <td>
+                        <strong>{c.caseId}</strong>
+                        {!isInvestigator && latestRep && (
+                          <div
+                            className={styles.muted}
+                            style={{ fontSize: 12, marginTop: 4, maxWidth: 260, whiteSpace: "normal" }}
+                          >
+                            v{latestRep.version}
+                            {rowSummary
+                              ? ` · ${rowSummary.length > 68 ? `${rowSummary.slice(0, 68)}...` : rowSummary}`
+                              : ""}
+                          </div>
+                        )}
+                      </td>
+                      <td>{enterpriseNameById.get(c.enterpriseId) ?? c.enterpriseId}</td>
+                      <td>
+                        <span className={styles.ruleTag}>
+                          {t.wf04Phase2a.caseQueue.alertCountBadge.replace(
+                            "{count}",
+                            String(c.alertIds.length),
+                          )}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.badge} ${getCaseStatusBadgeClass(c.status)}`}>
+                          {getCaseStatusLabel(c.status, t)}
+                        </span>
+                      </td>
+                      <td>{resolveActorDisplayName(c.assignee)}</td>
+                      <td>{formatDateTime(c.createdAt, dateLocale)}</td>
+                      <td>{formatDateTime(c.updatedAt, dateLocale)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <div
+                          className={styles.caseAssignRow}
+                          style={{ justifyContent: "flex-end" }}
+                        >
+                          {canAssignRow && (
+                            <>
+                              <select
+                                className={styles.control}
+                                aria-label={`${t.wf04Phase2a.caseQueue.assignInvestigatorLabel} (${c.caseId})`}
+                                value={selectedAssigneeId}
+                                onChange={(e) =>
+                                  setAssigneeDraftByCase((prev) => ({
+                                    ...prev,
+                                    [c.caseId]: e.target.value,
+                                  }))
+                                }
+                              >
+                                <option value="">
+                                  {t.wf04Phase2a.caseQueue.selectInvestigatorPlaceholder}
+                                </option>
+                                {tenantInvestigators.map((inv) => (
+                                  <option key={inv.id} value={inv.id}>
+                                    {inv.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                className={styles.btnPrimary}
+                                disabled={
+                                  !selectedAssigneeId ||
+                                  busyCaseId === c.caseId ||
+                                  !onAssignInvestigator
+                                }
+                                onClick={() => handleAssignSubmit(c.caseId)}
+                              >
+                                {busyCaseId === c.caseId
+                                  ? t.wf04Phase2a.caseQueue.assigningBtn
+                                  : t.wf04Phase2a.caseQueue.assignBtn}
+                              </button>
+                              {onSelfAssignCase && (
+                                <button
+                                  type="button"
+                                  className={styles.btnSecondary}
+                                  disabled={busyCaseId === c.caseId}
+                                  onClick={() => handleSelfAssignSubmit(c.caseId)}
+                                >
+                                  {t.wf04Phase2a.caseQueue.selfAssignBtn}
+                                </button>
+                              )}
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            className={styles.button}
+                            onClick={() => requestOpenCaseId(c.caseId)}
+                          >
+                            <Eye size={13} style={{ marginRight: 5 }} aria-hidden="true" />
+                            {t.wf04Phase2a.caseQueue.openCaseDetailBtn}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-                    <button
-                      className={styles.button}
-                      onClick={() => onReview(tx)}
-                      type="button"
-                      style={{
-                        fontSize: 12,
-                        height: 32,
-                        minHeight: 32,
-                        padding: "6px 12px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {t.actions.caseDetails}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        )}
-      </div>
+      {renderCaseDetailModal()}
     </>
   );
 }

@@ -62,6 +62,7 @@ export interface TransactionRisk {
   ruleEvidence?: Array<{ code: string; name: string; observed: string; condition: string }>;
   explanation?: string;
   alertId?: string;
+  alertName?: string;
   caseId?: string;
   caseStatus?: CaseStatus;
   assignedInvestigator?: string;
@@ -195,8 +196,32 @@ export interface ProjectItem {
 
 /* ── Audit Trail types ── */
 
-export type AuditAction =
+export type {
+  BuildConfirmedReportFeedbackPreviewArgs,
+  BuildConfirmedReportFeedbackPreviewResult,
+  FeedbackActorDirectoryEntry,
+  InvestigationActorReference,
+  InvestigationReportFeedback,
+  InvestigationReportFeedbackAlertItem,
+  InvestigationReportFeedbackErrorCode,
+  InvestigationReportFeedbackSnapshot,
+  ReadReportFeedbackDetailResult,
+  SubmitConfirmedReportFeedbackArgs,
+  SubmitConfirmedReportFeedbackResult,
+} from "./report-feedback";
+
+export type InvestigationAuditAction =
   | "CASE_STATUS_UPDATED"
+  | "CASE_CREATED"
+  | "INVESTIGATOR_ASSIGNED"
+  | "OPERATOR_SELF_ASSIGNED"
+  | "REPORT_SUBMITTED"
+  | "REVISION_REQUESTED"
+  | "REPORT_CONFIRMED_AND_CLOSED";
+
+export type AuditAction =
+  | InvestigationAuditAction
+  | "REPORT_FEEDBACK_SENT"
   | "RULE_UPDATED"
   | "PROJECT_UPDATED"
   | "RULE_CREATED"
@@ -206,6 +231,8 @@ export type AuditAction =
   | "WEBHOOK_UPDATED"
   | "ALERT_REVIEWED"
   | "EXPORT_GENERATED";
+
+export type ExtendedAuditAction = AuditAction;
 
 export interface AuditLogEntry {
   enterpriseId?: string;

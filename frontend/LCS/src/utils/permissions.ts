@@ -1,4 +1,23 @@
 import type { UserProfile, UserRole, SecondaryView, RolePermissions, TransactionRisk } from "@/types/fraudguard";
+import type { InvestigationCase } from "@/types/investigation-case";
+
+export interface LegacyCaseArchiveLike {
+  archiveId?: string;
+  legacyCaseId?: string;
+  legacyCaseStatus?: string;
+  originalStatus?: string;
+  enterpriseId?: string;
+  reasonCode?: string;
+  blocksAlertCreation?: boolean;
+  alertIds?: readonly string[];
+  transactionIds?: readonly string[];
+  canResolveAssigneeId?: string;
+  assignedInvestigatorName?: string;
+  transactions?: readonly Pick<
+    TransactionRisk,
+    "id" | "alertId" | "caseId" | "caseStatus" | "assignedInvestigatorId" | "assignedInvestigator"
+  >[];
+}
 
 export function canAccessView(role: UserRole, view: SecondaryView): boolean {
   const views: Partial<Record<UserRole, SecondaryView[]>> = {
@@ -101,16 +120,111 @@ export function getRolePermissions(role: UserRole): RolePermissions {
   }
 }
 
-export function canSaveMember(actor: UserProfile, member: UserProfile, users: UserProfile[], enterpriseTransactions: TransactionRisk[] = []): boolean {
+const ACTIVE_INVESTIGATION_STATUSES = new Set(["Investigating", "Pending Review"]);
+const ACTIVE_LEGACY_CASE_STATUSES = new Set(["Assigned", "Investigating", "Reported"]);
+
+function isLegacyArchiveAssignedToMember(
+  entry: LegacyCaseArchiveLike,
+  member: Pick<UserProfile, "id" | "name">,
+): boolean {
+  if (entry.canResolveAssigneeId) return entry.canResolveAssigneeId === member.id;
+  const txWithId = entry.transactions?.find((tx) => Boolean(tx.assignedInvestigatorId));
+  if (txWithId) return entry.transactions?.some((tx) => tx.assignedInvestigatorId === member.id) ?? false;
+  const fallbackName = entry.assignedInvestigatorName ?? entry.transactions?.find((tx) => Boolean(tx.assignedInvestigator))?.assignedInvestigator;
+  return Boolean(fallbackName && fallbackName === member.name);
+}
+
+function hasActiveRoleAssignment(
+  enterpriseId: string,
+  previous: Pick<UserProfile, "id" | "name">,
+  enterpriseTransactions: readonly TransactionRisk[],
+  investigationCases: readonly InvestigationCase[],
+  legacyCaseArchive: readonly LegacyCaseArchiveLike[],
+): boolean {
+  if (
+    investigationCases.some(
+      (c) =>
+        c.enterpriseId === enterpriseId &&
+        ACTIVE_INVESTIGATION_STATUSES.has(c.status) &&
+        c.assignee?.actorId === previous.id,
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    legacyCaseArchive.some((entry) => {
+      if (entry.enterpriseId !== enterpriseId) return false;
+      const status =
+        entry.originalStatus ??
+        entry.legacyCaseStatus ??
+        entry.transactions?.find((tx) => Boolean(tx.caseStatus))?.caseStatus ??
+        "";
+      return ACTIVE_LEGACY_CASE_STATUSES.has(status) && isLegacyArchiveAssignedToMember(entry, previous);
+    })
+  ) {
+    return true;
+  }
+
+  const coveredTxIds = new Set<string>();
+  const coveredAlertIds = new Set<string>();
+  const coveredCaseIds = new Set<string>();
+
+  for (const c of investigationCases) {
+    coveredCaseIds.add(c.caseId);
+    for (const alertId of c.alertIds) coveredAlertIds.add(alertId);
+    for (const alert of c.alerts) {
+      coveredTxIds.add(alert.transactionId);
+      coveredAlertIds.add(alert.alertId);
+    }
+  }
+  for (const entry of legacyCaseArchive) {
+    if (entry.legacyCaseId) coveredCaseIds.add(entry.legacyCaseId);
+    for (const id of entry.transactionIds ?? []) coveredTxIds.add(id);
+    for (const alertId of entry.alertIds ?? []) coveredAlertIds.add(alertId);
+    for (const tx of entry.transactions ?? []) {
+      coveredTxIds.add(tx.id);
+      if (tx.alertId) coveredAlertIds.add(tx.alertId);
+      if (tx.caseId) coveredCaseIds.add(tx.caseId);
+    }
+  }
+
+  return enterpriseTransactions.some((tx) => {
+    if (
+      coveredTxIds.has(tx.id) ||
+      (tx.alertId && coveredAlertIds.has(tx.alertId)) ||
+      (tx.caseId && coveredCaseIds.has(tx.caseId))
+    ) {
+      return false;
+    }
+    return (
+      tx.scoringSource === "AI" &&
+      Boolean(tx.caseId) &&
+      (tx.assignedInvestigatorId ? tx.assignedInvestigatorId === previous.id : tx.assignedInvestigator === previous.name) &&
+      ACTIVE_LEGACY_CASE_STATUSES.has(tx.caseStatus ?? "")
+    );
+  });
+}
+
+export function canSaveMember(
+  actor: UserProfile,
+  member: UserProfile,
+  users: UserProfile[],
+  enterpriseTransactions: TransactionRisk[] = [],
+  investigationCases: readonly InvestigationCase[] = [],
+  legacyCaseArchive: readonly LegacyCaseArchiveLike[] = [],
+): boolean {
   if (actor.role !== 'SME Admin' || !actor.enterpriseId || member.enterpriseId !== actor.enterpriseId || member.id === actor.id || !['SME Admin','Operator','Investigator'].includes(member.role)) return false;
   if (!member.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) return false;
   const previous = users.find(u => u.id === member.id);
   if (previous && previous.enterpriseId !== actor.enterpriseId) return false;
-  if (previous && previous.role !== member.role && enterpriseTransactions.some(tx =>
-    tx.scoringSource === 'AI' && !!tx.caseId &&
-    (tx.assignedInvestigatorId ? tx.assignedInvestigatorId === previous.id : tx.assignedInvestigator === previous.name) &&
-    ['Assigned', 'Investigating', 'Reported'].includes(tx.caseStatus ?? '')
-  )) return false;
+  if (
+    previous &&
+    previous.role !== member.role &&
+    hasActiveRoleAssignment(actor.enterpriseId, previous, enterpriseTransactions, investigationCases, legacyCaseArchive)
+  ) {
+    return false;
+  }
   return !users.some(u => u.id !== member.id && (u.email.toLowerCase() === member.email.toLowerCase() || u.enterpriseId === member.enterpriseId && u.name.toLowerCase() === member.name.toLowerCase()));
 }
 

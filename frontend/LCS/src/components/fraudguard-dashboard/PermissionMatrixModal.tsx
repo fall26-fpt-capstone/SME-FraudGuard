@@ -81,7 +81,7 @@ export function PermissionMatrixModal({ open, onClose }: PermissionMatrixModalPr
                 <tr key={idx}>
                   <td>
                     <div style={{ fontWeight: 500 }}>{item.capability}</div>
-                    <div style={{ fontSize: 10, color: "var(--security-subtle)" }}>
+                    <div style={{ fontSize: 12, color: "var(--security-muted)" }}>
                       {t.permissionMatrixModal.groupPrefix} {item.category}
                     </div>
                   </td>

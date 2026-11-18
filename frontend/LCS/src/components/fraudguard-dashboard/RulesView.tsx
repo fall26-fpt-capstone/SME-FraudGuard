@@ -58,7 +58,7 @@ function renderConditions(
         <span
           style={{
             color: "var(--security-purple)",
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 600,
           }}
         >
@@ -72,7 +72,7 @@ function renderConditions(
               <span
                 style={{
                   color: "var(--security-purple)",
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   marginRight: 8,
                 }}
@@ -300,7 +300,6 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
         className={styles.tabs}
         style={{
           margin: "16px 0 14px 0",
-          borderBottom: "1px solid var(--security-border)",
         }}
       >
         <button
@@ -329,31 +328,37 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
       {/* Filters */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarGroup}>
-          <select
-            className={styles.control}
-            aria-label={t.rulesView.filters.status}
-            value={filterEnabled}
-            onChange={(e) => setFilterEnabled(e.target.value)}
-          >
-            <option value="all">{t.rulesView.filters.allStatus}</option>
-            <option value="enabled">{t.rulesView.filters.enabledOnly}</option>
-            <option value="disabled">{t.rulesView.filters.disabledOnly}</option>
-          </select>
-          <select
-            className={styles.control}
-            aria-label={t.rulesView.filters.category}
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          >
-            <option value="all">{t.rulesView.filters.allCategories}</option>
-            <option value="velocity">Velocity</option>
-            <option value="amount">Amount</option>
-            <option value="identity">Identity</option>
-            <option value="behavior">Behavior</option>
-            <option value="geo">Geo</option>
-            <option value="device">Device</option>
-            <option value="custom">Custom</option>
-          </select>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>{t.rulesView.filters.status}</span>
+            <select
+              className={styles.control}
+              aria-label={t.rulesView.filters.status}
+              value={filterEnabled}
+              onChange={(e) => setFilterEnabled(e.target.value)}
+            >
+              <option value="all">{t.rulesView.filters.allStatus}</option>
+              <option value="enabled">{t.rulesView.filters.enabledOnly}</option>
+              <option value="disabled">{t.rulesView.filters.disabledOnly}</option>
+            </select>
+          </label>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>{t.rulesView.filters.category}</span>
+            <select
+              className={styles.control}
+              aria-label={t.rulesView.filters.category}
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="all">{t.rulesView.filters.allCategories}</option>
+              <option value="velocity">Velocity</option>
+              <option value="amount">Amount</option>
+              <option value="identity">Identity</option>
+              <option value="behavior">Behavior</option>
+              <option value="geo">Geo</option>
+              <option value="device">Device</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -369,7 +374,7 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
               style={{ padding: "16px", opacity: rule.enabled ? 1 : 0.65 }}
             >
               {rule.draft && <section className={styles.workflowDetails} style={{marginBottom: 16}} aria-label={language === 'vi' ? 'Bản nháp đã lưu' : 'Saved draft'}>
-                <strong>{language === 'vi' ? 'Bản nháp đã lưu — nội dung sẽ dùng khi kiểm thử' : 'Saved draft — used for the next test'}</strong>
+                <strong>{language === 'vi' ? 'Bản nháp đã lưu: nội dung sẽ dùng khi kiểm thử' : 'Saved draft: used for the next test'}</strong>
                 <ReadableConditions node={rule.draft.conditionGroup} vi={language === 'vi'} />
                 <p className={styles.muted}>{language === 'vi' ? 'Phạm vi bản nháp: ' : 'Draft scope: '}{rule.draft.appliesTo.projects.join(', ')}</p>
                 <button className={styles.button} onClick={() => handleEdit(rule)}>{language === 'vi' ? 'Tiếp tục sửa bản nháp' : 'Continue editing draft'}</button>
@@ -418,10 +423,10 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
                       <span
                         className={styles.badge}
                         style={{
-                          background: "rgba(237, 167, 101, 0.15)",
-                          color: "var(--security-orange)",
+                          background: "var(--high-bg)",
+                          color: "var(--high-text)",
                           borderColor: "var(--high-border)",
-                          fontSize: 11,
+                          fontSize: 12,
                         }}
                       >
                         {rule.status.toUpperCase()}
@@ -429,19 +434,19 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
                     )}
                     <span
                       className={`${styles.badge} ${rule.enabled ? styles.low : styles.medium}`}
-                      style={{ fontSize: 11 }}
+                      style={{ fontSize: 12 }}
                     >
                       {rule.enabled ? "ENABLED" : "DISABLED"}
                     </span>
                     <span className={styles.categoryBadge}>{rule.category}</span>
-                    <span style={{ fontSize: 11, color: "var(--security-subtle)" }}>
+                    <span style={{ fontSize: 12, color: "var(--security-subtle)" }}>
                       {rule.conditionGroup.logic}
                     </span>
                   </div>
                   <p
                     style={{
                       margin: 0,
-                      fontSize: 11,
+                      fontSize: 12,
                       color: "var(--security-muted)",
                       lineHeight: 1.5,
                     }}
@@ -504,11 +509,10 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
                 >
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: 12,
                       color: "var(--security-subtle)",
                       marginBottom: 10,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
+                      letterSpacing: "0.02em",
                       fontWeight: 600,
                     }}
                   >
@@ -525,7 +529,7 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
                   <div
                     style={{
                       marginTop: 12,
-                      fontSize: 11,
+                      fontSize: 12,
                       color: "var(--security-muted)",
                     }}
                   >
@@ -569,7 +573,7 @@ export function RulesView({ initialRules, onRulesChange, permissions, onNavigate
                   <div
                     style={{
                       marginTop: 10,
-                      fontSize: 11,
+                      fontSize: 12,
                       color: "var(--security-subtle)",
                     }}
                   >

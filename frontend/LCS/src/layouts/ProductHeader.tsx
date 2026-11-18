@@ -8,6 +8,8 @@ import { useDialogFocus } from '@/hooks/useDialogFocus';
 import type { SecondaryView, UserProfile } from "@/types/fraudguard";
 import { NotificationCenter } from '@/components/fraudguard-dashboard/NotificationCenter';
 import type { TransactionRisk } from '@/types/fraudguard';
+import type { InvestigationCase } from '@/types/investigation-case';
+import type { LegacyCaseArchiveLike } from '@/utils/permissions';
 import { RoleSwitcher } from "@/components/fraudguard-dashboard/RoleSwitcher";
 import { UserProfileMenu } from "@/components/fraudguard-dashboard/UserProfileMenu";
 import { useLanguage } from "@/context/LanguageContext";
@@ -16,6 +18,9 @@ import styles from "@/components/fraudguard-dashboard/SecurityDashboard.module.c
 interface ProductHeaderProps {
   notificationTransactions?: TransactionRisk[];
   onOpenNotification?: (tx: TransactionRisk) => void;
+  investigationCases?: readonly InvestigationCase[];
+  legacyCaseArchive?: readonly LegacyCaseArchiveLike[];
+  onOpenInvestigationCase?: (caseId: string) => void;
   users: UserProfile[];
   enterprises: Enterprise[];
   activeViewTitle?: string;
@@ -29,6 +34,9 @@ interface ProductHeaderProps {
 export function ProductHeader({
   users,
   notificationTransactions = [], onOpenNotification,
+  investigationCases,
+  legacyCaseArchive,
+  onOpenInvestigationCase,
   enterprises,
   activeViewTitle = "Risk Overview",
   theme = "dark",
@@ -59,7 +67,20 @@ export function ProductHeader({
           <RoleSwitcher users={users} currentUser={currentUser} onSwitchUser={onSwitchUser} enterprises={enterprises} />
         )}
 
-        {currentUser && onOpenNotification && ['SME Admin','Operator','Investigator'].includes(currentUser.role) && <NotificationCenter theme={theme} key={currentUser.id} userId={currentUser.id} transactions={notificationTransactions} onOpen={onOpenNotification} />}
+        {currentUser && onOpenNotification && ['SME Admin','Operator','Investigator'].includes(currentUser.role) && (
+          <NotificationCenter
+            theme={theme}
+            key={currentUser.id}
+            userId={currentUser.id}
+            transactions={notificationTransactions}
+            onOpen={onOpenNotification}
+            investigationCases={investigationCases}
+            legacyCaseArchive={legacyCaseArchive}
+            currentUser={currentUser}
+            enterprises={enterprises}
+            onOpenInvestigationCase={onOpenInvestigationCase}
+          />
+        )}
         {/* Language Toggle Button */}
         <button
           className={styles.languageToggleBtn}

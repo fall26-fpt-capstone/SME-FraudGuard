@@ -11,14 +11,23 @@
   --security-rail: #252130;
 
   /* Borders */
-  --security-border: #35363e;
-  --security-border-strong: #454752;
+  --security-border: #2d3744;
+  --security-border-strong: #6b7e96;
+
+  /* Shared Surface & Tab Tokens */
+  --security-surface-subtle: #19212c;
+  --security-row-hover: #1b2430;
+  --security-tab-active-bg: #19324d;
+  --security-tab-active-border: #7bb8ff;
+  --security-tab-active-text: #93c5fd;
+  --security-pill-count-bg: rgba(255, 255, 255, 0.08);
+  --security-pill-count-text: #d7e0ec;
 
   /* Typography */
   --security-text: #e5e5ec;
   --security-text-secondary: #b5b8c4;
   --security-muted: #9799a7;
-  --security-subtle: #777b8b;
+  --security-subtle: #9799a7;
 
   /* Accent colors */
   --security-blue: #71b9f4;
@@ -65,14 +74,23 @@
   --security-rail: #201c2e;
 
   /* Borders */
-  --security-border: #e2e5eb;
-  --security-border-strong: #cbd2df;
+  --security-border: #cbd5e1;
+  --security-border-strong: #64748b;
+
+  /* Shared Surface & Tab Tokens */
+  --security-surface-subtle: #f1f5f9;
+  --security-row-hover: #f8fafc;
+  --security-tab-active-bg: #eff6ff;
+  --security-tab-active-border: #1d4ed8;
+  --security-tab-active-text: #1e40af;
+  --security-pill-count-bg: #f1f5f9;
+  --security-pill-count-text: #0f172a;
 
   /* Typography */
   --security-text: #0f172a;
   --security-text-secondary: #334155;
-  --security-muted: #64748b;
-  --security-subtle: #64748b;
+  --security-muted: #475569;
+  --security-subtle: #475569;
 
   /* Accent colors */
   --security-blue: #2563eb;
@@ -111,7 +129,7 @@ body {
   margin: 0;
   background: var(--security-bg);
   color: var(--security-text);
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 14px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }

@@ -1,6 +1,8 @@
 import { isSandboxTransaction } from '@/utils/transaction-origin';
 import { normalizeFields, validateDataSchema, type DataField } from '@/utils/ingestion-validation';
 import type { AuditLogEntry, ProjectItem, TransactionRisk, UserProfile } from '@/types/fraudguard';
+import type { InvestigationCase } from '@/types/investigation-case';
+import type { LegacyCaseArchiveLike } from '@/utils/permissions';
 import type {
   ClarifiedConditionItem,
   ClarifiedFieldItem,
@@ -12,23 +14,286 @@ import type {
   SpecificationSnapshot
 } from "@/types/enterprise";
 
-export function canDeploy(user: UserProfile, enterprise: Enterprise) { return user.role === 'Implementation Staff' && user.id === enterprise.deploymentStaffId; }
-export function transactionsForEnterprise(transactions: TransactionRisk[], user: UserProfile, enterprises: Enterprise[]) {
- const projects = enterprises.find(e => e.id === user.enterpriseId)?.projectIds ?? [];
- if (!['SME Admin', 'Operator', 'Investigator'].includes(user.role)) return [];
- return transactions.filter(tx => projects.includes(tx.projectId) && (user.role !== 'Investigator' ||
-   tx.scoringSource === 'AI' && !!tx.caseId && (tx.assignedInvestigatorId ? tx.assignedInvestigatorId === user.id : tx.assignedInvestigator === user.name)));
+const INTERNAL_CASE_AUDIT_ACTIONS = new Set<string>([
+  'CASE_STATUS_UPDATED',
+  'CASE_CREATED',
+  'INVESTIGATOR_ASSIGNED',
+  'OPERATOR_SELF_ASSIGNED',
+  'REPORT_SUBMITTED',
+  'REVISION_REQUESTED',
+  'REPORT_CONFIRMED_AND_CLOSED',
+]);
+
+const SME_HIDDEN_INTERNAL_WORKFLOW_ACTIONS = new Set<string>([
+  'REPORT_SUBMITTED',
+  'REVISION_REQUESTED',
+]);
+
+const CONCLUDED_LEGACY_CASE_STATUSES = new Set<string>([
+  'Confirmed Fraud',
+  'False Alarm',
+  'Resolved',
+]);
+
+const ACTIVE_INVESTIGATION_CASE_STATUSES = new Set<string>([
+  'Open',
+  'Investigating',
+  'Pending Review',
+]);
+
+const LEGACY_CASE_FIELDS: readonly (keyof TransactionRisk)[] = [
+  'caseId',
+  'caseStatus',
+  'assignedInvestigator',
+  'assignedInvestigatorId',
+  'assignedAt',
+  'investigationNotes',
+  'investigationReport',
+  'caseDecision',
+];
+
+function canonicalValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalValue);
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => [k, canonicalValue(v)]);
+    return Object.fromEntries(entries);
+  }
+  return value === undefined ? null : value;
 }
 
-export function auditForUser(logs: AuditLogEntry[], user: UserProfile, enterprises: Enterprise[], transactions: TransactionRisk[]) {
- if (user.role === 'Platform Admin') return logs;
- if (!['Implementation Staff', 'SME Admin', 'Operator'].includes(user.role)) return [];
- const allowed = visibleEnterprises(user, enterprises);
- return logs.filter(log => {
-   if (log.enterpriseId) return allowed.some(e => e.id === log.enterpriseId);
-   const transaction = transactions.find(tx => tx.id === log.target || tx.caseId === log.target);
-   return allowed.some(e => log.target === e.id || log.target === e.name || e.projectIds.includes(log.target) || !!transaction && e.projectIds.includes(transaction.projectId));
- });
+function collectAllowedInvestigatorLinks(
+  user: UserProfile,
+  investigationCases: readonly InvestigationCase[],
+  legacyCaseArchive: readonly LegacyCaseArchiveLike[],
+): { txIds: Set<string>; alertIds: Set<string> } {
+  const txIds = new Set<string>();
+  const alertIds = new Set<string>();
+  if (!user.enterpriseId) return { txIds, alertIds };
+
+  for (const c of investigationCases) {
+    if (c.enterpriseId !== user.enterpriseId || c.assignee?.actorId !== user.id) continue;
+    for (const alertId of c.alertIds) {
+      if (alertId.trim()) alertIds.add(alertId.trim());
+    }
+    for (const alert of c.alerts) {
+      if (alert.transactionId) txIds.add(alert.transactionId);
+      if (alert.alertId.trim()) alertIds.add(alert.alertId.trim());
+    }
+  }
+
+  for (const entry of legacyCaseArchive) {
+    if (entry.enterpriseId !== user.enterpriseId || entry.canResolveAssigneeId !== user.id) continue;
+    for (const txId of entry.transactionIds ?? []) {
+      if (txId) txIds.add(txId);
+    }
+    for (const alertId of entry.alertIds ?? []) {
+      if (alertId.trim()) alertIds.add(alertId.trim());
+    }
+    for (const tx of entry.transactions ?? []) {
+      if (tx.id) txIds.add(tx.id);
+      if (tx.alertId?.trim()) alertIds.add(tx.alertId.trim());
+    }
+  }
+
+  return { txIds, alertIds };
+}
+
+export function canDeploy(user: UserProfile, enterprise: Enterprise) { return user.role === 'Implementation Staff' && user.id === enterprise.deploymentStaffId; }
+export function transactionsForEnterprise(
+  transactions: TransactionRisk[],
+  user: UserProfile,
+  enterprises: Enterprise[],
+  investigationCases: readonly InvestigationCase[] = [],
+  legacyCaseArchive: readonly LegacyCaseArchiveLike[] = [],
+) {
+  const projects = enterprises.find(e => e.id === user.enterpriseId)?.projectIds ?? [];
+  if (!['SME Admin', 'Operator', 'Investigator'].includes(user.role)) return [];
+  if (user.role !== 'Investigator') {
+    return transactions.filter(tx => projects.includes(tx.projectId));
+  }
+  if (investigationCases.length === 0 && legacyCaseArchive.length === 0) {
+    return transactions.filter(tx =>
+      projects.includes(tx.projectId) &&
+      tx.scoringSource === 'AI' &&
+      !!tx.caseId &&
+      (tx.assignedInvestigatorId ? tx.assignedInvestigatorId === user.id : tx.assignedInvestigator === user.name),
+    );
+  }
+  const allowed = collectAllowedInvestigatorLinks(user, investigationCases, legacyCaseArchive);
+  return transactions.filter(
+    tx =>
+      projects.includes(tx.projectId) &&
+      (allowed.txIds.has(tx.id) || (Boolean(tx.alertId?.trim()) && allowed.alertIds.has(tx.alertId!.trim()))),
+  );
+}
+
+function isArchiveAuditEntryBlocked(entry: LegacyCaseArchiveLike, enterpriseId: string): boolean {
+  return (
+    !entry.enterpriseId ||
+    entry.enterpriseId !== enterpriseId ||
+    entry.reasonCode === 'CROSS_TENANT_CONFLICT' ||
+    entry.reasonCode === 'UNKNOWN_ENTERPRISE'
+  );
+}
+
+export function auditForUser(
+  logs: AuditLogEntry[],
+  user: UserProfile,
+  enterprises: Enterprise[],
+  transactions: TransactionRisk[],
+  investigationCases: readonly InvestigationCase[] = [],
+  legacyCaseArchive: readonly LegacyCaseArchiveLike[] = [],
+) {
+  const allowed = visibleEnterprises(user, enterprises);
+  const caseById = new Map(investigationCases.map(c => [c.caseId, c]));
+  const archiveByTarget = new Map<string, LegacyCaseArchiveLike>();
+  for (const entry of legacyCaseArchive) {
+    if (entry.legacyCaseId) archiveByTarget.set(entry.legacyCaseId, entry);
+    if (entry.archiveId) archiveByTarget.set(entry.archiveId, entry);
+  }
+
+  return logs.filter(log => {
+    if (log.action === 'REPORT_FEEDBACK_SENT') {
+      if (user.role === 'Platform Admin') return true;
+      if (!['SME Admin', 'Operator'].includes(user.role) || !user.enterpriseId) return false;
+      if (log.enterpriseId) return log.enterpriseId === user.enterpriseId;
+      const matchedFeedbackCase = caseById.get(log.target);
+      if (matchedFeedbackCase) return matchedFeedbackCase.enterpriseId === user.enterpriseId;
+      const userEnterprise = enterprises.find(e => e.id === user.enterpriseId);
+      if (!userEnterprise) return false;
+      return (
+        log.target === userEnterprise.id ||
+        log.target === userEnterprise.name ||
+        userEnterprise.projectIds.includes(log.target)
+      );
+    }
+
+    const matchedCase = caseById.get(log.target);
+    const matchedArchive = archiveByTarget.get(log.target);
+    const isInternalCaseLog =
+      INTERNAL_CASE_AUDIT_ACTIONS.has(log.action) || Boolean(matchedCase) || Boolean(matchedArchive);
+
+    if (isInternalCaseLog) {
+      if (!['SME Admin', 'Operator'].includes(user.role) || !user.enterpriseId) return false;
+      if (log.enterpriseId && log.enterpriseId !== user.enterpriseId) return false;
+      if (matchedCase && matchedCase.enterpriseId !== user.enterpriseId) return false;
+      if (matchedArchive && isArchiveAuditEntryBlocked(matchedArchive, user.enterpriseId)) return false;
+
+      const userEnterprise = enterprises.find(e => e.id === user.enterpriseId);
+      const transaction = transactions.find(tx => tx.id === log.target || tx.caseId === log.target);
+      const belongsToTenant =
+        log.enterpriseId === user.enterpriseId ||
+        matchedCase?.enterpriseId === user.enterpriseId ||
+        matchedArchive?.enterpriseId === user.enterpriseId ||
+        (Boolean(userEnterprise) &&
+          (log.target === userEnterprise!.id ||
+            log.target === userEnterprise!.name ||
+            userEnterprise!.projectIds.includes(log.target) ||
+            (Boolean(transaction) && userEnterprise!.projectIds.includes(transaction!.projectId))));
+      if (!belongsToTenant) return false;
+
+      if (user.role === 'Operator') return true;
+      if (SME_HIDDEN_INTERNAL_WORKFLOW_ACTIONS.has(log.action)) return false;
+      if (matchedCase) {
+        return (
+          matchedCase.status === 'Closed' &&
+          Boolean(matchedCase.conclusion) &&
+          matchedCase.reports.some(
+            r =>
+              r.reportId === matchedCase.conclusion?.reportId &&
+              r.version === matchedCase.conclusion?.reportVersion,
+          )
+        );
+      }
+      if (matchedArchive) {
+        const archiveStatus =
+          matchedArchive.originalStatus ??
+          matchedArchive.legacyCaseStatus ??
+          matchedArchive.transactions?.find(tx => Boolean(tx.caseStatus))?.caseStatus ??
+          '';
+        return CONCLUDED_LEGACY_CASE_STATUSES.has(archiveStatus);
+      }
+      return Boolean(transaction && CONCLUDED_LEGACY_CASE_STATUSES.has(transaction.caseStatus ?? ''));
+    }
+
+    if (user.role === 'Platform Admin') return true;
+    if (!['Implementation Staff', 'SME Admin', 'Operator'].includes(user.role)) return false;
+    if (log.enterpriseId) return allowed.some(e => e.id === log.enterpriseId);
+    const transaction = transactions.find(tx => tx.id === log.target || tx.caseId === log.target);
+    return allowed.some(
+      e =>
+        log.target === e.id ||
+        log.target === e.name ||
+        e.projectIds.includes(log.target) ||
+        (Boolean(transaction) && e.projectIds.includes(transaction!.projectId)),
+    );
+  });
+}
+
+/** Detects whether any legacy transaction-embedded case field changed between two snapshots. */
+export function hasLegacyCaseFieldPatch(prev: TransactionRisk, next: TransactionRisk): boolean {
+  return LEGACY_CASE_FIELDS.some(
+    field => JSON.stringify(canonicalValue(prev[field])) !== JSON.stringify(canonicalValue(next[field])),
+  );
+}
+
+/** Counts non-sandbox AI abnormal alerts not linked to any InvestigationCase, legacy transaction case, or blocking archive entry. */
+export function countOpenUnlinkedAlerts(
+  transactions: readonly TransactionRisk[],
+  investigationCases: readonly InvestigationCase[] = [],
+  legacyCaseArchive: readonly LegacyCaseArchiveLike[] = [],
+): number {
+  const blockedTxIds = new Set<string>();
+  const blockedAlertIds = new Set<string>();
+
+  for (const c of investigationCases) {
+    for (const alertId of c.alertIds) {
+      if (alertId.trim()) blockedAlertIds.add(alertId.trim());
+    }
+    for (const alert of c.alerts) {
+      if (alert.transactionId) blockedTxIds.add(alert.transactionId);
+      if (alert.alertId.trim()) blockedAlertIds.add(alert.alertId.trim());
+    }
+  }
+
+  for (const entry of legacyCaseArchive) {
+    if (entry.blocksAlertCreation === false) continue;
+    for (const txId of entry.transactionIds ?? []) {
+      if (txId) blockedTxIds.add(txId);
+    }
+    for (const alertId of entry.alertIds ?? []) {
+      if (alertId.trim()) blockedAlertIds.add(alertId.trim());
+    }
+    for (const tx of entry.transactions ?? []) {
+      if (tx.id) blockedTxIds.add(tx.id);
+      if (tx.alertId?.trim()) blockedAlertIds.add(tx.alertId.trim());
+    }
+  }
+
+  let count = 0;
+  for (const tx of transactions) {
+    if (isSandboxTransaction(tx)) continue;
+    if (tx.scoringSource !== 'AI' || tx.riskLevel !== 'Abnormal') continue;
+    if (tx.caseId?.trim() || tx.caseStatus?.trim()) continue;
+    if (blockedTxIds.has(tx.id)) continue;
+    if (tx.alertId?.trim() && blockedAlertIds.has(tx.alertId.trim())) continue;
+    count += 1;
+  }
+  return count;
+}
+
+/** Counts active workflow cases (`Open`, `Investigating`, `Pending Review`), strictly 1 per unique caseId. */
+export function countActiveInvestigationCases(investigationCases: readonly InvestigationCase[]): number {
+  const activeIds = new Set<string>();
+  for (const c of investigationCases) {
+    if (ACTIVE_INVESTIGATION_CASE_STATUSES.has(c.status)) {
+      activeIds.add(c.caseId);
+    }
+  }
+  return activeIds.size;
 }
 export function visibleEnterprises(user: UserProfile, enterprises: Enterprise[]) {
  if (user.role === 'Platform Admin') return enterprises;
@@ -46,6 +311,65 @@ export function enterprisePlan(enterprise: Enterprise): ServicePlan | undefined 
  if (enterprise.id === 'tenant-greenmart') return 'Free';
  if (['tenant-techpay','tenant-fastretail','tenant-edulearn'].includes(enterprise.id)) return 'Subscription';
  return undefined;
+}
+
+
+export function generateEnterpriseCode(name: string, idOrSeed?: string): string {
+  if (!name || !name.trim()) return 'DN-1001';
+  const cleanName = name.trim();
+  const removeAccents = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+
+  const ignoredWords = new Set([
+    'cong', 'ty', 'tnhh', 'co', 'phan', 'cp', 'tap', 'doan', 'doanh', 'nghiep', 'thuong', 'mai', 'dich', 'vu',
+    'company', 'corp', 'corporation', 'ltd', 'limited', 'inc', 'co', 'enterprise'
+  ]);
+
+  const words = cleanName.split(/\s+/).filter(Boolean);
+  const coreWords = words.filter(w => {
+    const normalized = removeAccents(w.toLowerCase()).replace(/[^a-z0-9]/g, '');
+    return !ignoredWords.has(normalized);
+  });
+
+  const candidateWords = coreWords.length > 0 ? coreWords : words;
+
+  let prefix = '';
+  if (candidateWords.length >= 2) {
+    const first = removeAccents(candidateWords[0])[0] || '';
+    const second = removeAccents(candidateWords[1])[0] || '';
+    prefix = (first + second).toUpperCase();
+  } else if (candidateWords.length === 1) {
+    const cleanWord = removeAccents(candidateWords[0]).replace(/[^a-zA-Z0-9]/g, '');
+    prefix = cleanWord.slice(0, Math.min(3, cleanWord.length)).toUpperCase();
+  }
+
+  if (!prefix || prefix.length < 2) {
+    const rawLetters = removeAccents(cleanName).replace(/[^a-zA-Z0-9]/g, '');
+    prefix = (rawLetters.slice(0, 2) || 'DN').toUpperCase();
+  }
+
+  const seedStr = idOrSeed || cleanName;
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+    hash |= 0;
+  }
+  const num = Math.abs(hash % 9000) + 1000;
+  return `${prefix}-${num}`;
+}
+
+export function formatEnterpriseCode(enterprise: Enterprise): string {
+  if (enterprise.code && /^[A-Za-z0-9]{2,5}-\d{4}$/.test(enterprise.code)) {
+    return enterprise.code.toUpperCase();
+  }
+  return generateEnterpriseCode(enterprise.name, enterprise.id);
+}
+
+export function truncateText(text?: string, maxLength = 16): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return trimmed.slice(0, maxLength) + '...';
 }
 
 export function resolveOnboardingStage(enterprise?: Enterprise): OnboardingStage {
@@ -764,24 +1088,24 @@ export function formatSnapshotText(
   const fieldLines = snapshot.schema.map(
     (f, idx) =>
       `  ${idx + 1}. ${f.name} (${f.type}, ${f.required ? (vi ? 'Bắt buộc' : 'Required') : vi ? 'Tùy chọn' : 'Optional'})${
-        f.description ? ` — ${f.description}` : ''
+        f.description ? ` · ${f.description}` : ''
       }`
   );
   return [
-    `${vi ? 'ĐẶC TẢ YÊU CẦU TRIỂN KHAI' : 'DEPLOYMENT SPECIFICATION'} — ${enterpriseName}`,
+    `${vi ? 'ĐẶC TẢ YÊU CẦU TRIỂN KHAI' : 'DEPLOYMENT SPECIFICATION'}: ${enterpriseName}`,
     `${vi ? 'Phiên bản' : 'Version'}: ${snapshot.version}`,
     `${vi ? 'Cập nhật lúc' : 'Updated at'}: ${snapshot.updatedAt}`,
     snapshot.sentAt ? `${vi ? 'Ghi nhận gửi lúc' : 'Sent at'}: ${snapshot.sentAt} (${snapshot.sentBy ?? ''})` : '',
     snapshot.revisionSummary ? `${vi ? 'Tóm tắt chỉnh sửa' : 'Revision summary'}: ${snapshot.revisionSummary}` : '',
     '',
     `1. ${vi ? 'MỤC TIÊU & PHẠM VI PHÁT HIỆN' : 'DETECTION OBJECTIVES & SCOPE'}:`,
-    snapshot.requirements || '—',
+    snapshot.requirements || '-',
     '',
     `2. ${vi ? 'DANH SÁCH ĐIỀU KIỆN PHÁT HIỆN BẤT THƯỜNG' : 'ABNORMAL DETECTION CONDITIONS'} (${snapshot.conditionsList.length}):`,
-    ...(condLines.length ? condLines : ['—']),
+    ...(condLines.length ? condLines : ['-']),
     '',
     `3. ${vi ? 'DANH MỤC TRƯỜNG DỮ LIỆU ĐẦU VÀO' : 'DATA FIELD CATALOG'} (${snapshot.schema.length}):`,
-    ...(fieldLines.length ? fieldLines : ['—'])
+    ...(fieldLines.length ? fieldLines : ['-'])
   ]
     .filter(Boolean)
     .join('\n');

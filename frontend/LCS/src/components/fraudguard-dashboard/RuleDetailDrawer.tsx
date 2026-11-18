@@ -34,11 +34,11 @@ interface RuleDetailDrawerProps {
 }
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; border: string }> = {
-  Published: { bg: "rgba(120, 201, 172, 0.15)", text: "var(--security-green)", border: "#3f665a" },
-  Validated: { bg: "rgba(113, 185, 244, 0.15)", text: "var(--security-blue)", border: "#2d5a7b" },
-  Testing: { bg: "rgba(237, 167, 101, 0.15)", text: "var(--security-orange)", border: "#715139" },
-  Draft: { bg: "rgba(173, 138, 243, 0.15)", text: "var(--security-purple)", border: "#5c4778" },
-  Deprecated: { bg: "rgba(151, 153, 167, 0.15)", text: "var(--security-muted)", border: "#454752" },
+  Published: { bg: "var(--low-bg)", text: "var(--low-text)", border: "var(--low-border)" },
+  Validated: { bg: "var(--security-tab-active-bg)", text: "var(--security-tab-active-text)", border: "var(--security-tab-active-border)" },
+  Testing: { bg: "var(--high-bg)", text: "var(--high-text)", border: "var(--high-border)" },
+  Draft: { bg: "var(--medium-bg)", text: "var(--medium-text)", border: "var(--medium-border)" },
+  Deprecated: { bg: "var(--security-control)", text: "var(--security-text-secondary)", border: "var(--security-border-strong)" },
 };
 
 function renderConditionHierarchy(
@@ -62,7 +62,7 @@ function renderConditionHierarchy(
           marginLeft: depth * 16,
         }}
       >
-        <span className={styles.ruleTag} style={{ fontSize: 11 }}>
+        <span className={styles.ruleTag} style={{ fontSize: 12 }}>
           {node.field}
         </span>
         <span style={{ color: "var(--security-orange)", fontWeight: 700, fontSize: 12 }}>
@@ -81,9 +81,9 @@ function renderConditionHierarchy(
         <span
           style={{
             color: "var(--security-purple)",
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: 700,
-            letterSpacing: "0.05em",
+            letterSpacing: "0.03em",
           }}
         >
           {language === "vi" ? "LOGIC NHÓM: " : "GROUP LOGIC: "}{node.logic}
@@ -92,7 +92,7 @@ function renderConditionHierarchy(
       {node.children.map((child, i) => (
         <div key={child.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {i > 0 && (
-            <div style={{ paddingLeft: 12, color: "var(--security-purple)", fontSize: 10, fontWeight: 700 }}>
+            <div style={{ paddingLeft: 12, color: "var(--security-purple)", fontSize: 12, fontWeight: 700 }}>
               {node.logic}
             </div>
           )}
@@ -128,7 +128,7 @@ export function RuleDetailDrawer({
     const falsePositives = matched.filter(tx => tx.caseStatus === 'False Alarm').length;
     const confirmedFraud = matched.filter(tx => tx.caseStatus === 'Confirmed Fraud').length;
     const reviewed = confirmedFraud + falsePositives;
-    const precision = reviewed ? Math.round(confirmedFraud / reviewed * 100) : '—';
+    const precision = reviewed ? Math.round(confirmedFraud / reviewed * 100) : '-';
     const blockedAmountVND = matched.filter(tx => tx.currency === 'VND').reduce((total, tx) => total + (tx.amount ?? 0), 0).toLocaleString(dateLocale);
 
     return {
@@ -164,7 +164,6 @@ export function RuleDetailDrawer({
       <div className={styles.drawerOverlay} onClick={onClose} aria-hidden="true" />
       <div
         className={styles.drawer}
-        style={{ width: "min(640px, 100vw)" }}
         ref={drawerRef}
         tabIndex={-1}
         role="dialog"
@@ -190,7 +189,7 @@ export function RuleDetailDrawer({
               <h2 className={styles.drawerTitle} style={{ fontSize: 16 }}>
                 {language === "vi" ? "Chi tiết Quy tắc Phát hiện" : "Rule Specification Detail"}
               </h2>
-              <span style={{ fontSize: 11, color: "var(--security-muted)" }}>
+              <span style={{ fontSize: 12, color: "var(--security-muted)" }}>
                 ID: {rule.id} · Ver: {rule.version || "v1.0"}
               </span>
             </div>
@@ -216,16 +215,16 @@ export function RuleDetailDrawer({
                   </span>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                  <span className={styles.categoryBadge} style={{ fontSize: 10 }}>
+                  <span className={styles.categoryBadge} style={{ fontSize: 12 }}>
                     {language === "vi" ? "DANH MỤC: " : "CATEGORY: "}{rule.category.toUpperCase()}
                   </span>
                   <span
                     className={styles.badge}
                     style={{
-                      background: "rgba(113, 185, 244, 0.15)",
-                      color: "var(--security-blue)",
-                      borderColor: "#2d5a7b",
-                      fontSize: 10,
+                      background: "var(--security-tab-active-bg)",
+                      color: "var(--security-tab-active-text)",
+                      borderColor: "var(--security-tab-active-border)",
+                      fontSize: 12,
                       fontWeight: 700,
                     }}
                   >
@@ -237,7 +236,7 @@ export function RuleDetailDrawer({
                       background: statusStyle.bg,
                       color: statusStyle.text,
                       borderColor: statusStyle.border,
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: 700,
                     }}
                   >
@@ -245,7 +244,7 @@ export function RuleDetailDrawer({
                   </span>
                   <span
                     className={`${styles.badge} ${rule.enabled ? styles.low : styles.medium}`}
-                    style={{ fontSize: 10 }}
+                    style={{ fontSize: 12 }}
                   >
                     {rule.enabled
                       ? language === "vi" ? "ĐANG BẬT" : "ACTIVE"
@@ -262,11 +261,11 @@ export function RuleDetailDrawer({
                 className={`${styles.button} ${!canManage ? styles.actionDisabledTooltip : ""}`}
                 style={{
                   minWidth: 80,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   padding: "6px 12px",
-                  borderColor: rule.enabled ? "var(--security-green)" : "var(--security-border-strong)",
-                  color: rule.enabled ? "var(--security-green)" : "var(--security-muted)",
+                  borderColor: rule.enabled ? "var(--low-border)" : "var(--security-border-strong)",
+                  color: rule.enabled ? "var(--low-text)" : "var(--security-muted)",
                 }}
                 onClick={() => canManage && onToggle(rule.id)}
                 disabled={!canManage || rule.status !== "Published"}
@@ -310,12 +309,12 @@ export function RuleDetailDrawer({
               </h3>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 700,
-                  color: "var(--security-purple)",
-                  padding: "2px 6px",
-                  borderRadius: 3,
-                  background: "var(--security-purple-bg)",
+                  color: "var(--medium-text)",
+                  padding: "2px 8px",
+                  borderRadius: 6,
+                  background: "var(--medium-bg)",
                 }}
               >
                 {language === "vi" ? "LOGIC GỐC: " : "ROOT LOGIC: "}{rule.conditionGroup.logic}
@@ -324,7 +323,7 @@ export function RuleDetailDrawer({
 
             <div
               style={{
-                background: "color-mix(in srgb, var(--security-panel) 90%, black)",
+                background: "var(--security-surface-subtle)",
                 border: "1px solid var(--security-border)",
                 borderRadius: 6,
                 padding: "12px 14px",
@@ -352,27 +351,27 @@ export function RuleDetailDrawer({
                   marginBottom: 12,
                 }}
               >
-                <div style={{ background: "var(--security-control)", padding: 10, borderRadius: 4, textAlign: "center" }}>
+                <div style={{ background: "var(--security-control)", padding: 10, borderRadius: 6, textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "var(--security-text)" }}>
                     {metrics.triggers}
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--security-muted)" }}>
+                  <div style={{ fontSize: 12, color: "var(--security-muted)" }}>
                     {language === "vi" ? "Số lần kích hoạt" : "Triggers"}
                   </div>
                 </div>
-                <div style={{ background: "var(--security-control)", padding: 10, borderRadius: 4, textAlign: "center" }}>
+                <div style={{ background: "var(--security-control)", padding: 10, borderRadius: 6, textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "var(--security-green)" }}>
-                    {metrics.precision}%
+                    {typeof metrics.precision === "number" ? `${metrics.precision}%` : metrics.precision}
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--security-muted)" }}>
+                  <div style={{ fontSize: 12, color: "var(--security-muted)" }}>
                     {language === "vi" ? "Độ chính xác" : "Precision"}
                   </div>
                 </div>
-                <div style={{ background: "var(--security-control)", padding: 10, borderRadius: 4, textAlign: "center" }}>
+                <div style={{ background: "var(--security-control)", padding: 10, borderRadius: 6, textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "var(--critical-text)" }}>
                     {metrics.falsePositives}
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--security-muted)" }}>
+                  <div style={{ fontSize: 12, color: "var(--security-muted)" }}>
                     {language === "vi" ? "Báo động giả" : "False Alarms"}
                   </div>
                 </div>
@@ -426,17 +425,17 @@ export function RuleDetailDrawer({
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "8px 12px",
-                      borderRadius: 4,
+                      borderRadius: 6,
                       background: "var(--security-control)",
                       border: "1px solid var(--security-border)",
-                      fontSize: 11,
+                      fontSize: 12,
                     }}
                   >
                     <div>
                       <div style={{ fontWeight: 600, color: "var(--security-text)" }}>
                         {tx.transactionReference} · {tx.projectName}
                       </div>
-                      <div style={{ color: "var(--security-muted)", fontSize: 10 }}>
+                      <div style={{ color: "var(--security-muted)", fontSize: 12 }}>
                         {tx.amount != null ? `${tx.amount.toLocaleString(dateLocale)} ${tx.currency}` : "N/A"} · Entity: {tx.entityReference}
                       </div>
                     </div>
@@ -449,7 +448,7 @@ export function RuleDetailDrawer({
                       >
                         {tx.riskLevel}
                       </span>
-                      <div style={{ fontSize: 9, color: "var(--security-subtle)" }}>
+                      <div style={{ fontSize: 12, color: "var(--security-subtle)" }}>
                         {new Date(tx.processedAt).toLocaleDateString(dateLocale)}
                       </div>
                     </div>
@@ -516,7 +515,7 @@ export function RuleDetailDrawer({
               </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 10, color: "var(--security-subtle)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--security-subtle)" }}>
               <div>📅 {language === "vi" ? "Ngày tạo" : "Created"}: {new Date(rule.createdAt).toLocaleString(dateLocale)}</div>
               <div>🔄 {language === "vi" ? "Cập nhật lần cuối" : "Last updated"}: {new Date(rule.updatedAt).toLocaleString(dateLocale)}</div>
             </div>
