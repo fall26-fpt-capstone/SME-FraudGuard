@@ -1,4 +1,8 @@
 spring:
+  config:
+    import:
+      - "optional:file:./.env[.properties]"
+      - "optional:file:./backend/.env[.properties]"
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/fraudguard}
     username: ${DB_USER:fraudguard}
@@ -7,3 +11,9 @@ spring:
 logging:
   level:
     com.fraudguard: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

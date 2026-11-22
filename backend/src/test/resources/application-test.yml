@@ -1,0 +1,4 @@
+# Synthetic signing key for automated tests only; never packaged in the application.
+auth:
+  jwt:
+    secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
