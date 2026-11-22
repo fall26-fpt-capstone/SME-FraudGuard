@@ -14,3 +14,14 @@ spring:
 logging:
   level:
     com.fraudguard: INFO
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET}
+    ttl: PT15M

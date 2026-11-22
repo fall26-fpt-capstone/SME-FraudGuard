@@ -1,6 +1,6 @@
 /**
  * SRS 3.2: login, session lifecycle and mandatory/current password changes. Authentication and
- * credential ownership live here; member administration uses its service contracts. Package
- * scaffold only; business classes are added with their feature implementation.
+ * credential ownership live here; member administration uses its service contracts.
+ * JWT authentication uses persisted, revocable sessions and current account scope checks.
  */
 package com.fraudguard.auth;
