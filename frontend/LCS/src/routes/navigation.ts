@@ -1,5 +1,10 @@
 import { canAccessView } from "@/utils/permissions";
 import type { SecondaryView, UserProfile } from "@/types/fraudguard";
+import type { ScoringSource } from "@/types/fraudguard";
+
+export function getOperatorAlertSources(plan?: string): ScoringSource[] {
+  return plan === "Subscription" ? ["AI", "RULE_FALLBACK"] : plan === "Free" ? ["RULE"] : [];
+}
 import type { TranslationKey } from "@/config/translations";
 import type { LucideIcon } from "lucide-react";
 import { Building2, Activity, AlertTriangle, Briefcase, Sliders, FolderKanban, Users, FileText, History, Server, TestTube2 } from "lucide-react";
@@ -64,26 +69,6 @@ function roleSections(role?: string, t?: TranslationKey): NavSection[] {
         items: [
           { id: "active-cases", label: nav?.items.myCases || "My Cases", icon: Briefcase },
           { id: "reports", label: nav?.items.investigationHistory || "Investigation History", icon: FileText },
-        ],
-      },
-    ];
-  }
-
-  if (role === "Viewer") {
-    return [
-      {
-        title: nav?.sections.monitoring || "MONITORING (READ-ONLY)",
-        items: [
-          { id: "risk-overview", label: nav?.items.riskOverview || "Risk Overview", icon: Activity },
-          { id: "recent-alerts", label: nav?.items.recentAlerts || "Recent Alerts", icon: AlertTriangle },
-          { id: "active-cases", label: nav?.items.activeCases || "Active Cases", icon: Briefcase },
-        ],
-      },
-      {
-        title: nav?.sections.analyticsAudit || "ANALYTICS & COMPLIANCE",
-        items: [
-          { id: "reports", label: nav?.items.reports || "Reports & Metrics", icon: FileText },
-          { id: "audit-trail", label: nav?.items.auditTrail || "Audit Trail", icon: History },
         ],
       },
     ];

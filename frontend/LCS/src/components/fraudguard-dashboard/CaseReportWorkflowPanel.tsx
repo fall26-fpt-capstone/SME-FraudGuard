@@ -474,7 +474,7 @@ export function CaseReportWorkflowPanel({
   return (
     <>
       {storageWarning && (
-        <div className={styles.reportRevisionBanner} role="status" style={{ marginBottom: 14 }}>
+        <div className={styles.reportRevisionBanner} role="status">
           {storageWarning}
         </div>
       )}
@@ -484,7 +484,6 @@ export function CaseReportWorkflowPanel({
           className={styles.discardConfirmPanel}
           role="region"
           aria-live="polite"
-          style={{ marginBottom: 14 }}
         >
           <div>
             <strong>{t.wf04Phase2b.reportForm.discardDraftTitle}</strong>

@@ -679,8 +679,8 @@ export function CasesView({
               </button>
             </div>
 
-            <div className={styles.builderBody}>
-              <div className={styles.roleNoticeBanner} style={{ marginBottom: 14 }}>
+            <div className={`${styles.builderBody} ${styles.caseDetailBody}`}>
+              <div className={styles.roleNoticeBanner}>
                 <div className={styles.roleNoticeLeft}>
                   <span>{t.wf04Phase2a.caseQueue.smeAdminConfirmedOnlyNotice}</span>
                 </div>
@@ -914,15 +914,15 @@ export function CasesView({
             </button>
           </div>
 
-          <div className={styles.builderBody}>
+          <div className={`${styles.builderBody} ${styles.caseDetailBody}`}>
             {actionError && (
-              <div className={styles.modalErrorBanner} role="alert" style={{ marginBottom: 14 }}>
+              <div className={styles.modalErrorBanner} role="alert">
                 {actionError}
               </div>
             )}
 
             {isInvestigator && !isAuthorableActiveCase && (
-              <div className={styles.drawerReadOnlyNotice} style={{ marginBottom: 14 }}>
+              <div className={styles.drawerReadOnlyNotice}>
                 {t.wf04Phase2a.caseQueue.readOnlyPermissionNotice}
               </div>
             )}
@@ -1573,25 +1573,11 @@ export function CasesView({
                   const tenantInvestigators = getTenantInvestigators(c.enterpriseId);
                   const selectedAssigneeId = assigneeDraftByCase[c.caseId] ?? "";
                   const canAssignRow = isOperator && c.status === "Open";
-                  const latestRep =
-                    c.reports.length > 0 ? c.reports[c.reports.length - 1] : undefined;
-                  const rowSummary = c.conclusion?.summary ?? latestRep?.summary;
 
                   return (
                     <tr key={c.caseId}>
                       <td>
                         <strong>{c.caseId}</strong>
-                        {!isInvestigator && latestRep && (
-                          <div
-                            className={styles.muted}
-                            style={{ fontSize: 12, marginTop: 4, maxWidth: 260, whiteSpace: "normal" }}
-                          >
-                            v{latestRep.version}
-                            {rowSummary
-                              ? ` · ${rowSummary.length > 68 ? `${rowSummary.slice(0, 68)}...` : rowSummary}`
-                              : ""}
-                          </div>
-                        )}
                       </td>
                       <td>{enterpriseNameById.get(c.enterpriseId) ?? c.enterpriseId}</td>
                       <td>
