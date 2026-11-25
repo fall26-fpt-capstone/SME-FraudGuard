@@ -209,15 +209,13 @@ export type LoginValidationErrorCode =
   | "LOGIN_TOO_LONG"
   | "PASSWORD_REQUIRED"
   | "PASSWORD_TOO_LONG"
-  | "PORTAL_REQUIRED"
-  | "WORKSPACE_REQUIRED"
-  | "WORKSPACE_TOO_LONG";
+  | "PORTAL_REQUIRED";
 
 export type LoginValidationResult =
   | { readonly ok: true; readonly payload: LoginRequestPayload }
   | {
       readonly ok: false;
-      readonly field: "loginName" | "password" | "portal" | "workspaceKey";
+      readonly field: "loginName" | "password" | "portal";
       readonly code: LoginValidationErrorCode;
     };
 
@@ -225,7 +223,6 @@ export function buildLoginRequestPayload(input: {
   readonly loginName: string;
   readonly password: string;
   readonly portal: AuthPortal;
-  readonly workspaceKey?: string | null;
 }): LoginValidationResult {
   const cleanLogin = typeof input.loginName === "string" ? input.loginName.trim() : "";
   if (!cleanLogin) {
@@ -237,19 +234,6 @@ export function buildLoginRequestPayload(input: {
 
   if (input.portal !== "PLATFORM" && input.portal !== "ENTERPRISE") {
     return { ok: false, field: "portal", code: "PORTAL_REQUIRED" };
-  }
-
-  let cleanWorkspace: string | null = null;
-  if (input.portal === "ENTERPRISE") {
-    const candidateWorkspace =
-      typeof input.workspaceKey === "string" ? input.workspaceKey.trim() : "";
-    if (!candidateWorkspace) {
-      return { ok: false, field: "workspaceKey", code: "WORKSPACE_REQUIRED" };
-    }
-    if (candidateWorkspace.length > 64) {
-      return { ok: false, field: "workspaceKey", code: "WORKSPACE_TOO_LONG" };
-    }
-    cleanWorkspace = candidateWorkspace;
   }
 
   const password = typeof input.password === "string" ? input.password : "";
@@ -266,7 +250,6 @@ export function buildLoginRequestPayload(input: {
       loginName: cleanLogin,
       password,
       portal: input.portal,
-      workspaceKey: cleanWorkspace,
     },
   };
 }

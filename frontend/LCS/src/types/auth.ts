@@ -22,7 +22,6 @@ export interface LoginRequestPayload {
   readonly loginName: string;
   readonly password: string;
   readonly portal: AuthPortal;
-  readonly workspaceKey: string | null;
 }
 
 export interface PasswordChangePayload {
