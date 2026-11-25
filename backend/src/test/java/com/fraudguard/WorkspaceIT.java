@@ -71,10 +71,30 @@ class WorkspaceIT {
         otherStaff = token("other-staff-" + suffix, Role.IMPLEMENTATION_STAFF, null, true);
         staffId = subject(staff);
         otherStaffId = subject(otherStaff);
-        sme = token("sme-" + suffix, Role.SME_ADMIN, first.getWorkspaceKey(), true);
-        otherSme = token("other-sme-" + suffix, Role.SME_ADMIN, second.getWorkspaceKey(), true);
-        operator = token("operator-" + suffix, Role.OPERATOR, first.getWorkspaceKey(), true);
+        sme = token("sme-" + suffix, Role.SME_ADMIN, first, true);
+        otherSme = token("other-sme-" + suffix, Role.SME_ADMIN, second, true);
+        operator = token("operator-" + suffix, Role.OPERATOR, first, true);
         setup = token("setup-" + suffix, Role.PLATFORM_ADMIN, null, false);
+    }
+
+    @Test
+    void enterpriseUsesSessionUuidForSpecificationsWithoutWorkspaceDirectoryAccess() throws Exception {
+        var session = mvc.perform(get("/api/v1/auth/session").header("Authorization", bearer(sme)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.workspaceId").value(first.getId().toString()))
+                .andExpect(jsonPath("$.workspaceKey").value(first.getWorkspaceKey())).andReturn();
+        UUID workspaceId = UUID.fromString(json.readTree(session.getResponse().getContentAsString())
+                .get("workspaceId").asText());
+        mvc.perform(post(path(workspaceId, "/specification")).header("Authorization", bearer(sme))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(specification("Agreed requirements"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.workspaceId").value(workspaceId.toString()));
+        getPath(workspaceId, "/specification", sme).andExpect(status().isOk());
+        getPath(second.getId(), "/specification", sme).andExpect(status().isNotFound());
+        mvc.perform(get("/api/v1/workspaces").header("Authorization", bearer(sme)))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/workspaces/" + first.getWorkspaceKey() + "/specification")
+                .header("Authorization", bearer(sme))).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -144,7 +164,7 @@ class WorkspaceIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json.writeValueAsString(new StaffAssignmentRequest(subject(sme), 0L))))
                 .andExpect(status().isBadRequest());
-        Account disabled = new Account("disabled-" + suffix, HASH, Role.IMPLEMENTATION_STAFF, null);
+        Account disabled = new Account("disabled-" + suffix, HASH, Role.IMPLEMENTATION_STAFF, null, null);
         org.springframework.test.util.ReflectionTestUtils.setField(disabled, "enabled", false);
         accounts.saveAndFlush(disabled);
         mvc.perform(get(path(first.getId(), "/eligible-staff")).header("Authorization", bearer(admin)).param("search", "disabled-" + suffix))
@@ -313,8 +333,9 @@ class WorkspaceIT {
     }
     private UUID subject(String token) throws Exception { return UUID.fromString(claims(token).get("sub").asText()); }
 
-    private String token(String login, Role role, String workspaceKey, boolean ready) throws Exception {
-        Account account = new Account(login, HASH, role, workspaceKey);
+    private String token(String login, Role role, Workspace workspace, boolean ready) throws Exception {
+        String workspaceKey = workspace == null ? null : workspace.getWorkspaceKey();
+        Account account = new Account(login, HASH, role, workspace == null ? null : workspace.getId(), workspaceKey);
         if (ready) { account.changePassword(HASH); }
         accounts.saveAndFlush(account);
         var request = new LoginRequest(login, PASSWORD,

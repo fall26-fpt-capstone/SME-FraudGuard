@@ -210,7 +210,7 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         var workspace = (lock ? workspaces.findForUpdate(id) : workspaces.findById(id)).orElseThrow(this::notFound);
         if (actor.role() == Role.IMPLEMENTATION_STAFF
                 && !assignments.existsByWorkspaceIdAndStaffIdAndActiveTrue(id, actor.accountId())) { throw notFound(); }
-        if (actor.role() == Role.SME_ADMIN && !workspace.getWorkspaceKey().equals(actor.workspaceId())) { throw notFound(); }
+        if (actor.role() == Role.SME_ADMIN && !workspace.getId().equals(actor.workspaceId())) { throw notFound(); }
         return workspace;
     }
 

@@ -12,8 +12,10 @@ public class AuthSession {
     private UUID id;
     @Column(name = "account_id", nullable = false)
     private UUID accountId;
-    @Column(name = "workspace_id", length = 64)
-    private String workspaceId;
+    @Column(name = "workspace_id")
+    private UUID workspaceId;
+    @Column(name = "workspace_key", length = 64)
+    private String workspaceKey;
     @Column(name = "platform_scope", nullable = false)
     private boolean platformScope;
     @Column(name = "expires_at", nullable = false)
@@ -27,6 +29,7 @@ public class AuthSession {
         this.id = UUID.randomUUID();
         this.accountId = account.getId();
         this.workspaceId = account.getWorkspaceId();
+        this.workspaceKey = account.getWorkspaceKey();
         this.platformScope = account.getRole().isPlatformRole();
         this.expiresAt = expiresAt;
     }
@@ -35,6 +38,7 @@ public class AuthSession {
     public UUID getAccountId() { return accountId; }
     public boolean matchesScope(Account account) {
         return accountId.equals(account.getId()) && Objects.equals(workspaceId, account.getWorkspaceId())
+                && Objects.equals(workspaceKey, account.getWorkspaceKey())
                 && platformScope == account.getRole().isPlatformRole();
     }
     public boolean isActive(Instant now) { return !revoked && now.isBefore(expiresAt); }

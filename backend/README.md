@@ -10,6 +10,26 @@ Use [Report 3 functional requirements](../docs/02_Reports/Report3_SRS/sections/f
 
 One backend maintainer owns the application. The team reviews shared contracts/schema changes before implementation. The former Dev A/Dev B ownership split is retired.
 
+## Agreed behavior and implementation gaps
+
+Business-facing views use Enterprise / Doanh nghiệp. Technical `workspace` module/table/route names remain; one enterprise has one isolated workspace. This does not introduce a second customer-managed project.
+
+The table separates implemented behavior from remaining target work:
+
+| Area | Current implementation | Agreed target / remaining work |
+| --- | --- | --- |
+| Workspace identity | Login accepts string `workspaceKey`; login/session return UUID `workspaceId` and string `workspaceKey`. Workspace route `{id}` uses that UUID. V5 maps persisted auth scope from legacy keys. | Consumers must use the new input and response meanings; reconcile any unmapped legacy account keys before deploying V5. |
+| Enterprise creation | Metadata reads/updates only; no creation or subdomain-availability endpoint. | Platform Admin enters enterprise name, phone, enterprise email and proposed subdomain; check availability during entry and uniqueness again at save. Confirm subdomain/key mapping and reserved names before defining the creation contract. |
+| Initial SME Admin | Opt-in local Platform Admin bootstrap and mandatory initial password change exist; enterprise invitation email/setup tokens do not. | Enterprise creation sends the FG-format username and a time-limited, single-use password-setup link to the designated email. Confirm delivery-email policy, token lifetime, resend/recovery and failure handling. |
+| Onboarding documents | Scoped text specifications and history only. | Onboarding tracks implementation; discussions may happen externally. Retain agreed specifications/confirmation references. Platform Admin, assigned Staff and own-enterprise SME Admin may upload protected supporting files. |
+| Enterprise personnel | SME Admin can list/read members only. | Assigned Staff provisions Operator/Investigator accounts from confirmed enterprise requests, including after handover. SME Admin changes those personnel roles, locks access immediately and administers field-view grants; Platform Admin handles administrator replacement. |
+| Handover | Readiness, approval, production activation and entitlement allocation are not implemented. | Staff tests and submits readiness, Platform Admin approves, SME Admin accepts and activates production. Password setup does not activate production or start an initial Subscription. |
+| Implementation order | Auth, plan catalogue, enterprise metadata, assignments, text specifications and member reads are implemented. | Implement independently usable agreed parts first. Webhook integration, rule configuration/testing and payment processing remain deferred; catalogue CRUD is independent of checkout. Missing steps must not report fabricated success. |
+
+**Identity integration contract:** SME Admin obtains the workspace UUID from login `account.workspaceId` or GET `/api/v1/auth/session` `workspaceId`, then uses it in specification routes. The separate `workspaceKey` is the readable login code. Workspace list/detail remains restricted to platform roles; no extra discovery endpoint is needed. Never send the key in `{id}` or use browser-supplied identity as authorization.
+
+This is a breaking login contract change: replace input `workspaceId` with `workspaceKey`; legacy `workspaceId` and other unknown login properties return 400 instead of being ignored. Response `workspaceId` now means UUID. The dashboard has no backend auth client yet; other clients must update together with the backend. V5 retains legacy keys under `workspace_key`, maps UUIDs from existing verified workspace rows and enforces matching UUID/key pairs. It aborts if any enterprise account lacks a matching workspace; it never fabricates rows or guesses UUIDs. Existing enterprise sessions are retained but revoked and require login again; platform sessions retain their current state. Historical unmapped enterprise sessions remain revoked. Applied V1-V4 migrations are unchanged.
+
 | Module | SRS | Responsibility |
 | --- | --- | --- |
 | `auth` | 3.2 | Credentials, login, initial/current password changes and server sessions. |
@@ -85,7 +105,18 @@ These are constraints; only the auth, plan-offer catalogue, workspace administra
 
 ## Database history
 
-`src/main/resources/db/migration/V1__init.sql` is retained byte-for-byte. Its legacy tables, score fields and states are not the target model; no entities map to them. A fresh database still applies V1 at startup. `V2__auth_accounts_and_sessions.sql` adds auth accounts and revocable JWT sessions without changing legacy data. `V3__plan_offer_catalogue.sql` adds the offer catalogue and its attributed revision snapshots. `V4__workspace_metadata_and_assignments.sql` adds workspace metadata, Staff assignment links, text specifications and local history. Auth's existing `workspace_id` is the immutable workspace key; HTTP workspace `{id}` values are the workspace row UUID. References to auth actors/Staff do not introduce cross-module foreign keys. V4 does not backfill or fabricate workspace rows for existing accounts. Add reviewed migrations for later schema changes; never rewrite applied migrations, drop tables or reset shared data.
+`src/main/resources/db/migration/V1__init.sql` is retained byte-for-byte. Its legacy tables, score fields and states are not the target model; no entities map to them. A fresh database still applies V1 at startup. `V2__auth_accounts_and_sessions.sql` adds auth accounts and revocable JWT sessions without changing legacy data. `V3__plan_offer_catalogue.sql` adds the offer catalogue and its attributed revision snapshots. `V4__workspace_metadata_and_assignments.sql` adds workspace metadata, Staff assignment links, text specifications and local history. V4 does not backfill or fabricate workspace rows for existing accounts. `V5__auth_workspace_uuid.sql` renames auth's old string scope to `workspace_key`, adds UUID `workspace_id`, maps exact key matches and enforces matching account/session UUID-key references to workspaces. It does not add foreign keys from workspace Staff/history records to auth actors. Add reviewed migrations for later schema changes; never rewrite applied migrations, drop tables or reset shared data.
+
+Before deploying V5 to an existing environment, use read-only checks to identify unmapped account keys:
+
+```sql
+SELECT DISTINCT a.workspace_id AS legacy_workspace_key
+FROM auth_accounts a
+LEFT JOIN workspaces w ON w.workspace_key = a.workspace_id
+WHERE a.workspace_id IS NOT NULL AND w.id IS NULL;
+```
+
+This query applies only before V5. Any returned key needs verified enterprise/workspace reconciliation with the team before retrying migration. Do not insert arbitrary workspaces, delete accounts or reset the database to make migration pass. Flyway's PostgreSQL transaction leaves the existing scope unchanged when V5 rejects an unmapped account.
 
 ## Build and run
 
@@ -116,17 +147,43 @@ With the `local` profile (the default), open [Swagger UI](http://localhost:8080/
 
 | Method | Path | Input / behavior |
 | --- | --- | --- |
-| POST | `/api/v1/auth/login` | `loginName`, `password`, `portal` (`PLATFORM` or `ENTERPRISE`), and enterprise `workspaceId`; returns `accessToken`, `tokenType`, UTC `expiresAt`, and safe `account` data. |
-| GET | `/api/v1/auth/session` | Bearer JWT; returns current account ID, login name, role, workspace ID and `mustChangePassword`. Allowed during initial setup. |
+| POST | `/api/v1/auth/login` | `loginName`, `password`, `portal` (`PLATFORM` or `ENTERPRISE`), and enterprise string `workspaceKey`; returns `accessToken`, `tokenType`, UTC `expiresAt`, and safe `account` data including UUID `workspaceId` and string `workspaceKey`. |
+| GET | `/api/v1/auth/session` | Bearer JWT; returns current account ID, login name, role, UUID `workspaceId`, string `workspaceKey` and `mustChangePassword`. Both workspace fields are null for platform accounts. Allowed during initial setup. |
 | POST | `/api/v1/auth/initial-password` | Setup-only Bearer JWT and `currentPassword`, `newPassword`, `confirmation`. Clears setup restriction only after saving successfully. |
 | POST | `/api/v1/auth/password` | Fully set up Bearer JWT and the same password fields. Retains the current session. |
 | POST | `/api/v1/auth/logout` | Revokes the supplied Bearer JWT's persisted session. Returns 204; repeating logout for that signed, unexpired token also returns 204. No token returns 204 without creating a session. Invalid/expired tokens return 401. |
 
 1. Start PostgreSQL and the application with the environment variables above. Initial passwords must contain at least 12 characters and at most 72 UTF-8 bytes (BCrypt's input limit).
-2. In Swagger, call login with the bootstrap login/password, `"portal": "PLATFORM"` and `"workspaceId": null`. Enterprise accounts use `"portal": "ENTERPRISE"` and their stored workspace ID; login identifiers are distinct from contact emails.
+2. In Swagger, call login with the bootstrap login/password, `"portal": "PLATFORM"` and `"workspaceKey": null` (or omit the key). Enterprise accounts use `"portal": "ENTERPRISE"` and their stored string `workspaceKey`; login identifiers are distinct from contact emails. Do not send `workspaceId` in the login body.
 3. Copy `accessToken`, press **Authorize**, and paste the token without the `Bearer` prefix. Swagger adds the header.
 4. Call `initial-password` with the initial password and a different new password entered twice. Before this succeeds, operational endpoints and ordinary password change are forbidden.
 5. Call `session`, optionally `password`, then `logout`. Calling `session` with the logged-out token returns 401. Login again using the latest password for another session.
+
+For enterprise integration, a synthetic login body is:
+
+```json
+{
+  "loginName": "admin@school-a.fg",
+  "password": "<password supplied at runtime>",
+  "portal": "ENTERPRISE",
+  "workspaceKey": "school-a"
+}
+```
+
+The login `account` object and the session response use this shape (IDs are illustrative, not seeded accounts):
+
+```json
+{
+  "accountId": "6f7ce810-905a-4c55-8269-338b32ba2001",
+  "loginName": "admin@school-a.fg",
+  "role": "SME_ADMIN",
+  "workspaceId": "550e8400-e29b-41d4-a716-446655440000",
+  "workspaceKey": "school-a",
+  "mustChangePassword": false
+}
+```
+
+After required password setup, use `account.workspaceId` from login (or `workspaceId` from session) for GET/POST/PUT `/api/v1/workspaces/550e8400-e29b-41d4-a716-446655440000/specification`. An absent specification returns 404; POST creates it. Setup-only accounts remain forbidden from specification routes. Other-workspace UUIDs return 404, and a readable key in a UUID route returns 400. The backend still resolves current membership on every request; knowledge of a UUID is not permission.
 
 JWTs use HS256, a fixed issuer/audience and a 15-minute lifetime (`auth.jwt.ttl`, supported range one second to one hour). Claims contain only account/session identifiers and standard token metadata; passwords, roles and workspace data are not embedded. Every authenticated request validates the signature/expiry and checks the persisted session plus the current enabled account, role and original portal/workspace scope. Logout ends only the current session. Multiple logins have independent sessions. Current password changes retain existing sessions; authorization and setup restrictions are always rechecked from the database.
 
@@ -139,6 +196,7 @@ Workspace provisioning/activation, onboarding destinations, member creation/cont
 - `ArchitectureTest` checks module privacy, service interfaces, layers, infrastructure independence and cycles. Empty selections are allowed while layers contain no business classes.
 - `ArchitectureRulesSelfTest` proves that illegal entity/repository access and entity-leaking service contracts are rejected; service-interface consumers are allowed.
 - `AuthTest` exercises the real HTTP security chain, JWT signing/validation and service logic with mocked repositories: scope checks, setup restrictions, password validation, disabled accounts, current roles, expiry and revocation. It does not prove database transactions.
+- `AuthWorkspaceMigrationIT` exercises V4-to-V5 conversion in isolated PostgreSQL schemas: UUID/key mapping, retained/revoked sessions, mismatched-pair rejection, and safe failure/retry for unmapped account keys. `WorkspaceIT` verifies that an SME Admin can use the session UUID for specifications without platform directory access. These tests require Docker; a skip is not migration validation.
 - `SwaggerTest` verifies local Swagger assets, auth operations and the Bearer security scheme.
 - `FraudGuardApplicationIT` starts PostgreSQL, applies migrations, validates entity mappings and tests persisted login/password/logout behavior plus protection of removed routes. Testcontainers skips it without Docker; a skipped integration test is not database validation.
 - `PlanOfferIT` uses PostgreSQL and the real HTTP/JWT chain to test catalogue writes, pagination/filters, history, validation, role/setup restrictions, stale/concurrent edits and rollback if history cannot be saved. It also requires Docker.
