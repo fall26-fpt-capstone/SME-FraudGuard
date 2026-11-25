@@ -54,7 +54,6 @@ export function LoginPageContent({
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [loginName, setLoginName] = useState("");
-  const [workspaceKey, setWorkspaceKey] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -62,7 +61,6 @@ export function LoginPageContent({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     loginName?: string;
-    workspaceKey?: string;
     password?: string;
   }>({});
   const [formError, setFormError] = useState("");
@@ -119,10 +117,6 @@ export function LoginPageContent({
         return errors.loginRequired;
       case "LOGIN_TOO_LONG":
         return errors.loginTooLong;
-      case "WORKSPACE_REQUIRED":
-        return errors.workspaceRequired;
-      case "WORKSPACE_TOO_LONG":
-        return errors.workspaceTooLong;
       case "PASSWORD_REQUIRED":
         return errors.passwordRequired;
       case "PASSWORD_TOO_LONG":
@@ -145,7 +139,7 @@ export function LoginPageContent({
         case "CSRF_REJECTED":
           return errors.csrfRejected;
         case "VALIDATION_ERROR":
-          return errors.validationError;
+          return error.detail === "ENTERPRISE_ADDRESS_REQUIRED" ? errors.enterpriseAddressRequired : errors.validationError;
         default:
           return errors.unexpectedError;
       }
@@ -164,14 +158,12 @@ export function LoginPageContent({
       loginName,
       password,
       portal: fixedPortal,
-      workspaceKey: isEnterprise ? workspaceKey : null,
     });
 
     if (!validation.ok) {
       const msg = mapFieldValidationMessage(validation.code);
       if (
         validation.field === "loginName" ||
-        validation.field === "workspaceKey" ||
         validation.field === "password"
       ) {
         setFieldErrors({ [validation.field]: msg });
@@ -337,47 +329,6 @@ export function LoginPageContent({
                 </p>
               )}
             </div>
-
-            {isEnterprise && (
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="login-workspace">
-                  {loginCopy.workspaceLabel}
-                </label>
-                <div className={styles.inputWrapper}>
-                  <input
-                    id="login-workspace"
-                    name="workspaceKey"
-                    type="text"
-                    className={styles.input}
-                    placeholder={loginCopy.workspacePlaceholder}
-                    value={workspaceKey}
-                    onChange={(e) => {
-                      setWorkspaceKey(e.target.value);
-                      if (fieldErrors.workspaceKey) {
-                        setFieldErrors((prev) => ({ ...prev, workspaceKey: undefined }));
-                      }
-                    }}
-                    autoComplete="organization"
-                    maxLength={64}
-                    aria-invalid={Boolean(fieldErrors.workspaceKey)}
-                    aria-describedby={
-                      fieldErrors.workspaceKey
-                        ? "login-workspace-error"
-                        : "login-workspace-hint"
-                    }
-                    required
-                  />
-                </div>
-                <p id="login-workspace-hint" className={styles.fieldHint}>
-                  {loginCopy.workspaceHint}
-                </p>
-                {fieldErrors.workspaceKey && (
-                  <p id="login-workspace-error" className={styles.fieldError} role="alert">
-                    {fieldErrors.workspaceKey}
-                  </p>
-                )}
-              </div>
-            )}
 
             <div className={styles.formGroup}>
               <label className={styles.label} htmlFor="login-password">

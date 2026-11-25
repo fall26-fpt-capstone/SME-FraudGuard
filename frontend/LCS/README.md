@@ -15,6 +15,8 @@ Open http://localhost:3000. Landing page is a separate application in `../LCS_la
 
 ## Directory responsibilities
 
+Enterprise users open the login page on their assigned subdomain (for example, `http://school-a.localhost:3000/login` in local development). The server uses the single subdomain label as the readable workspace key. For deployment, set `FRAUDGUARD_ENTERPRISE_DOMAIN` to the parent domain, route enterprise subdomains to the dashboard, and preserve the original Host header at the reverse proxy. Platform users sign in at `/platform/login`.
+
 | Directory | Responsibility |
 | --- | --- |
 | `public/` | Files served by URL; currently reserved |

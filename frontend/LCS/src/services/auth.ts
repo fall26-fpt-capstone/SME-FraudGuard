@@ -207,6 +207,14 @@ export function buildClearSessionCookieHeader(secure: boolean): string {
   return attributes.join("; ");
 }
 
+function enterpriseKeyFromHost(host: string, base: string): string | null {
+  const hostname = host.toLowerCase().replace(/:\d+$/, "");
+  const suffix = "." + base.trim().toLowerCase();
+  if (!base.trim() || !hostname.endsWith(suffix)) return null;
+  const label = hostname.slice(0, -suffix.length);
+  return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label) ? label : null;
+}
+
 function resolveExpectedOrigin(
   headers: Headers,
   requestUrl: string,
@@ -573,22 +581,24 @@ export async function handleAuthBridgeRequest(
   }
 
   if (action === "login") {
-    if ("workspaceId" in parsedBody) {
-      return errorResult(400, "VALIDATION_ERROR", "Unexpected workspaceId in login request.");
+    if ("workspaceId" in parsedBody || "workspaceKey" in parsedBody) {
+      return errorResult(400, "VALIDATION_ERROR", "Workspace is determined by the enterprise address.");
     }
     const validated = buildLoginRequestPayload({
       loginName: typeof parsedBody.loginName === "string" ? parsedBody.loginName : "",
       password: typeof parsedBody.password === "string" ? parsedBody.password : "",
       portal: parsedBody.portal as LoginRequestPayload["portal"],
-      workspaceKey:
-        typeof parsedBody.workspaceKey === "string"
-          ? parsedBody.workspaceKey
-          : parsedBody.workspaceKey === null
-            ? null
-            : undefined,
     });
     if (!validated.ok) {
       return errorResult(400, "VALIDATION_ERROR", validated.code);
+    }
+
+    let workspaceKey: string | null = null;
+    if (validated.payload.portal === "ENTERPRISE") {
+      const base = env.FRAUDGUARD_ENTERPRISE_DOMAIN ?? (env.NODE_ENV === "production" ? "" : "localhost");
+      const host = headers.get("host") ?? new URL(requestUrl).host;
+      workspaceKey = enterpriseKeyFromHost(host, base);
+      if (!workspaceKey) return errorResult(400, "VALIDATION_ERROR", "ENTERPRISE_ADDRESS_REQUIRED");
     }
 
     let upstreamRes: Response;
@@ -602,7 +612,7 @@ export async function handleAuthBridgeRequest(
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(validated.payload),
+          body: JSON.stringify({ ...validated.payload, workspaceKey }),
         },
         fetchImpl,
       );

@@ -429,39 +429,18 @@ test('Login and password validation enforce portal/workspace contract, 12-char m
     parseSanitizedSessionAccount,
   } = load('src/utils/auth.ts');
 
-  // Platform portal forces workspaceKey to null even when a workspace string was supplied
+  // Browser login sends credentials and the route-specific portal
   const platformLogin = buildLoginRequestPayload({
     loginName: '  platform-admin  ',
     password: 'Initial-password-123',
     portal: 'PLATFORM',
-    workspaceKey: 'leftover-workspace',
   });
   assert.equal(platformLogin.ok, true);
   assert.deepEqual(platformLogin.payload, {
     loginName: 'platform-admin',
     password: 'Initial-password-123',
     portal: 'PLATFORM',
-    workspaceKey: null,
   });
-
-  // Enterprise portal requires non-blank workspaceKey <= 64 chars
-  assert.equal(
-    buildLoginRequestPayload({
-      loginName: 'sme.admin',
-      password: 'Initial-password-123',
-      portal: 'ENTERPRISE',
-      workspaceKey: '   ',
-    }).code,
-    'WORKSPACE_REQUIRED'
-  );
-  const entLogin = buildLoginRequestPayload({
-    loginName: 'sme.admin',
-    password: 'Initial-password-123',
-    portal: 'ENTERPRISE',
-    workspaceKey: ' acme-vn ',
-  });
-  assert.equal(entLogin.ok, true);
-  assert.equal(entLogin.payload.workspaceKey, 'acme-vn');
 
   // BCrypt 72 UTF-8 byte overflow on multi-byte characters (37 * 2 bytes = 74 bytes > 72)
   assert.equal(
@@ -683,7 +662,6 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
           loginName: 'platform-admin',
           password: 'Initial-password-123',
           portal: 'PLATFORM',
-          workspaceKey: 'ignored-for-platform',
         }),
       env,
     });
@@ -833,13 +811,12 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
       method: 'POST',
       action: 'login',
       requestUrl: 'http://localhost:3000/api/auth/login',
-      headers: makeBridgeHeaders(),
+      headers: makeBridgeHeaders({ origin: "http://wrong-tenant.localhost:3000", extra: { host: "wrong-tenant.localhost:3000" } }),
       readBodyText: async () =>
         JSON.stringify({
           loginName: 'admin.acme',
           password: 'Enterprise-password-123',
           portal: 'ENTERPRISE',
-          workspaceKey: 'wrong-tenant',
         }),
       env,
     });
@@ -849,13 +826,12 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
       method: 'POST',
       action: 'login',
       requestUrl: 'http://localhost:3000/api/auth/login',
-      headers: makeBridgeHeaders(),
+      headers: makeBridgeHeaders({ origin: "http://acme-retail.localhost:3000", extra: { host: "acme-retail.localhost:3000" } }),
       readBodyText: async () =>
         JSON.stringify({
           loginName: 'admin.acme',
           password: 'Enterprise-password-123',
           portal: 'ENTERPRISE',
-          workspaceKey: 'acme-retail',
         }),
       env,
     });
@@ -995,7 +971,8 @@ test('Authenticated entry points are disconnected from demo fixtures/role switch
     const idIdx = enterpriseHtml.indexOf('id="login-identifier"');
     const wsIdx = enterpriseHtml.indexOf('id="login-workspace"');
     const pwIdx = enterpriseHtml.indexOf('id="login-password"');
-    assert.ok(idIdx > 0 && wsIdx > idIdx && pwIdx > wsIdx, 'Enterprise field order must be loginName -> workspaceKey -> password');
+    assert.ok(idIdx > 0 && pwIdx > idIdx);
+    assert.equal(wsIdx, -1);
     assert.doesNotMatch(
       enterpriseHtml,
       /login-portal-label|Cổng truy cập|Access portal|Google|admin@fraudguard\.io|SecurityEnterprise|Save email|Dùng tài khoản mẫu|Fill demo/
@@ -1372,9 +1349,8 @@ test('Split login forms send independent payloads and portal-aware logout/expiry
   entHarness.resetCursors();
   let entTree = EntLogin({ portal: 'ENTERPRISE', skipInitialSessionCheck: true });
   const entInputs = findNodes(entTree, (n) => n.type === 'input');
-  assert.equal(entInputs.length, 3);
+  assert.equal(entInputs.length, 2);
   entInputs.find((n) => n.props.name === 'loginName').props.onChange({ target: { value: ' sme.operator ' } });
-  entInputs.find((n) => n.props.name === 'workspaceKey').props.onChange({ target: { value: ' acme-retail ' } });
   entInputs.find((n) => n.props.name === 'password').props.onChange({ target: { value: 'EnterprisePass123' } });
 
   // Fill Platform form in Tab B (confirm only 2 inputs, no workspaceKey)
@@ -1399,13 +1375,11 @@ test('Split login forms send independent payloads and portal-aware logout/expiry
       loginName: 'sme.operator',
       password: 'EnterprisePass123',
       portal: 'ENTERPRISE',
-      workspaceKey: 'acme-retail',
     },
     {
       loginName: 'platform.admin',
       password: 'PlatformPass123',
       portal: 'PLATFORM',
-      workspaceKey: null,
     },
   ]);
   assert.deepEqual(entNav, ['/fraud-monitoring']);
