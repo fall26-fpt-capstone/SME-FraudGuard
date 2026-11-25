@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Shield,
@@ -9,415 +9,485 @@ import {
   Sun,
   Moon,
   Globe,
-  ExternalLink,
-  Sparkles,
   AlertCircle,
+  Info,
   ChevronDown,
+  ExternalLink,
 } from "lucide-react";
+import type { AuthPortal, LoginNoticeReason } from "@/types/auth";
+import {
+  buildLoginRequestPayload,
+  readPreferredTheme,
+  resolveLoginPathForPortal,
+  writePreferredTheme,
+  type LoginValidationErrorCode,
+} from "@/utils/auth";
+import {
+  AuthServiceError,
+  fetchCurrentSession,
+  loginWithCredentials,
+  logoutCurrentSession,
+} from "@/services/auth";
+import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
+import { ToastProvider } from "@/context/ToastProvider";
 import styles from "./Login.module.css";
 
-// SVG Icons for Social Logins
-function GoogleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24">
-      <path
-        fill="#4285F4"
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-      />
-    </svg>
-  );
+export type { LoginNoticeReason } from "@/types/auth";
+
+export interface LoginPageProps {
+  readonly portal?: AuthPortal;
+  readonly initialReason?: LoginNoticeReason;
+  readonly skipInitialSessionCheck?: boolean;
 }
-export function LoginPage() {
+
+export function LoginPageContent({
+  portal = "ENTERPRISE",
+  initialReason,
+  skipInitialSessionCheck = false,
+}: LoginPageProps) {
   const router = useRouter();
+  const { language, toggleLanguage, t } = useLanguage();
 
-  // Theme state (Dark by default, togglable to Light)
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [lang, setLang] = useState<"vi" | "en">("vi");
+  // Portal is strictly fixed by the owning route (/login vs /platform/login).
+  const fixedPortal: AuthPortal = portal === "PLATFORM" ? "PLATFORM" : "ENTERPRISE";
+  const isEnterprise = fixedPortal === "ENTERPRISE";
 
-  // Form states
-  const [email, setEmail] = useState("");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [loginName, setLoginName] = useState("");
+  const [workspaceId, setWorkspaceId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleMode, setIsGoogleMode] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [isCheckingSession, setIsCheckingSession] = useState(!skipInitialSessionCheck);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    loginName?: string;
+    workspaceId?: string;
+    password?: string;
+  }>({});
+  const [formError, setFormError] = useState("");
+  const submittedRef = useRef(false);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  useEffect(() => {
+    setTheme(readPreferredTheme());
+  }, []);
+
+  useEffect(() => {
+    if (skipInitialSessionCheck) {
+      setIsCheckingSession(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    if (initialReason === "session_expired") {
+      void logoutCurrentSession({ signal: controller.signal }).finally(() => {
+        if (!controller.signal.aborted) {
+          setIsCheckingSession(false);
+        }
+      });
+      return () => controller.abort();
+    }
+
+    fetchCurrentSession({ signal: controller.signal })
+      .then(() => {
+        if (!controller.signal.aborted && !submittedRef.current) {
+          router.replace("/fraud-monitoring");
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setIsCheckingSession(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [initialReason, router, skipInitialSessionCheck]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      writePreferredTheme(next);
+      return next;
+    });
   };
 
-  const toggleLang = () => {
-    setLang((prev) => (prev === "vi" ? "en" : "vi"));
+  const mapFieldValidationMessage = (code: LoginValidationErrorCode): string => {
+    const errors = t.auth.login.errors;
+    switch (code) {
+      case "LOGIN_REQUIRED":
+        return errors.loginRequired;
+      case "LOGIN_TOO_LONG":
+        return errors.loginTooLong;
+      case "WORKSPACE_REQUIRED":
+        return errors.workspaceRequired;
+      case "WORKSPACE_TOO_LONG":
+        return errors.workspaceTooLong;
+      case "PASSWORD_REQUIRED":
+        return errors.passwordRequired;
+      case "PASSWORD_TOO_LONG":
+        return errors.passwordTooLong;
+      default:
+        return errors.validationError;
+    }
   };
 
-  const handleQuickFill = () => {
-    setEmail("admin@fraudguard.io");
-    setPassword("SecurityEnterprise@2026");
-    setErrorMsg("");
+  const mapServiceErrorMessage = (error: unknown): string => {
+    const errors = t.auth.login.errors;
+    if (error instanceof AuthServiceError) {
+      switch (error.code) {
+        case "INVALID_CREDENTIALS":
+          return isEnterprise
+            ? errors.invalidEnterpriseCredentials
+            : errors.invalidPlatformCredentials;
+        case "BACKEND_UNAVAILABLE":
+          return errors.backendUnavailable;
+        case "CSRF_REJECTED":
+          return errors.csrfRejected;
+        case "VALIDATION_ERROR":
+          return errors.validationError;
+        default:
+          return errors.unexpectedError;
+      }
+    }
+    return errors.unexpectedError;
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
+    if (isSubmitting) return;
 
-    if (!email.trim()) {
-      setErrorMsg(
-        lang === "vi"
-          ? "Vui lòng nhập email doanh nghiệp."
-          : "Please enter your business email."
-      );
+    setFieldErrors({});
+    setFormError("");
+
+    const validation = buildLoginRequestPayload({
+      loginName,
+      password,
+      portal: fixedPortal,
+      workspaceId: isEnterprise ? workspaceId : null,
+    });
+
+    if (!validation.ok) {
+      const msg = mapFieldValidationMessage(validation.code);
+      if (
+        validation.field === "loginName" ||
+        validation.field === "workspaceId" ||
+        validation.field === "password"
+      ) {
+        setFieldErrors({ [validation.field]: msg });
+      } else {
+        setFormError(msg);
+      }
       return;
     }
 
-    if (!isGoogleMode && !password) {
-      setErrorMsg(
-        lang === "vi" ? "Vui lòng nhập mật khẩu." : "Please enter your password."
-      );
-      return;
+    submittedRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      await loginWithCredentials(validation.payload);
+      setPassword("");
+      router.replace("/fraud-monitoring");
+    } catch (err) {
+      submittedRef.current = false;
+      setFormError(mapServiceErrorMessage(err));
+      setIsSubmitting(false);
     }
-
-    setIsLoading(true);
-
-    // Simulate authentication API call & redirect to dashboard
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push("/fraud-monitoring");
-    }, 850);
   };
+
+  const noticeConfig = (() => {
+    if (!initialReason || formError) return null;
+    const notices = t.auth.login.notices;
+    switch (initialReason) {
+      case "auth_required":
+        return { tone: "info" as const, text: notices.authRequired };
+      case "session_expired":
+        return { tone: "warning" as const, text: notices.sessionExpired };
+      case "signed_out":
+        return { tone: "info" as const, text: notices.signedOut };
+      case "logout_expired":
+        return { tone: "info" as const, text: notices.logoutExpiredToken };
+      case "logout_unconfirmed":
+        return { tone: "warning" as const, text: notices.logoutUnconfirmed };
+      default:
+        return null;
+    }
+  })();
+
+  const loginCopy = t.auth.login;
+  const headingText = isEnterprise
+    ? loginCopy.enterpriseHeading
+    : loginCopy.platformHeading;
+  const loginPlaceholder = isEnterprise
+    ? loginCopy.enterpriseLoginPlaceholder
+    : loginCopy.platformLoginPlaceholder;
+  const heroSubtitleText = isEnterprise
+    ? loginCopy.enterpriseHeroSubtitle
+    : loginCopy.platformHeroSubtitle;
 
   return (
     <div className={styles.wrapper} data-theme={theme}>
-      {/* ── Left Column (Authentication Form) ── */}
       <div className={styles.leftPanel}>
-        {/* Top bar with Logo + Theme Switcher + Language + Sign up */}
         <header className={styles.topBar}>
-          <a href="/login" className={styles.brandLogo}>
-            <div className={styles.logoIconWrapper}>
-              <Shield size={20} />
+          <a href={resolveLoginPathForPortal(fixedPortal)} className={styles.brandLogo}>
+            <div className={styles.logoIconWrapper} aria-hidden="true">
+              <Shield size={19} />
             </div>
-            <span className={styles.brandTitle}>FraudGuard</span>
+            <span className={styles.brandTitle}>{t.brandName}</span>
           </a>
 
           <div className={styles.topBarActions}>
-            {/* Theme Toggle Button */}
+            <button
+              type="button"
+              className={styles.mobileLangBtn}
+              onClick={toggleLanguage}
+              title={t.switchLanguage}
+              aria-label={t.switchLanguage}
+            >
+              <Globe size={15} aria-hidden="true" />
+              <span>{t.langLabel}</span>
+            </button>
+
             <button
               type="button"
               className={styles.themeToggleBtn}
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Chuyển sang Light Theme" : "Chuyển sang Dark Theme"}
-              aria-label="Toggle theme"
+              onClick={handleToggleTheme}
+              title={
+                theme === "dark"
+                  ? language === "vi"
+                    ? "Chuyển sang giao diện sáng"
+                    : "Switch to light theme"
+                  : language === "vi"
+                    ? "Chuyển sang giao diện tối"
+                    : "Switch to dark theme"
+              }
+              aria-label={theme === "dark" ? t.themeLight : t.themeDark}
             >
               {theme === "dark" ? (
-                <>
-                  <Sun size={15} style={{ color: "#eda765" }} />
-                  <span>Light</span>
-                </>
+                <Sun size={15} color="#eda765" aria-hidden="true" />
               ) : (
-                <>
-                  <Moon size={15} style={{ color: "#ad8af3" }} />
-                  <span>Dark</span>
-                </>
+                <Moon size={15} color="#7c3aed" aria-hidden="true" />
               )}
+              <span>{theme === "dark" ? t.themeLight : t.themeDark}</span>
             </button>
-
-            {/* Language & Sign up for Mobile/Tablet (on Desktop, Cloudflare puts these in the right panel) */}
-            <div className={styles.mobileOnlyTopActions}>
-              <button
-                type="button"
-                className={styles.langSelectBtn}
-                onClick={toggleLang}
-                title="Đổi ngôn ngữ"
-              >
-                <Globe size={14} />
-                <span>{lang === "vi" ? "VI" : "EN"}</span>
-              </button>
-
-              <a
-                href="#signup"
-                className={styles.signUpTopBtn}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleQuickFill();
-                }}
-              >
-                {lang === "vi" ? "Dùng tài khoản mẫu" : "Use demo account"}
-              </a>
-            </div>
           </div>
         </header>
 
-        {/* Center Main Form */}
         <main className={styles.mainContent}>
-          <h1 className={styles.heading}>
-            {isGoogleMode
-              ? lang === "vi"
-                ? "Đăng nhập với Google"
-                : "Sign in with Google"
-              : lang === "vi"
-              ? "Sign in to FraudGuard"
-              : "Sign in to FraudGuard"}
-          </h1>
+          <h1 className={styles.heading}>{headingText}</h1>
 
-          {errorMsg && (
-            <div className={styles.errorAlert} role="alert">
-              <AlertCircle size={16} />
-              <span>{errorMsg}</span>
+          {noticeConfig && (
+            <div
+              className={
+                noticeConfig.tone === "warning"
+                  ? styles.warningBanner
+                  : styles.noticeBanner
+              }
+              role="status"
+            >
+              <Info size={16} className={styles.bannerIcon} aria-hidden="true" />
+              <span>{noticeConfig.text}</span>
             </div>
           )}
 
-          {!isGoogleMode ? (
-            <>
+          {formError && (
+            <div className={styles.errorAlert} role="alert">
+              <AlertCircle size={16} className={styles.bannerIcon} aria-hidden="true" />
+              <span>{formError}</span>
+            </div>
+          )}
 
-              {/* Continue with Google Button */}
-              <button
-                type="button"
-                className={styles.ssoBtn}
-                onClick={() => {
-                  setIsGoogleMode(true);
-                  setErrorMsg("");
-                }}
-              >
-                <GoogleIcon />
-                <span>
-                  {lang === "vi" ? "Continue with Google" : "Continue with Google"}
-                </span>
-              </button>
+          {isCheckingSession && (
+            <div className={styles.noticeBanner} role="status" aria-live="polite">
+              <span>{loginCopy.checkingSession}</span>
+            </div>
+          )}
 
-              {/* Divider OR */}
-              <div className={styles.divider}>
-                <div className={styles.dividerLine} />
-                <span>OR</span>
-                <div className={styles.dividerLine} />
-              </div>
-            </>
-          ) : null}
-
-          {/* Email / Password Form */}
-          <form onSubmit={handleLogin} className={styles.form}>
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="login-email">
-                {isGoogleMode 
-                  ? lang === "vi"
-                    ? "Email"
-                    : "Corporate email or domain"
-                  : "Email"}
+              <label className={styles.label} htmlFor="login-identifier">
+                {loginCopy.loginNameLabel}
               </label>
               <div className={styles.inputWrapper}>
                 <input
-                  id="login-email"
-                  type="email"
+                  id="login-identifier"
+                  name="loginName"
+                  type="text"
                   className={styles.input}
-                  placeholder={
-                    isGoogleMode
-                      ? "name1@gmail.com"
-                      : "name@company.com"
+                  placeholder={loginPlaceholder}
+                  value={loginName}
+                  onChange={(e) => {
+                    setLoginName(e.target.value);
+                    if (fieldErrors.loginName) {
+                      setFieldErrors((prev) => ({ ...prev, loginName: undefined }));
+                    }
+                  }}
+                  autoComplete="username"
+                  maxLength={128}
+                  aria-invalid={Boolean(fieldErrors.loginName)}
+                  aria-describedby={
+                    fieldErrors.loginName ? "login-identifier-error" : undefined
                   }
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
                   required
                 />
               </div>
+              {fieldErrors.loginName && (
+                <p id="login-identifier-error" className={styles.fieldError} role="alert">
+                  {fieldErrors.loginName}
+                </p>
+              )}
             </div>
 
-            {!isGoogleMode && (
+            {isEnterprise && (
               <div className={styles.formGroup}>
-                <div className={styles.labelRow}>
-                  <label className={styles.label} htmlFor="login-password">
-                    Password
-                  </label>
-                </div>
+                <label className={styles.label} htmlFor="login-workspace">
+                  {loginCopy.workspaceLabel}
+                </label>
                 <div className={styles.inputWrapper}>
                   <input
-                    id="login-password"
-                    type={showPassword ? "text" : "password"}
-                    className={`${styles.input} ${styles.inputWithIcon}`}
-                    placeholder="••••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
+                    id="login-workspace"
+                    name="workspaceId"
+                    type="text"
+                    className={styles.input}
+                    placeholder={loginCopy.workspacePlaceholder}
+                    value={workspaceId}
+                    onChange={(e) => {
+                      setWorkspaceId(e.target.value);
+                      if (fieldErrors.workspaceId) {
+                        setFieldErrors((prev) => ({ ...prev, workspaceId: undefined }));
+                      }
+                    }}
+                    autoComplete="organization"
+                    maxLength={64}
+                    aria-invalid={Boolean(fieldErrors.workspaceId)}
+                    aria-describedby={
+                      fieldErrors.workspaceId
+                        ? "login-workspace-error"
+                        : "login-workspace-hint"
+                    }
                     required
                   />
-                  <button
-                    type="button"
-                    className={styles.togglePasswordBtn}
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
                 </div>
+                <p id="login-workspace-hint" className={styles.fieldHint}>
+                  {loginCopy.workspaceHint}
+                </p>
+                {fieldErrors.workspaceId && (
+                  <p id="login-workspace-error" className={styles.fieldError} role="alert">
+                    {fieldErrors.workspaceId}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Save login method checkbox */}
-            <label className={styles.rememberRow}>
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <span>
-                {lang === "vi"
-                  ? "Save email and login method on this device"
-                  : "Save email and login method on this device"}
-              </span>
-            </label>
+            <div className={styles.formGroup}>
+              <label className={styles.label} htmlFor="login-password">
+                {loginCopy.passwordLabel}
+              </label>
+              <div className={styles.inputWrapper}>
+                <input
+                  id="login-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  className={`${styles.input} ${styles.inputWithIcon}`}
+                  placeholder={loginCopy.passwordPlaceholder}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                    }
+                  }}
+                  autoComplete="current-password"
+                  maxLength={72}
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={
+                    fieldErrors.password ? "login-password-error" : undefined
+                  }
+                  required
+                />
+                <button
+                  type="button"
+                  className={styles.togglePasswordBtn}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  title={
+                    showPassword
+                      ? loginCopy.hidePasswordAria
+                      : loginCopy.showPasswordAria
+                  }
+                  aria-label={
+                    showPassword
+                      ? loginCopy.hidePasswordAria
+                      : loginCopy.showPasswordAria
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff size={16} aria-hidden="true" />
+                  ) : (
+                    <Eye size={16} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p id="login-password-error" className={styles.fieldError} role="alert">
+                  {fieldErrors.password}
+                </p>
+              )}
+            </div>
 
-            {/* Primary Sign In Button */}
             <button
               type="submit"
               className={styles.signInBtn}
-              disabled={isLoading}
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <>
-                  <div className={styles.spinner} />
-                  <span>
-                    {lang === "vi" ? "Đang xác thực..." : "Signing in..."}
-                  </span>
+                  <div className={styles.spinner} aria-hidden="true" />
+                  <span>{loginCopy.submittingBtn}</span>
                 </>
               ) : (
-                <span>
-                  {isGoogleMode
-                    ? lang === "vi"
-                      ? "Tiếp tục với Google"
-                      : "Continue with Google"
-                    : lang === "vi"
-                    ? "Sign in"
-                    : "Sign in"}
-                </span>
+                <span>{loginCopy.submitBtn}</span>
               )}
             </button>
-
-            {isGoogleMode && (
-              <button
-                type="button"
-                className={styles.ssoBtn}
-                style={{ marginTop: 6 }}
-                onClick={() => {
-                  setIsGoogleMode(false);
-                  setErrorMsg("");
-                }}
-              >
-                ← {lang === "vi" ? "Quay lại đăng nhập Email" : "Back to standard login"}
-              </button>
-            )}
           </form>
-
-          {/* Subtext links */}
-          <div className={styles.linksSection}>
-            <div>
-              {lang === "vi" ? "Bạn muốn trải nghiệm?" : "Want to try the demo?"}{" "}
-              <a
-                href="#signup"
-                className={styles.link}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleQuickFill();
-                }}
-              >
-                {lang === "vi" ? "Điền tài khoản mẫu" : "Fill demo credentials"}
-              </a>
-            </div>
-            <div>
-              {lang === 'vi' ? 'Khôi phục tài khoản chưa hỗ trợ trong bản demo. Bạn có thể dùng tài khoản mẫu bên dưới.' : 'Account recovery is unavailable in this demo. Use the sample account below.'}
-            </div>
-          </div>
-
-          {/* Quick Demo Helper Banner */}
-          <div className={styles.demoBanner}>
-            <div className={styles.demoText}>
-              <strong>⚡ Tài khoản Demo:</strong> admin@fraudguard.io
-            </div>
-            <button
-              type="button"
-              className={styles.demoBtn}
-              onClick={handleQuickFill}
-            >
-              <Sparkles size={12} style={{ display: "inline", marginRight: 4 }} />
-              Tự động điền
-            </button>
-          </div>
         </main>
 
-        {/* Left Panel Terms Footer */}
-        <footer className={styles.leftFooter}>
-          {lang === 'vi' ? 'Bản minh họa phục vụ đồ án. Đăng nhập mô phỏng; không sử dụng mật khẩu thật.' : 'Capstone demonstration. Sign-in is simulated; do not use a real password.'}
-        </footer>
+        <footer className={styles.leftFooter}>{loginCopy.footerNote}</footer>
       </div>
 
-      {/* ── Right Column (FraudGuard Cyber Security Hero Showcase - Cloudflare Style) ── */}
-      <div className={styles.rightPanel}>
-        {/* Top-right Language Selector & Sign up button (matching Cloudflare login layout) */}
+      <aside className={styles.rightPanel} aria-labelledby="login-hero-title">
         <div className={styles.rightTopBar}>
           <button
             type="button"
             className={styles.rightLangBtn}
-            onClick={toggleLang}
-            title={lang === "vi" ? "Switch to English" : "Chuyển sang Tiếng Việt"}
+            onClick={toggleLanguage}
+            aria-label={t.switchLanguage}
           >
-            <Globe size={15} />
-            <span>{lang === "vi" ? "Tiếng Việt" : "English"}</span>
-            <ChevronDown size={14} style={{ opacity: 0.85 }} />
+            <Globe size={15} /> {language === "vi" ? "Tiếng Việt" : "English"}{" "}
+            <ChevronDown size={14} />
           </button>
-
-          <a
-            href="#signup"
-            className={styles.rightSignUpBtn}
-            onClick={(e) => {
-              e.preventDefault();
-              handleQuickFill();
-            }}
-          >
-            {lang === "vi" ? "Dùng tài khoản mẫu" : "Use demo account"}
-          </a>
         </div>
-
         <div className={styles.heroContent}>
-          <div className={styles.heroEyebrow}>
-            FraudGuard Connect 2026
-          </div>
-
-          <h2 className={styles.heroTitle}>
+          <div className={styles.heroEyebrow}>FraudGuard Connect 2026</div>
+          <h2 id="login-hero-title" className={styles.heroTitle}>
             Where Enterprise &amp; SME Fraud Defense Connects.
           </h2>
-
-          <p className={styles.heroSubtitle}>
-            Hệ thống giám sát rủi ro giao dịch thời gian thực, tự động phát hiện
-            bất thường hành vi, Rule Engine không mã code và điều tra case theo
-            chuẩn an ninh mạng quốc tế.
-          </p>
-
-          <a
-            href="#register"
-            className={styles.heroCtaBtn}
-            onClick={(e) => {
-              e.preventDefault();
-              handleQuickFill();
-            }}
-          >
-            <ExternalLink size={14} />
-            <span>{lang === "vi" ? "Trải nghiệm nền tảng ngay" : "Register now"}</span>
+          <p className={styles.heroSubtitle}>{heroSubtitleText}</p>
+          <a className={styles.heroCtaBtn} href="#login-identifier">
+            <ExternalLink size={14} /> {loginCopy.submitBtn}
           </a>
         </div>
-      </div>
+      </aside>
     </div>
+  );
+}
+
+export function LoginPage(props: LoginPageProps) {
+  return (
+    <LanguageProvider>
+      <ToastProvider>
+        <LoginPageContent {...props} />
+      </ToastProvider>
+    </LanguageProvider>
   );
 }

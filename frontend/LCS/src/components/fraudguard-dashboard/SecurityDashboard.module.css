@@ -250,12 +250,20 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 8px;
+  border: 0;
   border-radius: 6px;
   background: var(--security-control);
   color: var(--security-text);
+  text-align: left;
   text-decoration: none;
   transition: background-color 0.15s ease;
+}
+
+.sidebarUserCard:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .sidebarUserCard:hover {
@@ -1593,6 +1601,17 @@
   max-height: min(88dvh, 88vh);
 }
 
+.caseDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.caseDetailModal .caseDetailBody > * {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
 @keyframes modalScaleIn {
   from {
     opacity: 0;
@@ -2109,58 +2128,7 @@
   border: 1px solid var(--critical-border);
 }
 
-/* ── Role Switcher & RBAC Styles ── */
-
-.roleSwitcherContainer {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.roleTriggerBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 10px 0 6px;
-  border: 1px solid var(--security-border-strong);
-  border-radius: 6px;
-  background: var(--security-panel);
-  color: var(--security-text);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.roleTriggerBtn:hover {
-  background: var(--security-panel-hover);
-  border-color: var(--security-blue);
-}
-
-.roleUserAvatar {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.roleUserMeta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.15;
-}
-
-.roleUserName {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--security-text);
-  white-space: nowrap;
-}
+/* Role Badges */
 
 .roleBadge {
   display: inline-flex;
@@ -2204,25 +2172,6 @@
   border: 1px solid var(--high-border);
 }
 
-.roleDropdownMenu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 100;
-  width: 320px;
-  max-height: min(560px, calc(100dvh - 96px));
-  overflow: hidden;
-  background: var(--security-panel);
-  border: 1px solid var(--security-border-strong);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  animation: fadeInDown 0.15s ease-out;
-}
-
 @keyframes fadeInDown {
   from {
     opacity: 0;
@@ -2234,112 +2183,7 @@
   }
 }
 
-.roleMenuHeader {
-  flex-shrink: 0;
-  padding: 6px 10px 8px;
-  border-bottom: 1px solid var(--security-border);
-  margin-bottom: 4px;
-}
-
-.roleMenuTitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--security-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.roleMenuItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.12s ease;
-  width: 100%;
-}
-
-.roleMenuList {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-
-.roleMenuItem:hover {
-  background: var(--security-control);
-  border-color: var(--security-border);
-}
-
-.roleMenuItemActive {
-  background: var(--security-control);
-  border-color: var(--security-blue);
-  box-shadow: inset 2px 0 var(--security-blue);
-}
-
-.roleMenuItemActive .roleItemName {
-  color: var(--security-blue);
-}
-
-.roleItemContent {
-  flex: 1;
-  min-width: 0;
-}
-
-.roleItemHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 2px;
-}
-
-.roleItemName {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--security-text);
-}
-
-.roleItemDesc {
-  font-size: 12px;
-  color: var(--security-muted);
-  line-height: 1.35;
-  margin: 0;
-}
-
-.roleMenuFooter {
-  flex-shrink: 0;
-  margin-top: 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--security-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.roleMatrixLinkBtn {
-  background: transparent;
-  border: 0;
-  color: var(--security-blue);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-
-.roleMatrixLinkBtn:hover {
-  background: var(--security-blue-bg);
-}
-
-/* ── Role Notice Banner ── */
+/* Role Notice Banner */
 
 .roleNoticeBanner {
   display: flex;
@@ -3462,7 +3306,6 @@
 .mobileNavigation { width: min(320px, 90vw); height: 100%; overflow-y: auto; background: var(--security-panel); padding: 16px; border-right: 1px solid var(--security-border); }
 .mobileNavigation .secondaryNavButton { min-height: 44px; gap: 12px; }
 .mobileNavigation [aria-current="page"] { background: var(--security-blue-bg); color: var(--security-blue); }
-.roleAccountScope { font-size: 12px; color: var(--security-text-secondary); margin: 4px 0; line-height: 1.5; }
 .tableWrap { overflow-x: auto; max-width: 100%; }
 .quotaBarBg { height: 6px; overflow: hidden; border-radius: 3px; background: var(--security-control); }
 .quotaBarFill { height: 100%; border-radius: inherit; }
@@ -3474,7 +3317,7 @@
 .ruleList { display: grid; }
 .caseMetricsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .root :is(.button, .control, .searchInput, .btnPrimary, .btnSecondary, .drawerPrimaryBtn) { min-height: 40px; }
-.root .findingMeta, .root .statDescription, .root .roleItemDesc { font-size: 12px; }
+.root .findingMeta, .root .statDescription { font-size: 12px; }
 .root .panel { border-radius: var(--panel-radius); }
 .routeState { max-width: 900px; margin: 40px auto; padding: 24px; }
 .loadingGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 24px; }
@@ -3491,7 +3334,6 @@
   .pageHeading { flex-wrap: wrap; }
   .caseMetricsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .evidenceRow { grid-template-columns: 1fr; }
-  .roleDropdownMenu { position: fixed; top: 120px; left: 12px; right: 12px; width: auto; max-height: calc(100dvh - 140px); }
 }
 @media (max-width: 420px) { .caseMetricsGrid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) {
@@ -4655,6 +4497,12 @@
   max-width: 100%;
 }
 
+.alertNavChildren {
+  margin-left: 24px;
+  padding-left: 8px;
+  border-left: 1px solid var(--security-border);
+}
+
 .caseTimelineList {
   display: flex;
   flex-direction: column;
@@ -4803,6 +4651,10 @@
   .caseDetailModal {
     width: 100%;
     max-height: 92dvh;
+  }
+
+  .caseDetailBody {
+    gap: 12px;
   }
 
   .caseHistoryTable {
@@ -5848,5 +5700,165 @@
 @media (prefers-reduced-motion: reduce) {
   .feedbackModalDialog {
     animation: none;
+  }
+}
+
+
+/* Authenticated Workspace & Mandatory Password Gate */
+.authStandaloneShell {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--security-bg);
+  color: var(--security-text);
+}
+
+.authStandaloneMain {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.authWorkspaceStack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.authSessionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+}
+
+.authSessionItem {
+  padding: 12px 14px;
+  border: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-surface-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.authSessionLabel {
+  font-size: 12px;
+  color: var(--security-muted);
+  font-weight: 500;
+}
+
+.authSessionValue {
+  font-size: 14px;
+  color: var(--security-text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.authSessionMono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.authActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.authPasswordForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.authPasswordFieldWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.authPasswordInput {
+  min-height: 44px;
+  padding-right: 48px;
+}
+
+.authPasswordToggleBtn {
+  position: absolute;
+  right: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--security-muted);
+}
+
+.authPasswordToggleBtn:hover {
+  color: var(--security-text);
+  background: var(--security-control-hover);
+}
+
+.authFieldError {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--critical-text);
+  line-height: 1.4;
+}
+
+.authRulesBox {
+  padding: 12px 16px;
+  border: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-surface-subtle);
+}
+
+.authRulesTitle {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--security-text);
+}
+
+.authRulesList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--security-text-secondary);
+  line-height: 1.5;
+}
+
+.authStatusCopy {
+  margin: 0;
+  font-size: 14px;
+  color: var(--security-text-secondary);
+  line-height: 1.6;
+}
+
+@media (max-width: 680px) {
+  .authStandaloneMain {
+    padding: 20px 14px 36px;
+    gap: 16px;
+  }
+
+  .authPasswordToggleBtn {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

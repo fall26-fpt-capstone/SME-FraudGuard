@@ -533,6 +533,14 @@ export function AlertCaseDrawer({
 
   const statusStyle = getStatusBadgeStyle(transaction.caseStatus);
   const ruleEvidences = getRuleEvidenceDetails(transaction, language);
+  const nonAiMonitoringNotice =
+    transaction.scoringSource === "RULE_FALLBACK"
+      ? language === "vi"
+        ? "Cảnh báo này do Rule Engine xử lý dự phòng khi dịch vụ AI không khả dụng, không phải kết quả suy luận của AI. Chỉ dùng để theo dõi, không tạo hồ sơ điều tra."
+        : "This alert was handled by the backup Rule Engine while the AI service was unavailable, not by AI inference. It is for monitoring only and does not open an investigation case."
+      : language === "vi"
+        ? "Xem kết quả và lý do phát hiện ở trên. Cảnh báo quy tắc dùng để theo dõi; quy trình điều tra chỉ dành cho cảnh báo AI bất thường."
+        : "Review the detection result and reasons above. Rule alerts are for monitoring only; investigation cases apply only to abnormal AI alerts.";
   const isCaseClosed =
     transaction.caseStatus === "Confirmed Fraud" ||
     transaction.caseStatus === "False Alarm" ||
@@ -775,9 +783,11 @@ export function AlertCaseDrawer({
 
           {isWf04Locked ? (
             <div className={styles.drawerSection}>
-              <h3 className={styles.drawerSectionTitle}>
-                {t.wf04Phase2a.caseQueue.caseSummarySectionTitle}
-              </h3>
+              {(linkedCase || linkedLegacyEntry || isAIAlert) && (
+                <h3 className={styles.drawerSectionTitle}>
+                  {t.wf04Phase2a.caseQueue.caseSummarySectionTitle}
+                </h3>
+              )}
               {linkedCase ? (
                 canViewLinkedCase ? (
                   <>
@@ -852,11 +862,7 @@ export function AlertCaseDrawer({
                   )}
                 </div>
               ) : !isAIAlert ? (
-                <p className={styles.muted}>
-                  {language === "vi"
-                    ? "Xem kết quả và lý do phát hiện ở trên. Quy trình điều tra chỉ dành cho giao dịch có cảnh báo AI bất thường."
-                    : "Rule results support monitoring and detection history. Investigation is available for AI alerts."}
-                </p>
+                <p className={styles.muted}>{nonAiMonitoringNotice}</p>
               ) : (
                 <div className={styles.drawerReadOnlyNotice}>
                   {t.wf04Phase2a.alertQueue.unlinkedAiDrawerNotice}
@@ -866,7 +872,7 @@ export function AlertCaseDrawer({
           ) : (
             <>
               {canSelfInvestigate && <div className={styles.drawerSection}><button type="button" className={styles.drawerPrimaryBtn} onClick={handleSelfInvestigate}>{language === 'vi' ? 'Tự điều tra' : 'Investigate myself'}</button><p className={styles.muted}>{language === 'vi' ? 'Tự ghi nhận kết quả hoặc tạo hồ sơ bên dưới để phân công điều tra.' : 'Record your own findings, or create a case below to assign an investigator.'}</p></div>}
-              {!isAIAlert ? <div className={styles.drawerSection}><p className={styles.muted}>{language === 'vi' ? 'Xem kết quả và lý do phát hiện ở trên. Quy trình điều tra chỉ dành cho giao dịch có cảnh báo AI bất thường.' : 'Rule results support monitoring and detection history. Investigation is available for AI alerts.'}</p></div> : !transaction.caseId ? (
+              {!isAIAlert ? <div className={styles.drawerSection}><p className={styles.muted}>{nonAiMonitoringNotice}</p></div> : !transaction.caseId ? (
             <div className={styles.drawerSection}>
               <h3 className={styles.drawerSectionTitle}>{t.drawer.createCaseTitle}</h3>
               <p style={{ fontSize: 12, color: "var(--security-muted)", marginBottom: 12 }}>

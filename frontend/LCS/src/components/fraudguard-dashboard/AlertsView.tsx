@@ -34,6 +34,7 @@ import styles from "./SecurityDashboard.module.css";
 import list from "./AlertsView.module.css";
 
 interface AlertsViewProps {
+  fixedSource?: ScoringSource;
   transactions: TransactionRisk[];
   onReview: (transaction: TransactionRisk) => void;
   canManageCases?: boolean;
@@ -161,6 +162,7 @@ function formatAlertDateTime(date: Date, locale: string): string {
 }
 
 export function AlertsView({
+  fixedSource,
   transactions,
   onReview,
   canManageCases = false,
@@ -215,16 +217,17 @@ export function AlertsView({
     );
   }, [currentEnterprise]);
 
-  const showSelectionUi = Boolean(onCreateInvestigationCase);
+  const isMonitoringOnlySource = fixedSource === "RULE_FALLBACK" || fixedSource === "RULE";
+  const showSelectionUi = Boolean(onCreateInvestigationCase) && !isMonitoringOnlySource;
   const isOperatorActor = canManageCases && (!currentUser || currentUser.role === "Operator");
 
   const all = useMemo(
     () =>
       transactions
-        .filter((a) => Boolean(a.alertId))
+        .filter((a) => Boolean(a.alertId) && (!fixedSource || a.scoringSource === fixedSource))
         .slice()
         .sort((a, b) => (Date.parse(b.processedAt) || 0) - (Date.parse(a.processedAt) || 0)),
-    [transactions],
+    [transactions, fixedSource],
   );
 
   const projects = useMemo(
@@ -365,7 +368,12 @@ export function AlertsView({
       if (alert.scoringSource !== "AI" || alert.riskLevel !== "Abnormal") {
         return {
           eligible: false,
-          disabledReason: alert.scoringSource !== "AI" ? aq.disabledRuleAlertReason : l.noCaseMonitoring,
+          disabledReason:
+            alert.scoringSource === "RULE_FALLBACK"
+              ? aq.disabledFallbackAlertReason
+              : alert.scoringSource !== "AI"
+                ? aq.disabledRuleAlertReason
+                : l.noCaseMonitoring,
         };
       }
       if (linkedCase) {
@@ -390,6 +398,7 @@ export function AlertsView({
       aq.disabledFreePlanReason,
       aq.disabledEnterpriseReason,
       aq.disabledSubscriptionReason,
+      aq.disabledFallbackAlertReason,
       aq.disabledRuleAlertReason,
       aq.disabledAlreadyLinkedReason,
       aq.disabledLegacyReason,
@@ -527,7 +536,32 @@ export function AlertsView({
     { id: "monitoring", label: l.monitoringTab, count: counts.monitoring },
   ];
 
-  const subtitle = canManageCases ? l.operatorSubtitle : t.alertsView.subtitle;
+  const headingTitle =
+    fixedSource === "AI"
+      ? t.nav.items.aiAlerts
+      : fixedSource === "RULE_FALLBACK"
+        ? t.nav.items.fallbackAlerts
+        : fixedSource === "RULE"
+          ? t.nav.items.ruleAlerts
+          : t.alertsView.title;
+  const subtitle =
+    fixedSource === "AI"
+      ? l.aiSubtitle
+      : fixedSource === "RULE_FALLBACK"
+        ? l.fallbackSubtitle
+        : fixedSource === "RULE"
+          ? l.ruleSubtitle
+          : canManageCases
+            ? l.operatorSubtitle
+            : t.alertsView.subtitle;
+  const emptyNoAlertsMessage =
+    fixedSource === "AI"
+      ? l.noAiAlerts
+      : fixedSource === "RULE_FALLBACK"
+        ? l.noFallbackAlerts
+        : fixedSource === "RULE"
+          ? l.noRuleAlerts
+          : l.noAlerts;
   const rangeText =
     filtered.length === 0
       ? `0 / ${all.length} ${l.count}`
@@ -540,34 +574,36 @@ export function AlertsView({
     <div className={list.alertsView}>
       <div className={styles.pageHeading}>
         <div>
-          <h1>{t.alertsView.title}</h1>
+          <h1>{headingTitle}</h1>
           <p>{subtitle}</p>
         </div>
       </div>
 
       <div className={list.controlsArea}>
-        <div className={list.triageTabs} role="group" aria-label={l.summary}>
-          {triageTabs.map((tab) => {
-            const active = triage === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                className={`${list.triageBtn} ${active ? list.triageBtnActive : ""}`}
-                aria-pressed={active}
-                onClick={() => {
-                  setTriage(tab.id);
-                  setPage(1);
-                }}
-              >
-                <span>{tab.label}</span>
-                <span className={`${list.triageCount} ${tab.urgent && !active ? list.triageCountPending : ""}`}>
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {!isMonitoringOnlySource && (
+          <div className={list.triageTabs} role="group" aria-label={l.summary}>
+            {triageTabs.map((tab) => {
+              const active = triage === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`${list.triageBtn} ${active ? list.triageBtnActive : ""}`}
+                  aria-pressed={active}
+                  onClick={() => {
+                    setTriage(tab.id);
+                    setPage(1);
+                  }}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`${list.triageCount} ${tab.urgent && !active ? list.triageCountPending : ""}`}>
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className={list.filters}>
           <label className={`${list.filterField} ${list.searchField}`}>
@@ -591,16 +627,17 @@ export function AlertsView({
             <span>{l.source}</span>
             <select
               className={list.controlSelect}
-              value={source}
+              value={fixedSource ?? source}
+              disabled={Boolean(fixedSource)}
               onChange={(e) => {
                 setSource(e.target.value as "all" | ScoringSource);
                 setPage(1);
               }}
             >
-              <option value="all">{l.allSources}</option>
-              <option value="AI">{l.ai}</option>
-              <option value="RULE">{l.rule}</option>
-              <option value="RULE_FALLBACK">{l.fallback}</option>
+              {!fixedSource && <option value="all">{l.allSources}</option>}
+              {(!fixedSource || fixedSource === "AI") && <option value="AI">{l.ai}</option>}
+              {(!fixedSource || fixedSource === "RULE") && <option value="RULE">{l.rule}</option>}
+              {(!fixedSource || fixedSource === "RULE_FALLBACK") && <option value="RULE_FALLBACK">{l.fallback}</option>}
             </select>
           </label>
 
@@ -687,11 +724,11 @@ export function AlertsView({
         </div>
       )}
 
-      <section className={`${styles.panel} ${list.panel}`} aria-label={l.caption}>
+      <section className={`${styles.panel} ${list.panel}`} aria-label={headingTitle}>
         {rows.length > 0 ? (
           <div className={list.tableWrap}>
             <table className={list.dataTable}>
-              <caption className={list.srOnly}>{l.caption}</caption>
+              <caption className={list.srOnly}>{headingTitle}</caption>
               <thead>
                 <tr>
                   {showSelectionUi && (
@@ -923,11 +960,13 @@ export function AlertsView({
         ) : (
           <div className={list.empty}>
             <p className={list.emptyTitle}>
-              {all.length ? t.alertsView.emptyMessage : l.noAlerts}
+              {all.length ? t.alertsView.emptyMessage : emptyNoAlertsMessage}
             </p>
             {all.length > 0 && hasActiveFilters && (
               <>
-                <p className={list.emptyDesc}>{l.filterSummaryEmpty}</p>
+                <p className={list.emptyDesc}>
+                  {isMonitoringOnlySource ? l.filterSummaryEmptyMonitoring : l.filterSummaryEmpty}
+                </p>
                 <button type="button" className={list.resetBtn} onClick={reset}>
                   <RotateCcw size={14} aria-hidden="true" />
                   <span>{l.reset}</span>

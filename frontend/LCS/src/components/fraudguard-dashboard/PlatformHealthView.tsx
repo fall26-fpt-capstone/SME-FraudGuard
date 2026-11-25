@@ -265,7 +265,6 @@ export function PlatformHealthView({
           </div>
 
           <p className={styles.feedbackLocalNote}>{ph.infoOnlyNote}</p>
-          <p className={styles.muted}>{ph.localDemoNote}</p>
 
           {visibleFeedbacks.length === 0 ? (
             <div className={styles.feedbackEmptyState}>{ph.emptyState}</div>
@@ -435,7 +434,6 @@ export function PlatformHealthView({
             <div className={styles.builderBody}>
               <div className={styles.drawerReadOnlyNotice} role="status">
                 <strong>{ph.readOnlyNotice}</strong>
-                <span>{ph.infoOnlyNote}</span>
               </div>
 
               <dl className={styles.feedbackMetaStrip}>

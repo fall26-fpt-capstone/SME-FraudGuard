@@ -380,11 +380,8 @@ export function ReportFeedbackModal({
               <div className={styles.drawerReadOnlyNotice} style={{ marginBottom: 10 }}>
                 {t.wf04Phase2c.smeFeedback.previewNotice}
               </div>
-              <div className={styles.feedbackLocalNote} style={{ marginBottom: 10 }}>
+              <div className={styles.feedbackLocalNote} style={{ marginBottom: 14 }}>
                 {t.wf04Phase2c.smeFeedback.localDemoNotice}
-              </div>
-              <div className={styles.reportDraftNotice} style={{ marginBottom: 14 }}>
-                <span>{t.wf04Phase2c.smeFeedback.draftInMemoryNote}</span>
               </div>
             </>
           )}
@@ -519,9 +516,17 @@ export function ReportFeedbackModal({
                 maxLength={2000}
                 className={styles.feedbackCommentBox}
                 placeholder={t.wf04Phase2c.smeFeedback.commentPlaceholder}
+                aria-describedby="wf04-sme-feedback-draft-hint"
                 value={smeComment}
                 onChange={(e) => setSmeComment(e.target.value)}
               />
+              <p
+                id="wf04-sme-feedback-draft-hint"
+                className={styles.muted}
+                style={{ margin: "4px 0 0", fontSize: 12 }}
+              >
+                {t.wf04Phase2c.smeFeedback.draftInMemoryNote}
+              </p>
             </div>
           )}
         </div>

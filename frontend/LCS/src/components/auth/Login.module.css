@@ -1,5 +1,3 @@
-/* ── Root Theme Variables (Default Dark, overrides on data-theme="light") ── */
-
 .wrapper {
   --login-bg: #17181c;
   --login-card-bg: #17181c;
@@ -47,8 +45,6 @@
   --login-accent-orange: #d97706;
 }
 
-/* ── Split Layout ── */
-
 .leftPanel {
   flex: 0 0 50%;
   width: 50%;
@@ -70,8 +66,6 @@
     padding: 24px 20px;
   }
 }
-
-/* Top Bar (Logo + Theme Toggle + Lang + Sign up) */
 .topBar {
   display: flex;
   flex-wrap: wrap;
@@ -112,64 +106,6 @@
   gap: 8px 10px;
 }
 
-.themeToggleBtn,
-.langSelectBtn {
-  height: 34px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  background: transparent;
-  border: 1px solid var(--login-border);
-  border-radius: 6px;
-  color: var(--login-text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.themeToggleBtn:hover,
-.langSelectBtn:hover {
-  background: var(--login-social-hover);
-  color: var(--login-text);
-  border-color: var(--login-input-border);
-}
-
-.signUpTopBtn {
-  height: 34px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  background: transparent;
-  border: 1px solid var(--login-border);
-  border-radius: 6px;
-  color: var(--login-text);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.signUpTopBtn:hover {
-  background: var(--login-social-hover);
-  border-color: var(--login-text);
-}
-
-.mobileOnlyTopActions {
-  display: none;
-}
-
-@media (max-width: 960px) {
-  .mobileOnlyTopActions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-}
-
-/* ── Center Form Content ── */
-
 .mainContent {
   width: 100%;
   max-width: 400px;
@@ -183,78 +119,6 @@
   margin: 0 0 24px;
   color: var(--login-text);
 }
-
-/* Social Login Row (Google, Apple, GitHub) */
-.socialRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.socialBtn {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--login-social-bg);
-  border: 1px solid var(--login-input-border);
-  border-radius: 6px;
-  color: var(--login-text);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.socialBtn:hover {
-  background: var(--login-social-hover);
-  border-color: var(--login-btn-primary);
-}
-
-/* SSO Button */
-.ssoBtn {
-  width: 100%;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--login-social-bg);
-  border: 1px solid var(--login-input-border);
-  border-radius: 6px;
-  color: var(--login-text);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.ssoBtn:hover {
-  background: var(--login-social-hover);
-  border-color: var(--login-accent);
-}
-
-/* Divider OR */
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin: 20px 0;
-  color: var(--login-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
-.dividerLine {
-  flex: 1;
-  height: 1px;
-  background: var(--login-divider);
-}
-
-/* Form inputs */
 .form {
   display: flex;
   flex-direction: column;
@@ -265,12 +129,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.labelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .label {
@@ -322,25 +180,6 @@
 .togglePasswordBtn:hover {
   color: var(--login-text);
 }
-
-.rememberRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--login-text-secondary);
-  cursor: pointer;
-  margin-top: 2px;
-}
-
-.checkbox {
-  width: 17px;
-  height: 17px;
-  accent-color: var(--login-btn-primary);
-  cursor: pointer;
-}
-
-/* Primary Sign In Button (Cloudflare Blue / FraudGuard Blue) */
 .signInBtn {
   width: 100%;
   height: 44px;
@@ -373,65 +212,6 @@
   cursor: not-allowed;
   box-shadow: none;
 }
-
-/* Links Section */
-.linksSection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: 18px;
-  font-size: 13px;
-  color: var(--login-text-secondary);
-  text-align: center;
-}
-
-.link {
-  color: var(--login-btn-primary);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-/* Demo quick fill banner */
-.demoBanner {
-  margin-top: 20px;
-  padding: 10px 14px;
-  border-radius: 6px;
-  background: rgba(113, 185, 244, 0.08);
-  border: 1px dashed rgba(113, 185, 244, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.demoText {
-  font-size: 12px;
-  color: var(--login-text-secondary);
-  line-height: 1.4;
-}
-
-.demoBtn {
-  background: var(--login-btn-primary);
-  border: none;
-  color: #fff;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.demoBtn:hover {
-  opacity: 0.9;
-}
-
-/* Error message */
 .errorAlert {
   padding: 10px 14px;
   border-radius: 6px;
@@ -444,8 +224,6 @@
   gap: 8px;
   margin-bottom: 16px;
 }
-
-/* Left Panel Footer */
 .leftFooter {
   margin-top: 32px;
   font-size: 12px;
@@ -457,8 +235,6 @@
   color: var(--login-text-secondary);
   text-decoration: underline;
 }
-
-/* ── Right Panel (Hero Showcase with Cloudflare-Matched Typography) ── */
 
 .rightPanel {
   flex: 0 0 50%;
@@ -482,8 +258,6 @@
     display: none;
   }
 }
-
-/* Cloudflare-Style Top Right Language & Sign Up Navigation */
 .rightTopBar {
   position: absolute;
   top: 36px;
@@ -512,27 +286,6 @@
 .rightLangBtn:hover {
   opacity: 0.85;
 }
-
-.rightSignUpBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #111827;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.rightSignUpBtn:hover {
-  background: #f3f4f6;
-}
-
-/* Grid & Geometric Background Pattern */
 .rightPanel::before {
   content: "";
   position: absolute;
@@ -552,8 +305,6 @@
   width: 100%;
   max-width: 480px;
 }
-
-/* Eyebrow / Tagline: Clean 14.5px text like Cloudflare Connect 2026 */
 .heroEyebrow {
   font-size: 14.5px;
   font-weight: 500;
@@ -561,8 +312,6 @@
   letter-spacing: 0.01em;
   margin-bottom: 14px;
 }
-
-/* Main Headline: Clean 31px semibold font matching Cloudflare's title */
 .heroTitle {
   font-size: 31px;
   font-weight: 600;
@@ -571,8 +320,6 @@
   margin: 0 0 16px;
   color: #ffffff;
 }
-
-/* Subtitle: Clean 14.5px with 1.55 line-height */
 .heroSubtitle {
   font-size: 14.5px;
   font-weight: 400;
@@ -580,8 +327,6 @@
   color: rgba(255, 255, 255, 0.82);
   margin: 0 0 24px;
 }
-
-/* CTA Button: 14px font, compact 9px 18px padding, icon on left */
 .heroCtaBtn {
   display: inline-flex;
   align-items: center;
@@ -602,33 +347,6 @@
   background: #f3f4f6;
   transform: translateY(-1px);
 }
-
-/* Metrics Row placed cleanly underneath */
-.heroMetricsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-top: 28px;
-  padding: 14px 18px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.heroMetricItem strong {
-  display: block;
-  font-size: 17px;
-  font-weight: 600;
-  color: #78c9ac;
-}
-
-.heroMetricItem span {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-/* Spinner */
 .spinner {
   width: 16px;
   height: 16px;
@@ -642,4 +360,73 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.noticeBanner,
+.warningBanner,
+.errorAlert {
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.noticeBanner {
+  background: var(--security-surface-subtle);
+  border: 1px solid var(--security-border-strong);
+  color: var(--security-text);
+}
+
+.warningBanner {
+  background: var(--high-bg);
+  border: 1px solid var(--high-border);
+  color: var(--high-text);
+}
+
+.bannerIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.fieldHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--security-muted);
+}
+
+.fieldError {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--critical-text);
+}
+.themeToggleBtn,
+.mobileLangBtn {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--login-border);
+  border-radius: 6px;
+  color: var(--login-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.themeToggleBtn:hover,
+.mobileLangBtn:hover {
+  background: var(--login-social-hover);
+  color: var(--login-text);
+  border-color: var(--login-input-border);
+}
+.mobileLangBtn { display: none; }
+@media (max-width: 960px) {
+  .mobileLangBtn { display: inline-flex; }
 }

@@ -56,6 +56,8 @@ import { demoEnterprises } from "@/data/fraudguard-enterprises";
 import { type Enterprise } from "@/types/enterprise";
 import { MembersView } from "./MembersView";
 import { Sidebar } from "@/layouts/Sidebar";
+import { getOperatorAlertSources } from "@/routes/navigation";
+import type { ScoringSource } from "@/types/fraudguard";
 import { ProductHeader } from "@/layouts/ProductHeader";
 import { DashboardToolbar } from "./DashboardToolbar";
 import { StatCard } from "./StatCard";
@@ -177,6 +179,19 @@ function FraudGuardDashboardContent({
 
   // RBAC state
   const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_DEMO_USER);
+  const [alertSourceSelection, setAlertSourceSelection] = useState<{ actorId: string; source: ScoringSource } | null>(null);
+  const operatorEnterprise = enterprises.find(item => item.id === currentUser.enterpriseId);
+  const operatorPlan = operatorEnterprise ? enterprisePlan(operatorEnterprise) : undefined;
+  const operatorSources = getOperatorAlertSources(operatorPlan);
+  const operatorAlertSource = alertSourceSelection?.actorId === currentUser.id && operatorSources.includes(alertSourceSelection.source)
+    ? alertSourceSelection.source : operatorSources[0];
+  const selectOperatorAlertSource = (source: ScoringSource) => {
+    if (currentUser.role !== "Operator" || !operatorSources.includes(source)) return;
+    setAlertSourceSelection({ actorId: currentUser.id, source });
+    setActiveNavItem("recent-alerts");
+    setDrawerOpen(false);
+    setSelectedTransaction(null);
+  };
   const permissions = useMemo(
     () => getRolePermissions(currentUser.role),
     [currentUser.role],
@@ -1327,7 +1342,9 @@ function FraudGuardDashboardContent({
       case "recent-alerts":
         return (
           <AlertsView
-            transactions={enterpriseTransactions}
+            key={`${currentUser.id}-${currentUser.role === "Operator" ? operatorAlertSource : "all"}`}
+            transactions={currentUser.role === "Operator" ? enterpriseTransactions.filter(tx => tx.scoringSource === operatorAlertSource) : enterpriseTransactions}
+            fixedSource={currentUser.role === "Operator" ? operatorAlertSource : undefined}
             onReview={handleReview}
             canManageCases={permissions.canManageCases}
             selectedAlertId={drawerOpen ? selectedTransaction?.id : undefined}
@@ -1597,6 +1614,11 @@ function FraudGuardDashboardContent({
   };
 
   const currentViewTitle = useMemo(() => {
+    if (currentUser.role === "Operator" && activeNavItem === "recent-alerts") {
+      if (operatorAlertSource === "AI") return t.nav.items.aiAlerts;
+      if (operatorAlertSource === "RULE_FALLBACK") return t.nav.items.fallbackAlerts;
+      if (operatorAlertSource === "RULE") return t.nav.items.ruleAlerts;
+    }
     if (currentUser.role === "Investigator") {
       if (activeNavItem === "reports") return t.nav.items.investigationHistory;
       if (activeNavItem === "active-cases" || activeNavItem === "my-cases")
@@ -1618,7 +1640,7 @@ function FraudGuardDashboardContent({
       "platform-health": t.nav.items.platformHealth,
     };
     return navTitleMap[activeNavItem] || t.nav.items.riskOverview;
-  }, [currentUser.role, activeNavItem, t, language]);
+  }, [currentUser.role, activeNavItem, t, language, operatorAlertSource]);
 
   const storageBanner = useMemo(() => {
     const st = t.wf04Phase2a.storage;
@@ -1747,6 +1769,9 @@ function FraudGuardDashboardContent({
     <ToastProvider>
       <div className={styles.root} data-theme={theme}>
         <Sidebar
+          alertPlan={operatorPlan}
+          activeAlertSource={activeNavItem === "recent-alerts" ? operatorAlertSource : undefined}
+          onAlertSourceChange={selectOperatorAlertSource}
           activeItem={activeNavItem}
           onItemChange={handleNavItemChange}
           currentUser={currentUser}
@@ -1754,8 +1779,21 @@ function FraudGuardDashboardContent({
           onToggleCollapse={handleToggleSidebar}
         />
         <div className={styles.workspace}>
+          <div className={styles.toolbar}>
+            <label>{language === "vi" ? "Tài khoản demo" : "Demo account"}{" "}
+              <select className={styles.control} value={currentUser.id} onChange={event => {
+                const actor = users.find(user => user.id === event.target.value);
+                if (actor) handleSwitchUser(actor);
+              }}>
+                {users.map(actor => <option key={actor.id} value={actor.id}>{actor.name} · {actor.role}</option>)}
+              </select>
+            </label>
+            <a className={styles.button} href="/fraud-monitoring">{language === "vi" ? "Quay lại phiên đăng nhập" : "Return to signed-in workspace"}</a>
+          </div>
           <ProductHeader
-            users={users}
+            alertPlan={operatorPlan}
+            activeAlertSource={activeNavItem === "recent-alerts" ? operatorAlertSource : undefined}
+            onAlertSourceChange={selectOperatorAlertSource}
             notificationTransactions={enterpriseTransactions}
             onOpenNotification={handleReview}
             investigationCases={caseHook.cases}
@@ -1766,7 +1804,6 @@ function FraudGuardDashboardContent({
             theme={theme}
             onToggleTheme={toggleTheme}
             currentUser={currentUser}
-            onSwitchUser={handleSwitchUser}
             onNavigate={setActiveNavItem}
           />
           <main className={styles.main}>
