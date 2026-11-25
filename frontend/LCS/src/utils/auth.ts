@@ -115,6 +115,7 @@ export function parseSanitizedSessionAccount(value: unknown): AuthSessionAccount
   const loginName = typeof record.loginName === "string" ? record.loginName : "";
   const role = record.role;
   const rawWorkspaceId = record.workspaceId;
+  const rawWorkspaceKey = record.workspaceKey;
   const mustChangePassword = record.mustChangePassword;
 
   if (!UUID_PATTERN.test(accountId)) {
@@ -131,7 +132,7 @@ export function parseSanitizedSessionAccount(value: unknown): AuthSessionAccount
   }
 
   if (isPlatformBackendRole(role)) {
-    if (rawWorkspaceId !== null && rawWorkspaceId !== undefined) {
+    if (rawWorkspaceId !== null || rawWorkspaceKey !== null) {
       return null;
     }
     return {
@@ -139,14 +140,17 @@ export function parseSanitizedSessionAccount(value: unknown): AuthSessionAccount
       loginName,
       role,
       workspaceId: null,
+      workspaceKey: null,
       mustChangePassword,
     };
   }
 
   if (
     typeof rawWorkspaceId !== "string" ||
-    rawWorkspaceId.trim().length === 0 ||
-    rawWorkspaceId.length > 64
+    !UUID_PATTERN.test(rawWorkspaceId) ||
+    typeof rawWorkspaceKey !== "string" ||
+    !rawWorkspaceKey.trim() ||
+    rawWorkspaceKey.length > 64
   ) {
     return null;
   }
@@ -156,6 +160,7 @@ export function parseSanitizedSessionAccount(value: unknown): AuthSessionAccount
     loginName,
     role,
     workspaceId: rawWorkspaceId,
+    workspaceKey: rawWorkspaceKey,
     mustChangePassword,
   };
 }
@@ -212,7 +217,7 @@ export type LoginValidationResult =
   | { readonly ok: true; readonly payload: LoginRequestPayload }
   | {
       readonly ok: false;
-      readonly field: "loginName" | "password" | "portal" | "workspaceId";
+      readonly field: "loginName" | "password" | "portal" | "workspaceKey";
       readonly code: LoginValidationErrorCode;
     };
 
@@ -220,7 +225,7 @@ export function buildLoginRequestPayload(input: {
   readonly loginName: string;
   readonly password: string;
   readonly portal: AuthPortal;
-  readonly workspaceId?: string | null;
+  readonly workspaceKey?: string | null;
 }): LoginValidationResult {
   const cleanLogin = typeof input.loginName === "string" ? input.loginName.trim() : "";
   if (!cleanLogin) {
@@ -237,12 +242,12 @@ export function buildLoginRequestPayload(input: {
   let cleanWorkspace: string | null = null;
   if (input.portal === "ENTERPRISE") {
     const candidateWorkspace =
-      typeof input.workspaceId === "string" ? input.workspaceId.trim() : "";
+      typeof input.workspaceKey === "string" ? input.workspaceKey.trim() : "";
     if (!candidateWorkspace) {
-      return { ok: false, field: "workspaceId", code: "WORKSPACE_REQUIRED" };
+      return { ok: false, field: "workspaceKey", code: "WORKSPACE_REQUIRED" };
     }
     if (candidateWorkspace.length > 64) {
-      return { ok: false, field: "workspaceId", code: "WORKSPACE_TOO_LONG" };
+      return { ok: false, field: "workspaceKey", code: "WORKSPACE_TOO_LONG" };
     }
     cleanWorkspace = candidateWorkspace;
   }
@@ -261,7 +266,7 @@ export function buildLoginRequestPayload(input: {
       loginName: cleanLogin,
       password,
       portal: input.portal,
-      workspaceId: cleanWorkspace,
+      workspaceKey: cleanWorkspace,
     },
   };
 }

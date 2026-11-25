@@ -18,7 +18,7 @@ import styles from "./SecurityDashboard.module.css";
 
 interface UserProfileMenuProps {
   currentUser?: UserProfile;
-  workspaceId?: string | null;
+  workspaceKey?: string | null;
   expiresAt?: string;
   onNavigate?: (view: SecondaryView) => void;
   onOpenChangePassword?: () => void;
@@ -30,7 +30,7 @@ interface UserProfileMenuProps {
 
 export function UserProfileMenu({
   currentUser,
-  workspaceId,
+  workspaceKey,
   expiresAt,
   onOpenChangePassword,
   onRefreshSession,
@@ -93,7 +93,7 @@ export function UserProfileMenu({
     }
   };
 
-  const resolvedWorkspace = workspaceId ?? currentUser?.enterpriseId ?? null;
+  const resolvedWorkspace = workspaceKey ?? currentUser?.enterpriseId ?? null;
   const scopeText =
     currentUser?.role === "Platform Admin" ||
     currentUser?.role === "Implementation Staff"

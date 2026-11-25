@@ -170,6 +170,7 @@ async function startContractAuthUpstream(seedAccounts) {
       session.revoked ||
       session.accountId !== account.accountId ||
       session.workspaceId !== account.workspaceId ||
+      session.workspaceKey !== account.workspaceKey ||
       session.expiresAtMs <= Date.now()
     ) {
       res.writeHead(401, {
@@ -214,7 +215,7 @@ async function startContractAuthUpstream(seedAccounts) {
             }
           : null,
         rawPortal: body?.portal,
-        rawWorkspaceId: body?.workspaceId,
+        rawWorkspaceKey: body?.workspaceKey,
       });
 
       if (req.method === 'POST' && req.url === '/api/v1/auth/login') {
@@ -227,8 +228,9 @@ async function startContractAuthUpstream(seedAccounts) {
           !body.password.trim() ||
           body.password.length > 72 ||
           (body.portal !== 'PLATFORM' && body.portal !== 'ENTERPRISE') ||
-          (body.workspaceId != null &&
-            (typeof body.workspaceId !== 'string' || body.workspaceId.length > 64))
+          'workspaceId' in body ||
+          (body.workspaceKey != null &&
+            (typeof body.workspaceKey !== 'string' || body.workspaceKey.length > 64))
         ) {
           sendJson(res, 400, {
             status: 400,
@@ -242,8 +244,8 @@ async function startContractAuthUpstream(seedAccounts) {
           acc && (acc.role === 'PLATFORM_ADMIN' || acc.role === 'IMPLEMENTATION_STAFF');
         const scopeOk = acc
           ? isPlatform
-            ? body.portal === 'PLATFORM' && (body.workspaceId === null || body.workspaceId === undefined)
-            : body.portal === 'ENTERPRISE' && body.workspaceId === acc.workspaceId
+            ? body.portal === 'PLATFORM' && (body.workspaceKey === null || body.workspaceKey === undefined)
+            : body.portal === 'ENTERPRISE' && body.workspaceKey === acc.workspaceKey
           : false;
 
         if (
@@ -264,6 +266,7 @@ async function startContractAuthUpstream(seedAccounts) {
           sessionId,
           accountId: acc.accountId,
           workspaceId: acc.workspaceId,
+          workspaceKey: acc.workspaceKey,
           expiresAtMs: expSec * 1000,
           revoked: false,
         });
@@ -277,6 +280,7 @@ async function startContractAuthUpstream(seedAccounts) {
             loginName: acc.loginName,
             role: acc.role,
             workspaceId: acc.workspaceId,
+            workspaceKey: acc.workspaceKey,
             mustChangePassword: acc.mustChangePassword,
           },
         });
@@ -291,6 +295,7 @@ async function startContractAuthUpstream(seedAccounts) {
           loginName: ctx.account.loginName,
           role: ctx.account.role,
           workspaceId: ctx.account.workspaceId,
+          workspaceKey: ctx.account.workspaceKey,
           mustChangePassword: ctx.account.mustChangePassword,
         });
         return;
@@ -354,6 +359,7 @@ async function startContractAuthUpstream(seedAccounts) {
           loginName: ctx.account.loginName,
           role: ctx.account.role,
           workspaceId: ctx.account.workspaceId,
+          workspaceKey: ctx.account.workspaceKey,
           mustChangePassword: false,
         });
         return;
@@ -423,28 +429,28 @@ test('Login and password validation enforce portal/workspace contract, 12-char m
     parseSanitizedSessionAccount,
   } = load('src/utils/auth.ts');
 
-  // Platform portal forces workspaceId to null even when a workspace string was supplied
+  // Platform portal forces workspaceKey to null even when a workspace string was supplied
   const platformLogin = buildLoginRequestPayload({
     loginName: '  platform-admin  ',
     password: 'Initial-password-123',
     portal: 'PLATFORM',
-    workspaceId: 'leftover-workspace',
+    workspaceKey: 'leftover-workspace',
   });
   assert.equal(platformLogin.ok, true);
   assert.deepEqual(platformLogin.payload, {
     loginName: 'platform-admin',
     password: 'Initial-password-123',
     portal: 'PLATFORM',
-    workspaceId: null,
+    workspaceKey: null,
   });
 
-  // Enterprise portal requires non-blank workspaceId <= 64 chars
+  // Enterprise portal requires non-blank workspaceKey <= 64 chars
   assert.equal(
     buildLoginRequestPayload({
       loginName: 'sme.admin',
       password: 'Initial-password-123',
       portal: 'ENTERPRISE',
-      workspaceId: '   ',
+      workspaceKey: '   ',
     }).code,
     'WORKSPACE_REQUIRED'
   );
@@ -452,10 +458,10 @@ test('Login and password validation enforce portal/workspace contract, 12-char m
     loginName: 'sme.admin',
     password: 'Initial-password-123',
     portal: 'ENTERPRISE',
-    workspaceId: ' acme-vn ',
+    workspaceKey: ' acme-vn ',
   });
   assert.equal(entLogin.ok, true);
-  assert.equal(entLogin.payload.workspaceId, 'acme-vn');
+  assert.equal(entLogin.payload.workspaceKey, 'acme-vn');
 
   // BCrypt 72 UTF-8 byte overflow on multi-byte characters (37 * 2 bytes = 74 bytes > 72)
   assert.equal(
@@ -520,12 +526,23 @@ test('Login and password validation enforce portal/workspace contract, 12-char m
 
   // Rejects mismatched platform/workspace payloads
   const id = crypto.randomUUID();
+  const enterpriseAccount = {
+    accountId: id,
+    loginName: 'op',
+    role: 'OPERATOR',
+    workspaceId: crypto.randomUUID(),
+    workspaceKey: 'school-a',
+    mustChangePassword: false,
+  };
+  assert.equal(parseSanitizedSessionAccount({ ...enterpriseAccount, workspaceId: 'school-a' }), null);
+  assert.equal(parseSanitizedSessionAccount({ ...enterpriseAccount, workspaceKey: null }), null);
   assert.equal(
     parseSanitizedSessionAccount({
       accountId: id,
       loginName: 'pa',
       role: 'PLATFORM_ADMIN',
-      workspaceId: 'acme',
+      workspaceId: null,
+      workspaceKey: 'acme',
       mustChangePassword: false,
     }),
     null
@@ -536,6 +553,7 @@ test('Login and password validation enforce portal/workspace contract, 12-char m
       loginName: 'op',
       role: 'OPERATOR',
       workspaceId: null,
+      workspaceKey: null,
       mustChangePassword: false,
     }),
     null
@@ -552,6 +570,7 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
       password: 'Initial-password-123',
       role: 'PLATFORM_ADMIN',
       workspaceId: null,
+      workspaceKey: null,
       enabled: true,
       mustChangePassword: true,
     },
@@ -560,7 +579,8 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
       loginName: 'admin.acme',
       password: 'Enterprise-password-123',
       role: 'SME_ADMIN',
-      workspaceId: 'acme-retail',
+      workspaceId: '550e8400-e29b-41d4-a716-446655440000',
+      workspaceKey: 'acme-retail',
       enabled: true,
       mustChangePassword: false,
     },
@@ -615,6 +635,22 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
     assert.equal(originBlocked.body.errorCode, 'CSRF_REJECTED');
     assert.equal(upstream.receivedRequests.length, 0);
 
+    for (const portal of ['PLATFORM', 'ENTERPRISE']) {
+      const legacyRequest = await handleAuthBridgeRequest({
+        method: 'POST',
+        action: 'login',
+        requestUrl: 'http://localhost:3000/api/auth/login',
+        headers: makeBridgeHeaders(),
+        readBodyText: async () => JSON.stringify({
+          loginName: 'legacy', password: 'test-password', portal,
+          workspaceId: portal === 'PLATFORM' ? null : 'acme-retail',
+        }),
+        env,
+      });
+      assert.equal(legacyRequest.status, 400);
+    }
+    assert.equal(upstream.receivedRequests.length, 0);
+
     // 3) Invalid login returns 401 INVALID_CREDENTIALS with no Set-Cookie and no password echo
     const badLogin = await handleAuthBridgeRequest({
       method: 'POST',
@@ -647,7 +683,7 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
           loginName: 'platform-admin',
           password: 'Initial-password-123',
           portal: 'PLATFORM',
-          workspaceId: 'ignored-for-platform',
+          workspaceKey: 'ignored-for-platform',
         }),
       env,
     });
@@ -660,7 +696,7 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
     assert.match(okLogin.setCookie, /fg_access_token=/);
     assert.match(okLogin.setCookie, /HttpOnly/);
     assert.match(okLogin.setCookie, /SameSite=Strict/);
-    assert.equal(upstream.receivedRequests.at(-1).rawWorkspaceId, null);
+    assert.equal(upstream.receivedRequests.at(-1).rawWorkspaceKey, null);
 
     const cookiePair = extractCookiePair(okLogin.setCookie);
 
@@ -792,7 +828,7 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
     assert.equal(afterRevokePw.body.errorCode, 'SESSION_EXPIRED');
     assert.match(afterRevokePw.setCookie, /Max-Age=0/);
 
-    // 11) Enterprise login sends exact workspaceId and rejects wrong workspaceId
+    // 11) Enterprise login sends exact workspaceKey and rejects wrong workspaceKey
     const wrongWs = await handleAuthBridgeRequest({
       method: 'POST',
       action: 'login',
@@ -803,7 +839,7 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
           loginName: 'admin.acme',
           password: 'Enterprise-password-123',
           portal: 'ENTERPRISE',
-          workspaceId: 'wrong-tenant',
+          workspaceKey: 'wrong-tenant',
         }),
       env,
     });
@@ -819,13 +855,14 @@ test('Server auth bridge enforces CSRF/SSRF protections, strips tokens from brow
           loginName: 'admin.acme',
           password: 'Enterprise-password-123',
           portal: 'ENTERPRISE',
-          workspaceId: 'acme-retail',
+          workspaceKey: 'acme-retail',
         }),
       env,
     });
     assert.equal(okEnt.status, 200);
     assert.equal(okEnt.body.account.role, 'SME_ADMIN');
-    assert.equal(okEnt.body.account.workspaceId, 'acme-retail');
+    assert.equal(okEnt.body.account.workspaceId, '550e8400-e29b-41d4-a716-446655440000');
+    assert.equal(okEnt.body.account.workspaceKey, 'acme-retail');
   } finally {
     await upstream.close();
   }
@@ -918,7 +955,7 @@ test('Authenticated entry points are disconnected from demo fixtures/role switch
     searchParams: Promise.resolve({
       reason: 'signed_out',
       portal: 'PLATFORM',
-      workspaceId: 'ignored',
+      workspaceKey: 'ignored',
     }),
   });
   assert.equal(entElement.props.portal, 'ENTERPRISE');
@@ -928,7 +965,7 @@ test('Authenticated entry points are disconnected from demo fixtures/role switch
     searchParams: Promise.resolve({
       reason: 'session_expired',
       portal: 'ENTERPRISE',
-      workspaceId: 'acme-retail',
+      workspaceKey: 'acme-retail',
     }),
   });
   assert.equal(platElement.props.portal, 'PLATFORM');
@@ -958,7 +995,7 @@ test('Authenticated entry points are disconnected from demo fixtures/role switch
     const idIdx = enterpriseHtml.indexOf('id="login-identifier"');
     const wsIdx = enterpriseHtml.indexOf('id="login-workspace"');
     const pwIdx = enterpriseHtml.indexOf('id="login-password"');
-    assert.ok(idIdx > 0 && wsIdx > idIdx && pwIdx > wsIdx, 'Enterprise field order must be loginName -> workspaceId -> password');
+    assert.ok(idIdx > 0 && wsIdx > idIdx && pwIdx > wsIdx, 'Enterprise field order must be loginName -> workspaceKey -> password');
     assert.doesNotMatch(
       enterpriseHtml,
       /login-portal-label|Cổng truy cập|Access portal|Google|admin@fraudguard\.io|SecurityEnterprise|Save email|Dùng tài khoản mẫu|Fill demo/
@@ -997,6 +1034,7 @@ test('Authenticated entry points are disconnected from demo fixtures/role switch
               loginName: 'bootstrap.admin',
               role: 'PLATFORM_ADMIN',
               workspaceId: null,
+              workspaceKey: null,
               mustChangePassword: true,
             },
             displayRole: 'Platform Admin',
@@ -1027,7 +1065,8 @@ test('Authenticated entry points are disconnected from demo fixtures/role switch
               accountId: '22222222-2222-4222-8222-222222222222',
               loginName: 'sme.owner',
               role: 'SME_ADMIN',
-              workspaceId: 'acme-vn',
+              workspaceId: '550e8400-e29b-41d4-a716-446655440000',
+              workspaceKey: 'acme-vn',
               mustChangePassword: false,
             },
             displayRole: 'SME Admin',
@@ -1151,7 +1190,8 @@ test('Late responses from a previous session are discarded after logout and neve
             accountId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
             loginName: 'previous.operator',
             role: 'OPERATOR',
-            workspaceId: 'tenant-one',
+            workspaceId: '550e8400-e29b-41d4-a716-446655440000',
+            workspaceKey: 'tenant-one',
             mustChangePassword: false,
           },
           displayRole: 'Operator',
@@ -1195,7 +1235,8 @@ test('Late responses from a previous session are discarded after logout and neve
       accountId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       loginName: 'previous.operator',
       role: 'OPERATOR',
-      workspaceId: 'tenant-one',
+      workspaceId: '550e8400-e29b-41d4-a716-446655440000',
+      workspaceKey: 'tenant-one',
       mustChangePassword: false,
     },
     displayRole: 'Operator',
@@ -1333,10 +1374,10 @@ test('Split login forms send independent payloads and portal-aware logout/expiry
   const entInputs = findNodes(entTree, (n) => n.type === 'input');
   assert.equal(entInputs.length, 3);
   entInputs.find((n) => n.props.name === 'loginName').props.onChange({ target: { value: ' sme.operator ' } });
-  entInputs.find((n) => n.props.name === 'workspaceId').props.onChange({ target: { value: ' acme-retail ' } });
+  entInputs.find((n) => n.props.name === 'workspaceKey').props.onChange({ target: { value: ' acme-retail ' } });
   entInputs.find((n) => n.props.name === 'password').props.onChange({ target: { value: 'EnterprisePass123' } });
 
-  // Fill Platform form in Tab B (confirm only 2 inputs, no workspaceId)
+  // Fill Platform form in Tab B (confirm only 2 inputs, no workspaceKey)
   platHarness.resetCursors();
   let platTree = PlatLogin({ portal: 'PLATFORM', skipInitialSessionCheck: true });
   const platInputs = findNodes(platTree, (n) => n.type === 'input');
@@ -1358,13 +1399,13 @@ test('Split login forms send independent payloads and portal-aware logout/expiry
       loginName: 'sme.operator',
       password: 'EnterprisePass123',
       portal: 'ENTERPRISE',
-      workspaceId: 'acme-retail',
+      workspaceKey: 'acme-retail',
     },
     {
       loginName: 'platform.admin',
       password: 'PlatformPass123',
       portal: 'PLATFORM',
-      workspaceId: null,
+      workspaceKey: null,
     },
   ]);
   assert.deepEqual(entNav, ['/fraud-monitoring']);
@@ -1443,6 +1484,7 @@ test('Split login forms send independent payloads and portal-aware logout/expiry
           loginName: 'platform.setup',
           role: 'PLATFORM_ADMIN',
           workspaceId: null,
+          workspaceKey: null,
           mustChangePassword: true,
         },
         displayRole: 'Platform Admin',
@@ -1467,6 +1509,7 @@ test('Split login forms send independent payloads and portal-aware logout/expiry
           loginName: 'impl.staff',
           role: 'IMPLEMENTATION_STAFF',
           workspaceId: null,
+          workspaceKey: null,
           mustChangePassword: false,
         },
         displayRole: 'Implementation Staff',

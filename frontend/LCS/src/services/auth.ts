@@ -573,14 +573,17 @@ export async function handleAuthBridgeRequest(
   }
 
   if (action === "login") {
+    if ("workspaceId" in parsedBody) {
+      return errorResult(400, "VALIDATION_ERROR", "Unexpected workspaceId in login request.");
+    }
     const validated = buildLoginRequestPayload({
       loginName: typeof parsedBody.loginName === "string" ? parsedBody.loginName : "",
       password: typeof parsedBody.password === "string" ? parsedBody.password : "",
       portal: parsedBody.portal as LoginRequestPayload["portal"],
-      workspaceId:
-        typeof parsedBody.workspaceId === "string"
-          ? parsedBody.workspaceId
-          : parsedBody.workspaceId === null
+      workspaceKey:
+        typeof parsedBody.workspaceKey === "string"
+          ? parsedBody.workspaceKey
+          : parsedBody.workspaceKey === null
             ? null
             : undefined,
     });

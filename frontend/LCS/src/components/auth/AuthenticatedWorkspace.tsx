@@ -796,7 +796,7 @@ export function AuthenticatedWorkspaceContent({
                     {session.displayRole} ({session.account.role})
                   </span>
                 </div>
-                {!isPlatform && session.account.workspaceId && (
+                {!isPlatform && session.account.workspaceKey && (
                   <div className={styles.authSessionItem}>
                     <span className={styles.authSessionLabel}>
                       {t.auth.workspace.workspaceKeyLabel}
@@ -804,7 +804,7 @@ export function AuthenticatedWorkspaceContent({
                     <span
                       className={`${styles.authSessionValue} ${styles.authSessionMono}`}
                     >
-                      {session.account.workspaceId}
+                      {session.account.workspaceKey}
                     </span>
                   </div>
                 )}
@@ -836,7 +836,7 @@ export function AuthenticatedWorkspaceContent({
     ? t.auth.workspace.platformSectionUnavailableDesc
     : t.auth.workspace.enterpriseSectionUnavailableDesc.replace(
         "{workspace}",
-        session.account.workspaceId ?? "",
+        session.account.workspaceKey ?? "",
       );
 
   const handleNavigate = (nextView: string) => {
@@ -852,7 +852,7 @@ export function AuthenticatedWorkspaceContent({
         activeItem={activeNavItem}
         onItemChange={handleNavigate}
         currentUser={shellUser}
-        workspaceId={session.account.workspaceId}
+        workspaceKey={session.account.workspaceKey}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         onLogout={handleLogout}
@@ -865,7 +865,7 @@ export function AuthenticatedWorkspaceContent({
           theme={theme}
           onToggleTheme={handleToggleTheme}
           currentUser={shellUser}
-          workspaceId={session.account.workspaceId}
+          workspaceKey={session.account.workspaceKey}
           expiresAt={session.expiresAt}
           onNavigate={handleNavigate}
           onOpenChangePassword={() => setPasswordModalOpen(true)}
@@ -928,10 +928,10 @@ export function AuthenticatedWorkspaceContent({
                   </span>
                   <span
                     className={`${styles.authSessionValue} ${
-                      session.account.workspaceId ? styles.authSessionMono : ""
+                      session.account.workspaceKey ? styles.authSessionMono : ""
                     }`}
                   >
-                    {session.account.workspaceId ?? t.auth.workspace.notApplicable}
+                    {session.account.workspaceKey ?? t.auth.workspace.notApplicable}
                   </span>
                 </div>
 

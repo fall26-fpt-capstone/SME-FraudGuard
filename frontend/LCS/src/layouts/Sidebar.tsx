@@ -13,7 +13,7 @@ interface SidebarProps extends AlertNavigationProps {
   activeItem: string;
   onItemChange: (id: string) => void;
   currentUser?: UserProfile;
-  workspaceId?: string | null;
+  workspaceKey?: string | null;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onLogout?: () => void;
@@ -24,7 +24,7 @@ export function Sidebar({
   activeItem,
   onItemChange,
   currentUser,
-  workspaceId,
+  workspaceKey,
   isCollapsed = false,
   onToggleCollapse,
   onLogout,
@@ -66,7 +66,7 @@ export function Sidebar({
             : t.roles.smeBadge;
 
   const accountDisplayName = currentUser?.name || "";
-  const resolvedWorkspace = workspaceId ?? currentUser?.enterpriseId ?? null;
+  const resolvedWorkspace = workspaceKey ?? currentUser?.enterpriseId ?? null;
   const scopeLabel = resolvedWorkspace
     ? t.userMenu.workspaceScope.replace("{workspace}", resolvedWorkspace)
     : language === "vi"

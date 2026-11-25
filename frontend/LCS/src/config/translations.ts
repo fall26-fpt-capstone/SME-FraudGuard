@@ -1260,7 +1260,7 @@ const rawTranslations = {
       "platformSectionUnavailableTitle": "Màn hình nghiệp vụ \"{section}\" chưa nối API trong giai đoạn xác thực",
       "platformSectionUnavailableDesc": "Đợt tích hợp đầu tiên chỉ kích hoạt xác thực tài khoản, kiểm tra phiên, đổi mật khẩu và đăng xuất. Các màn hình quản trị gói dịch vụ, không gian làm việc, bộ quy tắc và nhật ký chưa nạp dữ liệu máy chủ nên không hiển thị chỉ số hoặc thao tác giả lập.",
       "enterpriseSectionUnavailableTitle": "Màn hình doanh nghiệp \"{section}\" đang chờ giai đoạn tích hợp tiếp theo",
-      "enterpriseSectionUnavailableDesc": "Tài khoản doanh nghiệp đã xác thực hợp lệ với mã không gian làm việc \"{workspace}\". Các màn hình nghiệp vụ phụ thuộc không gian làm việc chưa được mở trong đợt này và đang chờ thống nhất cơ chế ánh xạ giữa mã không gian làm việc (workspace key) và định danh UUID của workspace trên backend."
+      "enterpriseSectionUnavailableDesc": "Tài khoản doanh nghiệp đã xác thực hợp lệ với mã không gian làm việc \"{workspace}\". Các màn hình nghiệp vụ phụ thuộc không gian làm việc chưa được mở trong đợt này."
     }
   }
 },
@@ -2523,7 +2523,7 @@ const rawTranslations = {
       "platformSectionUnavailableTitle": "\"{section}\" is not connected in the authentication phase",
       "platformSectionUnavailableDesc": "This integration phase connects real authentication, session verification, password management, and logout only. Plan catalogue, workspace administration, rule lifecycle, and audit views remain disconnected rather than showing simulated metrics or local-only edits.",
       "enterpriseSectionUnavailableTitle": "\"{section}\" awaits the next enterprise integration phase",
-      "enterpriseSectionUnavailableDesc": "Your enterprise account is authenticated for workspace key \"{workspace}\". Workspace-dependent business screens are not enabled in this phase and await backend resolution between the session workspace key and workspace row UUIDs."
+      "enterpriseSectionUnavailableDesc": "Your enterprise account is authenticated for workspace key \"{workspace}\". Workspace-dependent business screens are not enabled in this phase."
     }
   }
 },

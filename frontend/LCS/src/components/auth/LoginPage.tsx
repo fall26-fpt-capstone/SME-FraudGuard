@@ -54,7 +54,7 @@ export function LoginPageContent({
 
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [loginName, setLoginName] = useState("");
-  const [workspaceId, setWorkspaceId] = useState("");
+  const [workspaceKey, setWorkspaceKey] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -62,7 +62,7 @@ export function LoginPageContent({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     loginName?: string;
-    workspaceId?: string;
+    workspaceKey?: string;
     password?: string;
   }>({});
   const [formError, setFormError] = useState("");
@@ -164,14 +164,14 @@ export function LoginPageContent({
       loginName,
       password,
       portal: fixedPortal,
-      workspaceId: isEnterprise ? workspaceId : null,
+      workspaceKey: isEnterprise ? workspaceKey : null,
     });
 
     if (!validation.ok) {
       const msg = mapFieldValidationMessage(validation.code);
       if (
         validation.field === "loginName" ||
-        validation.field === "workspaceId" ||
+        validation.field === "workspaceKey" ||
         validation.field === "password"
       ) {
         setFieldErrors({ [validation.field]: msg });
@@ -346,22 +346,22 @@ export function LoginPageContent({
                 <div className={styles.inputWrapper}>
                   <input
                     id="login-workspace"
-                    name="workspaceId"
+                    name="workspaceKey"
                     type="text"
                     className={styles.input}
                     placeholder={loginCopy.workspacePlaceholder}
-                    value={workspaceId}
+                    value={workspaceKey}
                     onChange={(e) => {
-                      setWorkspaceId(e.target.value);
-                      if (fieldErrors.workspaceId) {
-                        setFieldErrors((prev) => ({ ...prev, workspaceId: undefined }));
+                      setWorkspaceKey(e.target.value);
+                      if (fieldErrors.workspaceKey) {
+                        setFieldErrors((prev) => ({ ...prev, workspaceKey: undefined }));
                       }
                     }}
                     autoComplete="organization"
                     maxLength={64}
-                    aria-invalid={Boolean(fieldErrors.workspaceId)}
+                    aria-invalid={Boolean(fieldErrors.workspaceKey)}
                     aria-describedby={
-                      fieldErrors.workspaceId
+                      fieldErrors.workspaceKey
                         ? "login-workspace-error"
                         : "login-workspace-hint"
                     }
@@ -371,9 +371,9 @@ export function LoginPageContent({
                 <p id="login-workspace-hint" className={styles.fieldHint}>
                   {loginCopy.workspaceHint}
                 </p>
-                {fieldErrors.workspaceId && (
+                {fieldErrors.workspaceKey && (
                   <p id="login-workspace-error" className={styles.fieldError} role="alert">
-                    {fieldErrors.workspaceId}
+                    {fieldErrors.workspaceKey}
                   </p>
                 )}
               </div>

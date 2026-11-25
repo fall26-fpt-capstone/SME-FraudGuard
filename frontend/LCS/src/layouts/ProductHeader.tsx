@@ -25,7 +25,7 @@ interface ProductHeaderProps extends AlertNavigationProps {
   theme?: "dark" | "light";
   onToggleTheme?: () => void;
   currentUser?: UserProfile;
-  workspaceId?: string | null;
+  workspaceKey?: string | null;
   expiresAt?: string;
   onNavigate?: (view: SecondaryView) => void;
   onOpenChangePassword?: () => void;
@@ -46,7 +46,7 @@ export function ProductHeader({
   theme = "light",
   onToggleTheme,
   currentUser,
-  workspaceId,
+  workspaceKey,
   expiresAt,
   onNavigate,
   onOpenChangePassword,
@@ -141,7 +141,7 @@ export function ProductHeader({
 
           <UserProfileMenu
             currentUser={currentUser}
-            workspaceId={workspaceId}
+            workspaceKey={workspaceKey}
             expiresAt={expiresAt}
             onNavigate={onNavigate}
             onOpenChangePassword={onOpenChangePassword}
