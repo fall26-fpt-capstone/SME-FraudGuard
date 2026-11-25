@@ -38,6 +38,7 @@ class AuthTest {
     private static final String INITIAL = "Initial-password-123";
     private static final String CHANGED = "Changed-password-456";
     private static final String HASH = new BCryptPasswordEncoder(4).encode(INITIAL);
+    private static final UUID WORKSPACE_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired JwtEncoder encoder;
@@ -48,7 +49,7 @@ class AuthTest {
 
     @BeforeEach
     void prepare() {
-        account = new Account("admin@acme.fg", HASH, Role.SME_ADMIN, "acme");
+        account = new Account("admin@acme.fg", HASH, Role.SME_ADMIN, WORKSPACE_ID, "acme");
         storedSessions = new HashMap<>();
         when(accounts.findByLoginName(any())).thenAnswer(a ->
                 account.getLoginName().equals(a.getArgument(0)) ? Optional.of(account) : Optional.empty());
@@ -70,9 +71,12 @@ class AuthTest {
         login(account.getLoginName(), "wrong", "ENTERPRISE", "acme").andExpect(status().isUnauthorized());
         login(account.getLoginName(), INITIAL, "PLATFORM", null).andExpect(status().isUnauthorized());
         login(account.getLoginName(), INITIAL, "ENTERPRISE", "other").andExpect(status().isUnauthorized());
+        login(account.getLoginName(), INITIAL, "ENTERPRISE", null).andExpect(status().isUnauthorized());
+        login(account.getLoginName(), INITIAL, "ENTERPRISE", WORKSPACE_ID.toString()).andExpect(status().isUnauthorized());
         login(account.getLoginName(), INITIAL, "ENTERPRISE", "acme")
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(jsonPath("$.account.workspaceId").value("acme"))
+                .andExpect(jsonPath("$.account.workspaceId").value(WORKSPACE_ID.toString()))
+                .andExpect(jsonPath("$.account.workspaceKey").value("acme"))
                 .andExpect(jsonPath("$.account.mustChangePassword").value(true))
                 .andExpect(jsonPath("$.account.passwordHash").doesNotExist());
         assertThat(storedSessions).hasSize(1);
@@ -80,16 +84,40 @@ class AuthTest {
 
     @Test
     void platformAccountCannotUseEnterprisePortal() throws Exception {
-        account = new Account("platform-admin", HASH, Role.PLATFORM_ADMIN, null);
+        account = new Account("platform-admin", HASH, Role.PLATFORM_ADMIN, null, null);
         login(account.getLoginName(), INITIAL, "ENTERPRISE", "acme").andExpect(status().isUnauthorized());
-        login(account.getLoginName(), INITIAL, "PLATFORM", null).andExpect(status().isOk());
+        login(account.getLoginName(), INITIAL, "PLATFORM", "acme").andExpect(status().isUnauthorized());
+        login(account.getLoginName(), INITIAL, "PLATFORM", null).andExpect(status().isOk())
+                .andExpect(jsonPath("$.account.workspaceId").isEmpty())
+                .andExpect(jsonPath("$.account.workspaceKey").isEmpty());
+    }
+
+    @Test
+    void rejectsLegacyWorkspaceIdInputInsteadOfSilentlyIgnoringIt() throws Exception {
+        for (String portal : List.of("ENTERPRISE", "PLATFORM")) {
+            mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                    .content(json.writeValueAsString(Map.of("loginName", account.getLoginName(),
+                            "password", INITIAL, "portal", portal, "workspaceId", "acme"))))
+                    .andExpect(status().isBadRequest());
+        }
+        assertThat(storedSessions).isEmpty();
+    }
+
+    @Test
+    void readableKeyChangesAlsoInvalidateExistingSession() throws Exception {
+        String token = token();
+        org.springframework.test.util.ReflectionTestUtils.setField(account, "workspaceKey", "other");
+        mvc.perform(get("/api/v1/auth/session").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void setupRestrictionClearsOnlyAfterValidPasswordChange() throws Exception {
         String token = token();
         mvc.perform(get("/api/v1/auth/session").header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.workspaceId").value(WORKSPACE_ID.toString()))
+                .andExpect(jsonPath("$.workspaceKey").value("acme"));
         change("password", token, INITIAL, CHANGED, CHANGED).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/protected").header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
@@ -180,7 +208,7 @@ class AuthTest {
         mvc.perform(get("/api/v1/auth/session").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
         org.springframework.test.util.ReflectionTestUtils.setField(account, "enabled", true);
-        org.springframework.test.util.ReflectionTestUtils.setField(account, "workspaceId", "other");
+        org.springframework.test.util.ReflectionTestUtils.setField(account, "workspaceId", UUID.randomUUID());
         mvc.perform(get("/api/v1/auth/session").header("Authorization", "Bearer " + token))
                 .andExpect(status().isUnauthorized());
     }
@@ -196,7 +224,7 @@ class AuthTest {
     private ResultActions login(String login, String password, String portal, String workspace) throws Exception {
         Map<String, Object> body = new HashMap<>();
         body.put("loginName", login); body.put("password", password);
-        body.put("portal", portal); body.put("workspaceId", workspace);
+        body.put("portal", portal); body.put("workspaceKey", workspace);
         return mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                 .content(json.writeValueAsString(body)));
     }

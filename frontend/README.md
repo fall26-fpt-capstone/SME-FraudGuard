@@ -38,7 +38,7 @@ Dashboard:
 
 ```powershell
 cd frontend/LCS
-node --test tests/rule-sandbox.test.cjs
+npm run check
 npm run build
 ```
 
@@ -46,6 +46,7 @@ Landing page:
 
 ```powershell
 cd frontend/LCS_landingpage
+npm run typecheck
 npm run build
 ```
 

@@ -5,7 +5,7 @@ A Vietnamese landing page introducing FraudGuard and its abnormal transaction mo
 ## Local development
 
 ```powershell
-npm install
+npm ci
 npm run dev
 ```
 
@@ -55,4 +55,4 @@ Sample data comes from the sample enterprises and transactions in `../LCS/src/da
 
 ## Validation
 
-`npm run build` checks compilation and TypeScript. The automated Playwright browser validation report (`node tmp/verify.cjs`) is recorded in `QA.md`.
+Run `npm run typecheck` and `npm run build` from this application directory for TypeScript and production-build validation. The earlier automated Playwright browser validation report (`node tmp/verify.cjs`) is recorded in `QA.md`; it is not evidence that the latest source was rechecked.

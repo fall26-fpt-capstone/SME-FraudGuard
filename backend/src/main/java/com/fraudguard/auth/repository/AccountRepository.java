@@ -13,9 +13,9 @@ import java.util.UUID;
 public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Query("select a from Account a where a.workspaceId = :workspaceId and a.role in :roles "
             + "and locate(lower(:search), lower(a.loginName)) > 0")
-    Page<Account> findEnterpriseMembers(String workspaceId, List<Role> roles, String search, Pageable pageable);
+    Page<Account> findEnterpriseMembers(UUID workspaceId, List<Role> roles, String search, Pageable pageable);
 
-    Optional<Account> findByIdAndWorkspaceIdAndRoleIn(UUID id, String workspaceId,
+    Optional<Account> findByIdAndWorkspaceIdAndRoleIn(UUID id, UUID workspaceId,
             List<Role> roles);
     @Query("select a from Account a where a.enabled = true and a.role = :role and a.workspaceId is null "
             + "and locate(lower(:search), lower(a.loginName)) > 0")

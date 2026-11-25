@@ -2,11 +2,13 @@
 
 This section presents the target detailed design derived from Report 3 functional requirements, Sections 3.2-3.15. Class diagrams identify controllers/listeners, service interfaces and implementations, repositories, DTOs and domain types. Sequence diagrams use the same class names and operations, with explicit calls, returns, activation bars and repository/database interactions. These proposed design signatures are not claims of implemented Java classes or approved HTTP routes; cross-module calls use public APIs/ports within the modular monolith.
 
+The updated SRS account/onboarding decisions take precedence over older diagram messages and actors: enterprise recipients set a password through an emailed, expiring single-use link; assigned Staff provisions Operator/Investigator accounts from confirmed requests; SME Admin administers existing personnel but cannot create accounts. Existing class/sequence/state images and their sources still require synchronization before publication. Enterprise / Doanh nghiệp is the business-facing term; workspace remains technical scope. Backend auth now accepts string `workspaceKey` for enterprise login and returns UUID `workspaceId` plus string `workspaceKey`. V5 maps persisted legacy scopes; workspace/member authorization uses UUIDs. See the backend README for actual wire contracts, rollout preflight and enterprise re-login requirements; broader proposed signatures are not claims of implementation.
+
 All operations enforce current identity, role, workspace and object/assignment scope on the backend. Integration authentication establishes workspace scope before mapping or acceptance. Sensitive values remain protected in ordinary results and diagnostics; required writes retain history atomically. Activity diagrams describe workflows and decisions. State machines cover the SRS-defined lifecycles of sessions, purchases, Subscription periods, onboarding, configuration candidates, API keys, import batches, initial detection, recovery, cases, report generation and email delivery. Each figure identifies its object/operation scope and initial/final boundary; completion does not delete retained records. Stage labels outside the explicit case lifecycle are logical design terms, not implemented enums. Read-only views, audit attribution and unspecified review flags do not introduce invented status models. Exact external wire formats, technical limits and retry schedules remain subject to confirmed interface specifications.
 
 ## 3.1 Authentication and Account Access
 
-SRS reference: 3.2.1-3.2.4. Sessions bind verified identity to platform or enterprise scope. Mandatory initial password change restricts access until saved; logout ends authorization without deleting business history.
+SRS reference: 3.2.1-3.2.4. Sessions bind verified identity to platform or enterprise scope. New enterprise accounts require password setup through an emailed single-use link before ordinary login; existing mandatory initial-change sessions remain restricted until saved. Password setup does not activate enterprise production. Logout ends authorization without deleting business history. Setup-token expiry, resend/recovery, consumption and delivery-failure contracts still need detailed design; the existing initial-change diagram is not the target enterprise invitation sequence.
 
 ### 3.1.1 Class Diagram
 
@@ -48,7 +50,7 @@ SRS 3.2.1-3.2.4: this session begins only after successful credential, availabil
 
 ## 3.2 Customer and Workspace Management
 
-SRS reference: 3.3.1-3.3.4. Platform Admin provisions one workspace per enterprise and its initial SME Admin. Staff accesses assigned setup metadata only; assignment changes never grant production-data access.
+SRS reference: 3.3.1-3.3.4. Platform Admin provisions one workspace per enterprise and its initial SME Admin from enterprise name, phone, email and a proposed subdomain. Check availability during entry and enforce uniqueness again at save under concurrent requests. Send the FG-format username and password-setup link only after successful persistence; retain and report a delivery failure separately from creation. Subdomain syntax/reserved names, relation to the readable key, DNS and SME Admin delivery-email policy require confirmed contracts. Staff accesses assigned setup metadata only; assignment changes never grant production-data access.
 
 ### 3.2.1 Class Diagram
 
@@ -128,7 +130,7 @@ SRS 3.4.5-3.4.6: one stored purchase quote for an available offer, owned by SME 
 
 ## 3.4 Workspace Onboarding and Activation
 
-SRS reference: 3.5.1-3.5.5. Specifications are retained for human configuration work. Staff readiness, Platform Admin handover approval and SME Admin activation are distinct recorded gates; initial Subscription starts only at activation.
+SRS reference: 3.5.1-3.5.5. Specifications are retained for human configuration work. Discussions may happen externally; retain final agreed requirements and enterprise confirmation references. Platform Admin, assigned Staff and own-enterprise SME Admin may upload protected supporting documents; text specification APIs alone do not implement storage integration. Staff readiness, Platform Admin handover approval and SME Admin operational activation are distinct recorded gates; initial Subscription starts only at operational activation, not password setup.
 
 ### 3.4.1 Class Diagram
 
@@ -170,7 +172,7 @@ Scope: onboarding of one newly provisioned workspace, ending when it becomes Ope
 
 ## 3.5 Enterprise Member and Permission Management
 
-SRS reference: 3.6.1-3.6.4. SME Admin manages only own-workspace enterprise accounts and explicit field-view grants. Permission administration does not grant SME Admin plaintext access; history survives role/access changes.
+SRS reference: 3.6.1-3.6.4. Assigned Implementation Staff provisions Operator/Investigator accounts from enterprise-confirmed requests during onboarding and after handover. SME Admin lists existing personnel, changes Operator/Investigator roles, locks access immediately and manages explicit field-view grants in their own enterprise; SME Admin cannot create accounts. Platform Admin handles the initial SME Admin and administrator replacement. Locking denies login and subsequent protected requests without waiting for case reassignment or deleting history. Role changes still check case responsibilities. Permission administration does not grant SME Admin plaintext access; history survives role/access changes. The older provisioning sequence must not be read as granting SME Admin account-creation authority.
 
 ### 3.5.1 Class Diagram
 

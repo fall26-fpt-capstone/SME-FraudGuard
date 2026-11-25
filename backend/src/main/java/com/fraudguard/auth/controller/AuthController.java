@@ -23,7 +23,8 @@ public class AuthController {
     public AuthController(AuthService service) { this.service = service; }
 
     @PostMapping("/login")
-    @Operation(summary = "Log in with an internal identifier and portal/workspace scope")
+    @Operation(summary = "Log in with an internal identifier, portal and enterprise workspaceKey",
+            description = "ENTERPRISE uses the readable workspaceKey. The returned account.workspaceId is the UUID for workspace routes. PLATFORM uses a null workspaceKey. Legacy workspaceId login input is rejected.")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.login(request));
     }
