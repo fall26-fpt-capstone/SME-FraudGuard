@@ -43,6 +43,7 @@ class PlanOfferIT {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired AccountRepository accounts;
+    @Autowired com.fraudguard.workspace.repository.WorkspaceRepository workspaces;
     @Autowired PlanOfferService service;
     @SpyBean PlanOfferHistoryRepository revisions;
     private String adminToken;
@@ -60,7 +61,7 @@ class PlanOfferIT {
         actorId = UUID.fromString(jwt.get("sub").asText());
         sessionId = UUID.fromString(jwt.get("jti").asText());
         staffToken = accountToken("catalogue-staff-" + suffix, Role.IMPLEMENTATION_STAFF, null, true);
-        enterpriseToken = accountToken("admin-" + suffix + "@catalogue.fg", Role.SME_ADMIN, "catalogue", true);
+        enterpriseToken = accountToken("admin-" + suffix + "@catalogue.fg", Role.SME_ADMIN, "catalogue-" + suffix, true);
         setupToken = accountToken("catalogue-setup-" + suffix, Role.PLATFORM_ADMIN, null, false);
     }
 
@@ -229,7 +230,10 @@ class PlanOfferIT {
     }
 
     private String accountToken(String login, Role role, String workspace, boolean ready) throws Exception {
-        Account account = new Account(login, HASH, role, workspace);
+        UUID workspaceId = workspace == null ? null : workspaces.saveAndFlush(
+                new com.fraudguard.workspace.entity.Workspace(workspace, "Synthetic " + workspace,
+                        "Synthetic contact", "contact@example.org", null)).getId();
+        Account account = new Account(login, HASH, role, workspaceId, workspace);
         if (ready) { account.changePassword(HASH); }
         accounts.saveAndFlush(account);
         var request = new LoginRequest(login, PASSWORD,

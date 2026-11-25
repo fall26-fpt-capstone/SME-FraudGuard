@@ -75,10 +75,10 @@ public class AuthServiceImpl implements AuthService {
 
     private boolean scopeMatches(Account account, LoginRequest request) {
         if (account.getRole().isPlatformRole()) {
-            return request.portal() == LoginRequest.Portal.PLATFORM && request.workspaceId() == null;
+            return request.portal() == LoginRequest.Portal.PLATFORM && request.workspaceKey() == null;
         }
         return request.portal() == LoginRequest.Portal.ENTERPRISE
-                && Objects.equals(account.getWorkspaceId(), request.workspaceId());
+                && Objects.equals(account.getWorkspaceKey(), request.workspaceKey());
     }
 
     @Override
@@ -140,7 +140,7 @@ public class AuthServiceImpl implements AuthService {
         }
         validateNewPassword(password);
         if (accounts.findByLoginName(loginName).isEmpty()) {
-            accounts.saveAndFlush(new Account(loginName, passwords.encode(password), Role.PLATFORM_ADMIN, null));
+            accounts.saveAndFlush(new Account(loginName, passwords.encode(password), Role.PLATFORM_ADMIN, null, null));
         }
     }
 
@@ -156,7 +156,7 @@ public class AuthServiceImpl implements AuthService {
 
     private SessionResponse response(Account account) {
         return new SessionResponse(account.getId(), account.getLoginName(), account.getRole(),
-                account.getWorkspaceId(), account.isMustChangePassword());
+                account.getWorkspaceId(), account.getWorkspaceKey(), account.isMustChangePassword());
     }
 
     @Override

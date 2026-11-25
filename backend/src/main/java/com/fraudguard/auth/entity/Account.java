@@ -16,8 +16,10 @@ public class Account {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private Role role;
-    @Column(name = "workspace_id", length = 64)
-    private String workspaceId;
+    @Column(name = "workspace_id")
+    private UUID workspaceId;
+    @Column(name = "workspace_key", length = 64)
+    private String workspaceKey;
     @Column(nullable = false)
     private boolean enabled;
     @Column(name = "must_change_password", nullable = false)
@@ -25,8 +27,9 @@ public class Account {
 
     protected Account() { }
 
-    public Account(String loginName, String passwordHash, Role role, String workspaceId) {
-        if (role.isPlatformRole() ? workspaceId != null : workspaceId == null || workspaceId.isBlank()) {
+    public Account(String loginName, String passwordHash, Role role, UUID workspaceId, String workspaceKey) {
+        if (role.isPlatformRole() ? workspaceId != null || workspaceKey != null
+                : workspaceId == null || workspaceKey == null || workspaceKey.isBlank()) {
             throw new IllegalArgumentException("Account role and workspace scope do not match");
         }
         this.id = UUID.randomUUID();
@@ -34,6 +37,7 @@ public class Account {
         this.passwordHash = passwordHash;
         this.role = role;
         this.workspaceId = workspaceId;
+        this.workspaceKey = workspaceKey;
         this.enabled = true;
         this.mustChangePassword = true;
     }
@@ -42,7 +46,8 @@ public class Account {
     public String getLoginName() { return loginName; }
     public String getPasswordHash() { return passwordHash; }
     public Role getRole() { return role; }
-    public String getWorkspaceId() { return workspaceId; }
+    public UUID getWorkspaceId() { return workspaceId; }
+    public String getWorkspaceKey() { return workspaceKey; }
     public boolean isEnabled() { return enabled; }
     public boolean isMustChangePassword() { return mustChangePassword; }
 

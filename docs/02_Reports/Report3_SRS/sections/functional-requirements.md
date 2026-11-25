@@ -4,9 +4,13 @@
 
 This overview describes the agreed target functions and access boundaries. Screen names identify required views/actions; their UI layouts are intentionally left blank for later design. Detailed behaviour is specified in Sections 3.2-3.15.
 
+Use Enterprise / Doanh nghiệp in business-facing views. Workspace remains the technical name for each enterprise's isolated data/configuration scope; one enterprise has one workspace. Contracts distinguish UUID `workspaceId` from string `workspaceKey`. Backend login accepts `workspaceKey` and login/session return both identifiers; use the UUID for business API routes. V5 rollout requires legacy-data preflight and enterprise re-login. The backend README defines this implemented contract; the broader requirements below still describe target behavior.
+
+Implement agreed, independently usable parts of each workflow first. Plan catalogue administration can precede checkout; Webhook integration, rule configuration/testing and payment processing remain deferred implementation work. Their target requirements remain in this SRS. Current routes and implementation gaps are documented in the backend README, not inferred from these target screens.
+
 ### 3.1.1 Screens Flow
 
-The following role views use left-to-right screen-flow notation: a pale entry box, rectangular main views, rounded action/detail nodes and orthogonal navigation arrows. Arrows show available navigation, not automatic business-state transitions. All routes require backend authorization; first-login password change precedes protected work.
+The following role views use left-to-right screen-flow notation: a pale entry box, rectangular main views, rounded action/detail nodes and orthogonal navigation arrows. Arrows show available navigation, not automatic business-state transitions. All routes require backend authorization; mandatory credential setup precedes ordinary protected work. New enterprise recipients set a password through their emailed setup link before login; existing initial-change sessions remain restricted until setup succeeds.
 
 **WEB (Platform Admin)**
 
@@ -27,6 +31,8 @@ The following role views use left-to-right screen-flow notation: a pale entry bo
 *Figure 3.5. WEB (SME Admin) screen flow.*
 
 Onboarding and activation precede production use. Purchase/renewal is available after activation; sensitive-field permission administration does not grant SME Admin plaintext access.
+
+The account-provisioning decision supersedes member-creation navigation in the existing screen-flow images: assigned Implementation Staff provisions Operator/Investigator accounts in the platform portal; SME Admin only administers existing personnel. Diagram exports still require synchronization before report publication.
 
 **WEB (Operator)**
 
@@ -66,6 +72,7 @@ Related transaction/alert/history access exists only through currently assigned 
 | P14 | Integration | Workspace API Keys | View metadata; issue/replace or disable according to role. |
 | P15 | Monitoring | Platform Health and Operations | Inspect safe health, errors and operational/onboarding metadata. |
 | P16 | Configuration | Draft Review / Apply Configuration | Review the tested candidate and atomically apply its exact version. |
+| P17 | Members | Personnel Provisioning | Assigned Staff provisions Operator/Investigator accounts from enterprise-confirmed personnel requests, during onboarding or after handover. |
 
 **Enterprise Portal**
 
@@ -73,7 +80,7 @@ Related transaction/alert/history access exists only through currently assigned 
 | --- | --- | --- | --- |
 | E01 | Onboarding | Workspace Activation | Review approved handover and explicitly activate production. |
 | E02 | Members | Member List and Detail | Review enterprise accounts and roles. |
-| E03 | Members | Member Provisioning / Access Form | Provision members and maintain permitted roles/access. |
+| E03 | Members | Member Role / Access Controls | Change existing Operator/Investigator roles or lock personnel access; no account creation. |
 | E04 | Members | Sensitive-Field Permission Controls | Grant/revoke Operator/Investigator disclosure permissions. |
 | E05 | Plan | Plans and Current Subscription | View available offers and current entitlement/validity. |
 | E06 | Plan | Purchase / Renewal and Payment Status | Review a quote, initiate gateway checkout and review server status. |
@@ -100,7 +107,7 @@ Related transaction/alert/history access exists only through currently assigned 
 | ID | Feature | Screen | Description |
 | --- | --- | --- | --- |
 | A01 | Authentication | Login | Authenticate a provisioned account in its permitted portal. |
-| A02 | Authentication | Initial / Current Password Change | Verify identity and complete required credential changes. |
+| A02 | Authentication | Initial Password Setup / Current Password Change | Validate emailed enterprise setup links or restricted setup sessions; complete required credential setup/changes. |
 | A03 | Authentication | Account Menu / Log Out | End the current session and return to login. |
 
 ### 3.1.3 Screen Authorization
@@ -125,9 +132,10 @@ PA = Platform Admin; IS = Implementation Staff; SA = SME Admin; OP = Operator; I
 | P14 Workspace API Keys | Manage | Manage* | Disable | — | — |
 | P15 Platform Health and Operations | View | — | — | — | — |
 | P16 Draft Review / Apply Configuration | — | Apply* | — | — | — |
+| P17 Personnel Provisioning | — | Provision* | — | — | — |
 | E01 Workspace Activation | — | — | Activate | — | — |
 | E02 Member List and Detail | — | — | Manage | — | — |
-| E03 Member Provisioning / Access Form | — | — | Manage | — | — |
+| E03 Member Role / Access Controls | — | — | Role / lock | — | — |
 | E04 Sensitive-Field Permission Controls | — | — | Manage | — | — |
 | E05 Plans and Current Subscription | — | — | View | — | — |
 | E06 Purchase / Renewal and Payment Status | — | — | Purchase | — | — |
@@ -149,7 +157,7 @@ PA = Platform Admin; IS = Implementation Staff; SA = SME Admin; OP = Operator; I
 | E22 Report Generation and Export | — | — | Report / export | Report / export | — |
 | E23 In-App Notification List | — | — | Relevant | Relevant | Case only |
 | A01 Login | Own | Own | Own | Own | Own |
-| A02 Initial / Current Password Change | Own | Own | Own | Own | Own |
+| A02 Initial Password Setup / Current Password Change | Own | Own | Own | Own | Own |
 | A03 Account Menu / Log Out | Own | Own | Own | Own | Own |
 
 Authorization is enforced on every protected backend request, including direct calls, links, downloads and stale browser controls. Current plan gates new detection/case operations; assignment and sensitive-field permissions remain independent. No platform role receives enterprise production-data access.
@@ -268,11 +276,11 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 
 **Screen layout:**
 
-### 3.2.2 Complete Initial Password Change
+### 3.2.2 Complete Initial Password Setup
 
 **Related use cases:** UC-02
 
-**Function trigger:** The authenticated account is flagged as requiring its first password change.
+**Function trigger:** A newly provisioned enterprise recipient opens the emailed password-setup link, or an existing authenticated account is restricted to mandatory initial password change.
 
 **Function description:** Completes mandatory credential setup before other protected work.
 
@@ -280,11 +288,11 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 
 **Purpose:** Ensure initial account access cannot be used as a completed operational session.
 
-**Interface:** Required password-change form.
+**Interface:** Password-setup link/form; restricted initial password-change form where applicable.
 
 **Data processing:**
 
-- **Input data:** Verified setup identity, new password and confirmation.
+- **Input data:** Single-use setup token for an enterprise invitation, or verified restricted setup identity; new password and confirmation.
 - **Output data:** Updated protected credential and cleared initial-change requirement.
 
 **Function details and business rules:**
@@ -292,10 +300,12 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 - BR-11; CR-14, CR-18.
 - The new password must satisfy the credential policy defined for the deployment.
 - Only successful persistence clears the setup requirement; passwords are never written to logs.
+- Enterprise invitations contain the internal username and a time-limited, single-use setup link, never a plaintext password. Validate the token and account scope before accepting a password, and consume the token only with successful credential setup. Token lifetime, resend/recovery and delivery-failure handling remain credential-interface decisions.
+- Password setup does not constitute handover acceptance or operational enterprise activation. After setup and login, an SME Admin whose enterprise is not operational enters onboarding; any initial Subscription remains unstarted.
 
 **Normal case:**
 
-1. The system opens required setup after credential verification.
+1. The system validates the enterprise setup link or existing restricted setup identity and opens the password form.
 2. The user supplies and confirms a new password.
 3. The system checks the credential policy and persists the protected credential.
 4. The system clears the requirement and allows the appropriate scoped destination.
@@ -303,7 +313,7 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 **Abnormal cases:**
 
 - **AC-01:** Password mismatch or policy failure: identify the correction without echoing password contents; keep setup required.
-- **AC-02:** Invalid or ended setup session: require identity verification again.
+- **AC-02:** Invalid, expired or consumed setup link, or an ended setup session: reject setup without granting access; use the confirmed resend/recovery procedure when available.
 - **AC-03:** Save failure: retain the setup restriction and provide a controlled retry.
 
 **Screen layout:**
@@ -442,27 +452,30 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 
 **Data processing:**
 
-- **Input data:** Enterprise name/contact information, unique workspace identifier, initial SME Admin login/contact information.
-- **Output data:** Provisioned enterprise/workspace and SME Admin requiring initial password change.
+- **Input data:** Enterprise name, phone, enterprise email and proposed subdomain; designated initial SME Admin contact information. The default/override policy for a separate SME Admin delivery email remains to be confirmed.
+- **Output data:** Enterprise/workspace with a UUID identity and an initial SME Admin pending password setup; attributable setup-email delivery status.
 
 **Function details and business rules:**
 
 - BR-01, BR-11, BR-12, BR-39; CR-05, CR-10.
 - One enterprise has one workspace. Provisioning does not activate production or start an onboarding Subscription.
-- Secure credential/setup delivery follows the account design; no plaintext password email is prescribed.
+- Check proposed subdomain availability during form entry and enforce system-wide uniqueness again on save. Availability is advisory, not a reservation; concurrent creation must not create duplicate names. Subdomain syntax, reserved names, relation to `workspaceKey` and DNS provisioning remain interface/deployment decisions.
+- Generate the internal username in the agreed FG format, such as `admin@school-a.fg`. Send the username and a time-limited, single-use password-setup link to the designated email; never send a plaintext password. Account setup and operational activation are separate.
+- UUID `workspaceId` and string `workspaceKey` are distinct identifiers. Do not assume the subdomain, readable key or login identifier is a UUID or proof of tenant authorization.
 
 **Normal case:**
 
-1. Platform Admin enters enterprise, workspace and initial account information.
-2. The system validates required values, uniqueness and role restrictions.
-3. The system creates linked records with the initial password-change restriction and records attribution.
-4. The system displays provisioning results; initial plan allocation is handled in 3.4.3.
+1. Platform Admin enters enterprise details and the proposed subdomain; the system reports availability during entry.
+2. On submission, the system validates required values, uniqueness and role restrictions again.
+3. The system creates linked records with the initial SME Admin pending password setup and records attribution.
+4. After successful persistence, the system sends the username and password-setup link and records the delivery outcome. Initial plan allocation is handled in 3.4.3.
 
 **Abnormal cases:**
 
 - **AC-01:** Duplicate enterprise/workspace or login identifier: reject the conflicting creation.
 - **AC-02:** Invalid contact or required information: return field validation.
 - **AC-03:** Persistence failure: do not expose a partially provisioned workspace as ready; retain a reconcilable operation result.
+- **AC-04:** Setup-email delivery fails after creation: retain the created enterprise/account and report delivery failure separately. Recovery/resend must not create duplicate enterprises or claim that email was delivered.
 
 **Screen layout:**
 
@@ -854,6 +867,7 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 - BR-02, BR-12, BR-13, BR-25; CR-06, CR-13, CR-17.
 - Uploading a document does not automatically extract rules, approve configuration or enable production.
 - Retained specifications are not temporary test transaction samples.
+- In-system discussion is optional; the enterprise and Staff may exchange requirements through external channels. Retain the final agreed specification and enterprise confirmation reference for configuration work. Platform Admin, assigned Staff and own-enterprise SME Admin may upload supporting documents; no in-system chat is required.
 - Cloudinary stores retained onboarding files; the application database retains workspace-scoped metadata and protected asset references. Upload and retrieval require current role, workspace and object authorization; sensitive files must not be publicly accessible.
 
 **Normal case:**
@@ -1075,38 +1089,41 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 
 **Related use cases:** UC-09
 
-**Function trigger:** SME Admin submits a new enterprise member account.
+**Function trigger:** Assigned Implementation Staff submits a personnel account based on an enterprise-confirmed request, during onboarding or after handover.
 
 **Function description:** Creates an account in the current workspace with a permitted enterprise role.
 
-**Actor/roles:** SME Admin
+**Actor/roles:** Assigned Implementation Staff
 
-**Purpose:** Provide enterprise operational and investigation personnel access.
+**Purpose:** Provide enterprise operational and investigation personnel access through platform-controlled provisioning.
 
-**Interface:** Enterprise member creation form.
+**Interface:** Personnel provisioning form in the platform portal for an assigned workspace.
 
 **Data processing:**
 
-- **Input data:** Internal login identifier, separate contact information and permitted enterprise role.
-- **Output data:** Provisioned member requiring initial password change and administrative history.
+- **Input data:** Assigned workspace, personnel name, internal login identifier, separate contact email, requested Operator/Investigator role and enterprise request/confirmation reference.
+- **Output data:** Provisioned member pending secure password setup and administrative history.
 
 **Function details and business rules:**
 
 - BR-11, BR-13, BR-14; CR-05, CR-14.
 - An account belongs to one workspace and one role. The form cannot grant Platform Admin or Staff privileges.
+- ACC-07/08 apply. Only currently assigned Implementation Staff may use this function, and only for Operator/Investigator accounts. SME Admin requests and confirms personnel additions but cannot create accounts. Platform Admin provisions the initial SME Admin through 3.3.2 and handles administrator replacement separately.
+- Personnel details may arrive with specifications or through external communications. Record the authorized enterprise requester, confirmation reference, provisioning actor and time. No in-system chat or request-ticket workflow is required for v1.
+- Platform control of provisioning does not introduce a numerical account quota, seat billing or a new plan entitlement.
 - Secure account/setup delivery follows the credential design.
 
 **Normal case:**
 
-1. SME Admin enters member details and selects a permitted role.
-2. The system validates uniqueness, role and workspace scope.
-3. The system creates the restricted first-login account and records the action.
+1. Assigned Implementation Staff records the enterprise-confirmed request, enters personnel details and selects Operator or Investigator.
+2. The system validates current Staff assignment, request confirmation, uniqueness, role and workspace scope.
+3. The system creates the account pending password setup, initiates secure setup delivery under the confirmed credential design and records the action. No plaintext password is emailed.
 4. The member appears in the workspace list.
 
 **Abnormal cases:**
 
 - **AC-01:** Duplicate login or invalid details: reject with safe field guidance.
-- **AC-02:** Platform role or other-workspace injection: reject the request.
+- **AC-02:** SME Admin/Operator/Investigator attempts creation, or Staff submits an SME Admin/platform role, an unassigned workspace or an unconfirmed request: reject without creating an account.
 - **AC-03:** Provisioning failure: do not show the member as usable.
 
 **Screen layout:**
@@ -1115,7 +1132,7 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 
 **Related use cases:** UC-09
 
-**Function trigger:** SME Admin submits a permitted role/account-access change or removes a member from active access.
+**Function trigger:** SME Admin changes an existing employee between Operator and Investigator, or locks that employee's access.
 
 **Function description:** Updates enterprise member administration while preserving required attribution and business history.
 
@@ -1127,13 +1144,15 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 
 **Data processing:**
 
-- **Input data:** Member reference, permitted role/access change and current version.
+- **Input data:** Own-workspace Operator/Investigator reference, requested role change or access lock and current version.
 - **Output data:** Updated access and retained administrative history.
 
 **Function details and business rules:**
 
 - BR-11, BR-13, BR-14, BR-39; CR-05, CR-11, CR-14.
 - Role changes remain within allowed enterprise roles. Historical assignments/reports retain actor references.
+- SME Admin may change Operator to Investigator or Investigator to Operator, but cannot create accounts, promote personnel to SME Admin, grant platform roles or replace the enterprise administrator. Platform Admin handles SME Admin replacement. Unlocking and account recovery require a separately confirmed procedure.
+- Locking denies login and subsequent protected requests from existing sessions immediately. It retains the account, case assignments, reports and history, and must not wait for reassignment or automatically close cases. Authorized Operators retain responsibility for follow-up through the existing case workflow.
 - Subsequent requests recheck permissions. A role change cannot silently grant case access or rewrite historical authorship.
 
 **Normal case:**
@@ -1146,7 +1165,7 @@ Each enterprise has one workspace. Workspace-owned configuration, transactions, 
 **Abnormal cases:**
 
 - **AC-01:** Cross-workspace member or forbidden role: reject.
-- **AC-02:** Unresolved case responsibility or administrative continuity constraint: reject the affected removal/change until handled under the agreed member lifecycle.
+- **AC-02:** A role change conflicts with unresolved case responsibility: reject that role change until responsibility is handled. Do not use this condition to delay an access lock.
 - **AC-03:** Concurrent edit or save failure: preserve the existing record and request review/retry.
 
 **Screen layout:**

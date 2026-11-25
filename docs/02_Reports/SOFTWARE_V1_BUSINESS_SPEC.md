@@ -19,7 +19,7 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 | One enterprise, one workspace, one active rule set | Multiple projects or independent business configuration sets within a workspace |
 | REST API with an API key and CSV/Excel import, with one mapping per channel | Multiple input formats active simultaneously within one channel |
 | Dynamic rules on standard and custom fields, evaluated per transaction | Historical aggregation and time-window rules; consider for v2 |
-| Free and Subscription, with manual plan administration | Online payments, QR and automatic reconciliation |
+| Free and Subscription, initial platform allocation and online purchase/renewal after enterprise activation | Payment implementation is deferred; unconfirmed payment methods or wire contracts are not implied |
 | AI Alert and investigation workflow, testable with simulated AI | AI algorithms, data, contracts and retraining workflow not yet finalized |
 | Backend authorization; protection of sensitive data | No promise that the platform is entirely unable to decrypt data |
 
@@ -30,11 +30,21 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 - Electricity consumption and e-commerce are the two demo scenarios. Use workspace-configured fields, mappings and detection settings to support other domains with compatible inputs and detection needs. Demo field names, thresholds and sample values belong in demo configurations and test data. Apply validation, authorization and tenant isolation to every workspace.
 - No experimental results yet demonstrate that AI outperforms rules.
 
+### 2.1 Incremental implementation
+
+Implement independently usable parts of a workflow once their behavior and shared contracts are agreed. Each implemented part still requires input validation, authorization, tenant isolation, error handling and appropriate tests. Catalogue CRUD does not require checkout to be implemented first. Webhook integration, rule configuration/testing and payment processing are deferred implementation work, not removed business requirements. Do not simulate successful completion of missing steps in production APIs.
+
+The [backend README](../../backend/README.md) records actual routes and gaps, including the implemented UUID/key contract and V5 deployment requirements. Target behavior below must not be presented as current implementation. Provisioning, secure setup delivery and protected uploads still require coordinated contracts before their dependent features are implemented.
+
 ## 3. Terminology
 
 | Term | Meaning |
 | --- | --- |
-| Workspace / tenant | Data and operational scope of one enterprise |
+| Enterprise / Doanh nghiệp | Customer-facing business term for the enterprise using the service |
+| Workspace / tenant | Technical data and operational scope of one enterprise; one enterprise has one workspace, not a second customer-managed project |
+| `workspaceId` | UUID identifying the workspace row and used in business API references; returned by backend login/session after V5 |
+| `workspaceKey` | Separate readable string code, for example `school-a`; it is not the UUID and must not be substituted for it |
+| Proposed subdomain | Requested enterprise access address, checked for system-wide uniqueness; its exact relationship to `workspaceKey`, reserved-name policy and DNS provisioning require a confirmed contract |
 | Internal field | A field with consistent meaning and data type within a workspace, used to configure rules |
 | Mapping | Mapping a channel's input fields to internal fields, including conversion rules |
 | Transaction | An online payment transaction submitted for evaluation |
@@ -51,12 +61,17 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 
 ### 4.1 Confirmed rules
 
-- ACC-01: One enterprise has one workspace; a dedicated subdomain such as `nhanhoa.fraudguard.vn` is planned. The domain is an example; ownership and DNS deployment are not confirmed.
+- ACC-01: One enterprise has one workspace. Use Enterprise / Doanh nghiệp in business-facing views; existing technical workspace names may remain. Platform Admin enters enterprise name, phone, enterprise email and a proposed subdomain. Check subdomain availability during entry and enforce uniqueness again when saving, including concurrent submissions. A dedicated address such as `nhanhoa.fraudguard.vn` is an example, not confirmed domain ownership or DNS deployment. Exact syntax and reserved names remain interface decisions.
 - ACC-02: Enterprise accounts are provisioned by the platform, belong to one workspace and one role, and cannot log into other workspaces. Google/Facebook/GitHub login is outside the discussed scope.
-- ACC-03: Usernames follow `username@workspace.fg`, for example `admin@nhanhoa.fg`. This is an internal identifier, not necessarily a real mailbox. Personal email/contact addresses for receiving account information are stored separately.
-- ACC-04: Users must change their password at first login before use. Secure activation delivery, expiry and account recovery need separate design; sending plaintext passwords by email has not been agreed.
+- ACC-03: Usernames follow `username@<workspaceKey>.fg`, for example `admin@nhanhoa.fg`. The suffix uses the readable workspace code, not its UUID. This is an internal identifier, not necessarily a real mailbox. Personal email/contact addresses for receiving account information are stored separately.
+- ACC-04: Enterprise provisioning sends the internal username and a time-limited, single-use password-setup link to the designated contact email. The recipient sets their own password before ordinary login; never email a plaintext password. Account setup permits onboarding access only until enterprise handover and operational activation are complete. Token lifetime, resend/recovery and delivery-failure handling require a confirmed credential design. The current backend initial-password-change flow is an implementation gap, not the target enterprise invitation flow.
 - ACC-05: The backend checks identity, workspace, role, plan and object scope. Do not infer permissions from username suffixes, subdomains or UI button states.
 - ACC-06: Platform Admin and Staff accounts belong to the platform. Do not infer from SME account rules that each needs a separate account in customer workspaces; Staff work in the platform portal.
+- ACC-07: Platform Admin provisions the initial SME Admin and handles replacement of the enterprise administrator. Assigned Implementation Staff provisions Operator/Investigator accounts only for their assigned workspaces, using a personnel list confirmed by the SME Admin or authorized enterprise contact. SME Admin cannot create accounts or grant platform roles.
+- ACC-08: The personnel list contains each person's name, contact email and requested enterprise role. It may accompany onboarding specifications or arrive through an external communication channel. Record the requester, confirmation reference, provisioning actor and time; v1 does not require an in-system chat or account-request module. Additional accounts after handover follow the same confirmed-request process through the platform.
+- ACC-09: SME Admin may change existing personnel between Operator and Investigator, immediately lock their access, and grant/revoke explicit sensitive-field viewing permissions in their own workspace. These actions do not grant SME Admin plaintext access. Role changes recheck case responsibilities and preserve history; locking must not wait for case reassignment, delete records or close cases. Locked users cannot log in or continue protected requests through existing sessions.
+- ACC-10: Platform provisioning controls the issuance process; it does not establish a numerical account quota. No new plan quota, seat billing or automatic account-limit feature is introduced by this decision.
+- ACC-11: Use `workspaceId` as UUID and `workspaceKey` as a separate string. Enterprise login accepts `workspaceKey`; login/session responses expose both fields so subsequent calls can use the workspace UUID. Backend V5 maps legacy account/session keys to verified workspace rows without rewriting V1-V4. Unmapped account keys stop migration; enterprise sessions are retained but revoked and require login again. Clients must replace the old login input `workspaceId`; it is rejected rather than silently ignored. Workspace/member authorization uses the persisted UUID, not a supplied key or username suffix.
 
 ### 4.2 Confirmed business permission matrix
 
@@ -69,12 +84,13 @@ Compiled on: 02/11/2026. Status: consolidated draft for team review, serving as 
 | Upload onboarding specifications | Yes | Yes, as assigned | Yes, own workspace | Pending confirmation | No |
 | Analyze, map, configure rules and run tests | Track progress; no direct implementation | Perform as assigned | Coordinate confirmation; no self-configuration | No | No |
 | Review and complete handover | Review readiness, approve or return work, and view SME requests for changes | Confirm readiness after testing and submit for approval | Request changes or confirm acceptance and activate | No | No |
-| Manage enterprise members | Detailed administrative scope pending confirmation | No | Yes | No | No |
+| Provision enterprise accounts | Initial SME Admin and administrator replacement | Operator/Investigator in assigned workspaces, on confirmed request | No | No | No |
+| Administer existing enterprise personnel | Administrator replacement | No role/access administration beyond provisioning | Change Operator/Investigator role, lock access and manage explicit field-view permissions in own workspace | No | No |
 | View production data and investigation reports | No | No | Overview/reports as permitted | Operate within workspace | Only data related to assigned cases |
 | Open cases, investigate directly or assign | No | No | No involvement in handling | Yes, subject to plan entitlement | Cannot open/assign; receives assigned cases |
 | Prepare investigation reports | No | No | View reports | Yes, when investigating directly | Yes, assigned cases |
 | Confirm final conclusions | No | No | No | Yes | No |
-| View sensitive fields in plaintext | No | No | Pending separate confirmation | Subject to permission and object scope | Subject to permission and assigned case |
+| View sensitive fields in plaintext | No | No | No | Subject to permission and object scope | Subject to permission and assigned case |
 
 Platform Admin has full CRUD rights within platform administration; this does not grant rights to read/edit enterprise transactions or investigation reports. Deletion of enterprises, workspaces and accounts with history needs a separate lifecycle policy; cascading deletion must not be inferred as permitted.
 
@@ -83,20 +99,21 @@ Platform Admin has full CRUD rights within platform administration; this does no
 ### 5.1 Confirmed workflow
 
 1. Customers contact the team from the landing page and indicate a plan of interest; their needs may still change after consultation.
-2. Platform Admin creates enterprise information, a workspace and an SME Admin account; access information is sent to the contact email.
-3. SME Admin changes the initial password, enters the onboarding UI directly and sees the workspace being implemented. They may upload specifications and track progress, but cannot yet operate in production.
+2. Platform Admin enters the enterprise name, phone, enterprise email and proposed subdomain, checks availability, and creates the enterprise, workspace and initial SME Admin. The system emails the username and secure password-setup link. The SME Admin delivery address may differ from the enterprise email; the default and override policy remain to be confirmed.
+3. SME Admin sets their password through the link, logs in and enters the enterprise onboarding view. They may provide specifications and track progress, but cannot yet operate in production. Completing account setup does not activate the enterprise or start its Subscription term.
 4. Platform Admin assigns Staff. Staff work on the workspace object in the platform portal, rather than logging into the customer's subdomain.
-5. Staff and the enterprise confirm specifications, fields, mappings and detection conditions; documents may be received outside the system and uploaded by Admin/Staff on the customer's behalf. Specification files are for humans to read/analyze; automatic AI analysis is not assumed.
+5. Staff and the enterprise confirm specifications, fields, mappings and detection conditions. In-system exchange is optional; discussions may use external channels, but retain the final agreed specification and enterprise confirmation reference in the system. Platform Admin, assigned Staff and own-enterprise SME Admin may upload supporting documents to protected storage. The enterprise also confirms its personnel list; assigned Staff provisions Operator/Investigator accounts under ACC-07/08. Specification files are for humans to read/analyze; automatic AI analysis is not assumed.
 6. Implementation Staff tests the current configuration revision with sample data, assesses the results and explicitly confirms readiness for handover review.
 7. Platform Admin reviews the readiness submission and approves the current configuration revision or returns it to Implementation Staff with comments.
 8. After Platform Admin approval, SME Admin reviews the handover and confirms acceptance to activate the workspace. Activation enables production and starts the term of any Subscription already granted during onboarding.
 9. If SME Admin requests changes before first activation, Platform Admin can see the request and the workspace returns to implementation. Implementation Staff revises and tests the configuration, confirms readiness again and resubmits it to Platform Admin. The earlier approval remains in history. Activation requires Platform Admin approval of the current revision followed by SME Admin acceptance.
-10. Staff continue supporting configuration changes after handover. Enterprises cannot edit mappings or rules themselves.
+10. Staff continue supporting configuration changes and confirmed requests for additional personnel accounts after handover. Enterprises cannot edit mappings or rules themselves, or create accounts.
 
 - ONB-01: Record the actor, time, comments and applicable configuration revision for readiness, approval, requests for changes and acceptance.
 - ONB-02: Activation requires current Staff readiness, Platform Admin approval of the current configuration revision and SME Admin acceptance. A Subscription granted during onboarding starts its term at activation.
 - ONB-03: Onboarding and plan entitlement are independent conditions; granting a Subscription does not bypass handover.
 - ONB-04: Staff may process specifications/samples for onboarding, but cannot view production transactions.
+- ONB-05: Password setup and operational enterprise activation are separate events. Only the latter requires current Staff readiness, Platform Admin approval and SME Admin acceptance, and starts an initially allocated Subscription. Onboarding document upload or external correspondence cannot bypass these gates.
 
 ### 5.2 Onboarding states
 
@@ -190,16 +207,16 @@ Temporary-file cleanup timing, failed-job handling, file size, timeouts, result 
 | Alerts | Rule Alert | AI Alert, or Rule Alert during fallback |
 | Open cases from AI Alerts | No | Operator decides whether to open |
 | Mapping/rule configuration | Staff-assisted | Staff-assisted |
-| v1 payments | None | Platform Admin grants/renews manually |
+| Target purchase/renewal | None | SME Admin purchases/renews online after enterprise activation; implementation deferred |
 
 - PLN-01: Plans apply per workspace; roles and object scope are still checked separately.
-- PLN-02: The landing-page selection expresses initial needs. Platform Admin may change the plan as agreed, activate, renew and adjust its term.
+- PLN-02: The landing-page selection expresses initial needs. Platform Admin allocates the agreed initial plan during onboarding; allocation does not activate production or start an initial Subscription. Post-activation purchase/renewal follows verified payment under PLN-08. Exceptional manual term adjustments require a separately agreed policy.
 - PLN-03: A Subscription granted during onboarding starts its term when SME Admin accepts the approved handover and activates the workspace. An upgrade for an operational workspace starts on successful activation.
 - PLN-04: Renewal while active extends the current expiry date; after expiry, the term starts on reactivation. Use calendar months/years; if the corresponding day does not exist, use the last day of the month.
 - PLN-05: On expiry or early downgrade to Free by Admin: new transactions use rules, and no new cases may be opened, including from old AI Alerts. Existing cases may continue to investigation completion; old history/reports remain accessible according to permissions.
 - PLN-06: AI unavailability does not remove the enterprise's Subscription. Use fallback and record the detection source.
 - PLN-07: Enforce entitlements in the backend and processing flows, rather than only hiding UI. Direct API calls to open cases on Free must still be rejected.
-- PLN-08: SME Admin self-purchase/term selection/payment is a post-v1 direction; do not create fake payment workflows in production.
+- PLN-08: Online Subscription purchase/renewal by own-enterprise SME Admin after operational activation remains in the target SRS scope. Implement payment processing later than independent catalogue CRUD. Only verified server-side payment confirmation may apply a paid entitlement, once; browser return values and catalogue edits are not payment proof. Payment and entitlement wire contracts remain deferred.
 
 ### 9.2 Confirmed plan catalogue administration
 
@@ -208,7 +225,7 @@ Temporary-file cleanup timing, failed-job handling, file size, timeouts, result 
 - New prices apply to the next grant/renewal; retain the price at grant/renewal time so history does not change. Specific prices, currency and taxes are not finalized; do not use reference-image prices as product prices.
 - Unused plans may be deleted; plans with usage history may only be discontinued. On discontinuation, existing users keep entitlements until expiry, and the plan cannot be newly granted or renewed.
 - Record who changed what and when. Platform Admin still cannot view customer investigation data.
-- The enterprise UI has plan comparison cards, term-based prices and a “Current plan” status; there is no online payment step yet.
+- The target enterprise UI has plan comparison cards, term-based prices and a “Current plan” status, with purchase/renewal after activation. Current backend catalogue APIs do not implement checkout, payment confirmation or enterprise entitlement changes.
 
 Design needed: exact expiry/timezone boundaries, requests in progress during downgrades, duplicate grants/concurrent renewals, plans discontinued during onboarding and manual Admin adjustments. Do not assume exceptions may all bypass discontinued status.
 
@@ -272,7 +289,7 @@ Plan entitlements and workflows can be tested with a controlled simulated adapte
 
 - SEC-01: Both standard and custom fields may be sensitive. UI-only masking is insufficient; list/detail APIs must not return sensitive plaintext by default.
 - SEC-02: Viewing plaintext is a separate action: the backend checks workspace, role and object/case permissions, then returns only permitted fields; record access history without decrypted values.
-- SEC-03: Platform Admin and Staff cannot view production plaintext. Investigators may view it only for assigned cases. SME Admin plaintext access needs separate confirmation, rather than being inferred from administrative rights.
+- SEC-03: Platform Admin and Staff cannot view production plaintext. Investigators may view it only for assigned cases and with explicit field permission. SME Admin administers explicit field-view permissions for Operator/Investigator but does not receive plaintext access.
 - SEC-04: Apply protection to mapped data, original payloads/files, test data, errors, logs, notifications and exports. Do not leave plaintext elsewhere while protecting only the main table.
 - SEC-05: Customers send data needed for detection through HTTPS. Masking before submission loses information; masking outgoing API responses differs from protecting ingestion transport.
 
@@ -295,7 +312,7 @@ These describe target behavior, not executed test results. Each test needs seed 
 | ID | Scenario | Result to verify | Rules |
 | --- | --- | --- | --- |
 | AC-01 | A workspace A account accesses workspace B through a direct API call | Rejected without disclosing B's data | ACC-02, ACC-05 |
-| AC-02 | An account that has not changed its initial password calls an operational feature | Blocked until password change is completed | ACC-04 |
+| AC-02 | An account that has not completed mandatory password setup calls a protected business feature | Blocked until credential setup succeeds; setup completion alone does not bypass onboarding/activation | ACC-04, ONB-05 |
 | AC-03 | A workspace has a Subscription before handover | Production remains unavailable; the term does not run during onboarding | ONB-02, ONB-03 |
 | AC-04 | After Platform Admin approval and before first activation, SME Admin requests changes | Platform Admin sees the request. Retain the prior approval in history. Reject activation until Staff retests and confirms readiness, Platform Admin approves the revised configuration, and SME Admin accepts | ONB-01, ONB-02 |
 | AC-05 | The same valid transaction passes through each corresponding mapping | Normalizes to the same meaning; test each channel independently without duplicate-data interference | ING-03, ING-07 |
@@ -318,6 +335,14 @@ These describe target behavior, not executed test results. Each test needs seed 
 | AC-22 | Unauthorized user calls the plaintext-view API | Rejected; authorized users see only permitted objects, with an audit trail | SEC-02, SEC-03 |
 | AC-23 | Operator selects multiple eligible AI Alerts from one workspace under an active Subscription | One Open case contains the selected alerts. Reject ineligible selections without creating partial links | CAS-02 |
 | AC-24 | Investigator submits a report, then Operator requests more work and later accepts the revised report | Case moves from Investigating to Pending Review, back to Investigating and then through Pending Review to Closed. Retain the earlier report and review history | CAS-04, CAS-07 |
+| AC-25 | SME Admin attempts member creation through a direct request | Reject without creating an account, even if browser controls are modified | ACC-05, ACC-07 |
+| AC-26 | Assigned Staff provisions personnel during onboarding or after handover | Require an enterprise-confirmed request and valid assignment; create only Operator/Investigator accounts in that workspace, with separate contact email and attributable history | ACC-03, ACC-04, ACC-07, ACC-08 |
+| AC-27 | Staff attempts provisioning without confirmation, outside an assigned workspace, or with an SME Admin/platform role | Reject without creating an account | ACC-05, ACC-07, ACC-08 |
+| AC-28 | SME Admin changes a personnel role or field-view permission | Enforce own-workspace scope, permitted roles and case responsibilities; preserve authorship/history and recheck access on subsequent requests | ACC-05, ACC-09 |
+| AC-29 | SME Admin locks an employee who has an active session and assigned cases | Immediately deny login and subsequent protected requests; retain cases, assignments and reports for authorized follow-up without waiting for reassignment | ACC-09 |
+| AC-30 | Two Platform Admins submit the same available proposed subdomain concurrently | At most one enterprise is created with that subdomain; report the conflict without a partial usable account. An earlier availability result does not reserve the name | ACC-01 |
+| AC-31 | A recipient uses an expired or already consumed password-setup link | Reject setup; never expose a password or grant an authenticated operational session | ACC-04 |
+| AC-32 | SME Admin completes password setup before handover | Permit authorized onboarding only; production remains unavailable and an initial Subscription term has not started | ACC-04, ONB-02, ONB-05 |
 
 Add tests for conflict handling, case reopening and REST delivery details as those designs are finalized.
 
@@ -360,11 +385,13 @@ Do not claim that new rules in this document already match the code. A separate 
 | OPEN-05 | AI inputs/outputs, dataset/features, timeouts, recovery reanalysis and labels | AI integration and evaluation |
 | OPEN-06 | REST ingestion endpoint, key header, payload and response formats, and retry behavior | Contract and operations |
 | OPEN-07 | Sensitive-field list, plaintext viewers, keys/backup/retention | Security SDD |
-| OPEN-08 | Account activation/recovery, account locking and administrative data-deletion policy | IAM and data lifecycle |
+| OPEN-08 | Setup-token lifetime/resend/recovery and delivery failure, SME Admin delivery-email default/override, unlocking, administrator replacement safeguards and administrative data deletion; setup-link flow and personnel authority are defined in ACC-04/07..09 | IAM and data lifecycle |
 | OPEN-09 | Realtime/batch performance, upload limits, system load, storage, backup/recovery | Measurable NFRs |
 | OPEN-10 | Dashboard, report, export, in-app/email and platform monitoring details | Required by proposal, not yet analyzed in detail |
 | OPEN-11 | Exact expiry boundaries, in-flight requests, concurrent grants/renewals and plan exceptions | Subscription lifecycle |
 | OPEN-12 | Whether the Rule Alert action records review or flags the alert for follow-up | Operator workflow, UI, tests |
+| OPEN-13 | Environment-specific V5 rollout: reconcile verified workspace rows for any unmapped account keys, update external clients to `workspaceKey` input and require enterprise re-login; the backend UUID/key contract is implemented | Deployment, frontend integration and legacy data reconciliation |
+| OPEN-14 | Subdomain syntax/reserved names, relationship to workspace key and domain routing/provisioning | Enterprise creation, validation, DNS and account naming |
 
 ## 17. Compare with the proposal before releasing official documentation
 
