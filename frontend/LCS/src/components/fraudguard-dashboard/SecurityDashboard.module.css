@@ -5862,3 +5862,170 @@
     min-height: 44px;
   }
 }
+
+
+/* Platform Admin real workspace directory */
+.workspaceDirectoryHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.workspaceDirectoryControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--security-border);
+  background: var(--security-panel);
+}
+
+.workspaceSearchForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 300px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.workspaceDirectoryMetaGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.workspaceInlineError {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--critical-border);
+  background: var(--critical-bg);
+  color: var(--critical-text);
+  font-size: 13px;
+}
+
+.workspaceWrapCell {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  min-width: 190px;
+}
+
+.workspaceKeyCell {
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.workspaceKeyCode {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid var(--security-border-strong);
+  border-radius: 4px;
+  background: var(--security-control);
+  color: var(--security-text);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 12.5px;
+}
+
+.workspaceContactStack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.45;
+}
+
+.workspaceContactName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--security-text);
+}
+
+.workspaceContactDetail {
+  font-size: 12px;
+  color: var(--security-text-secondary);
+}
+
+.workspaceUpdatedCell {
+  vertical-align: top;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--security-text-secondary);
+}
+
+.workspaceStateCell {
+  padding: 0 !important;
+  white-space: normal;
+}
+
+.workspaceStateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 20px;
+  text-align: center;
+  white-space: normal;
+}
+
+.workspaceStateTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--security-text);
+}
+
+.workspaceStateDesc {
+  margin: 0;
+  max-width: 520px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--security-text-secondary);
+}
+
+.workspaceStateActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.workspacePaginationEllipsis {
+  padding: 0 4px;
+  color: var(--security-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 680px) {
+  .workspaceDirectoryControls {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px 14px;
+  }
+
+  .workspaceSearchForm,
+  .workspaceDirectoryMetaGroup {
+    width: 100%;
+  }
+
+  .workspaceSearchForm .onboardingSearchBox {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .pagination {
+    padding: 12px 14px;
+  }
+
+  .paginationControls {
+    flex-wrap: wrap;
+  }
+}

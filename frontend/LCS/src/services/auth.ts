@@ -215,7 +215,7 @@ function enterpriseKeyFromHost(host: string, base: string): string | null {
   return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label) ? label : null;
 }
 
-function resolveExpectedOrigin(
+export function resolveExpectedOrigin(
   headers: Headers,
   requestUrl: string,
 ): { origin: string; secure: boolean } {
@@ -272,7 +272,7 @@ export function verifySameOriginMutation(
   return { ok: true };
 }
 
-async function parseUpstreamJsonOrText(
+export async function parseUpstreamJsonOrText(
   response: Response,
 ): Promise<{ json: Record<string, unknown> | null; detail?: string }> {
   let raw = "";
@@ -304,7 +304,7 @@ async function parseUpstreamJsonOrText(
   return { json: null };
 }
 
-async function callUpstream(
+export async function callUpstream(
   baseUrl: string,
   path: string,
   init: RequestInit,

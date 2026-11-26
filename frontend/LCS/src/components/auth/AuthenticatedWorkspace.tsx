@@ -1,6 +1,7 @@
 "use client";
 
 import { PlatformHealthOverview } from "../fraudguard-dashboard/PlatformHealthOverview";
+import { PlatformWorkspaceListView } from "../fraudguard-dashboard/PlatformWorkspaceListView";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -879,6 +880,11 @@ export function AuthenticatedWorkspaceContent({
           {showDemoLink && <a className={styles.button} href="/demo">{language === "vi" ? "Thử dashboard theo vai trò" : "Preview role dashboards"}</a>}
           {session.account.role === "PLATFORM_ADMIN" && activeNavItem === "platform-health" ? (
             <PlatformHealthOverview />
+          ) : session.account.role === "PLATFORM_ADMIN" && activeNavItem === "onboarding" ? (
+            <PlatformWorkspaceListView
+              onSessionExpired={() => invalidateSessionAndRedirect("session_expired")}
+              onUnauthenticated={() => invalidateSessionAndRedirect("auth_required")}
+            />
           ) : (
           <div className={styles.authWorkspaceStack}>
             <div className={styles.pageHeading}>
