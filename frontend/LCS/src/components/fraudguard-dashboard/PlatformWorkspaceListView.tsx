@@ -1,8 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, RefreshCw, Search, ShieldAlert, X } from "lucide-react";
+import {
+  AlertCircle,
+  Building2,
+  Clock,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  User,
+  X,
+} from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 import type {
   NormalizedWorkspaceListQuery,
   WorkspaceDirectoryItem,
@@ -13,6 +23,7 @@ import {
   DEFAULT_WORKSPACE_PAGE_SIZE,
   MAX_WORKSPACE_SEARCH_LENGTH,
   WorkspaceServiceError,
+  fetchWorkspaceDetail,
   fetchWorkspacePage,
 } from "@/services/workspaces";
 import styles from "./SecurityDashboard.module.css";
@@ -27,10 +38,31 @@ export interface PlatformWorkspaceListViewProps {
     query: WorkspaceListQuery,
     options?: { readonly signal?: AbortSignal },
   ) => Promise<WorkspacePageResponse>;
+  readonly loadDetail?: (
+    workspaceId: string,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<WorkspaceDirectoryItem>;
   readonly searchDebounceMs?: number;
 }
 
 type ViewLoadStatus = "loading" | "ready" | "forbidden" | "error";
+
+type DetailModalStatus =
+  | "loading"
+  | "ready"
+  | "forbidden"
+  | "not_found"
+  | "error";
+
+type DetailModalState =
+  | { readonly open: false }
+  | {
+      readonly open: true;
+      readonly workspaceId: string;
+      readonly fallbackTitle: string;
+      readonly status: DetailModalStatus;
+      readonly detail: WorkspaceDirectoryItem | null;
+    };
 
 export function buildPaginationTokens(
   currentZeroBasedPage: number,
@@ -103,10 +135,12 @@ export function PlatformWorkspaceListView({
   onSessionExpired,
   onUnauthenticated,
   loadPage = fetchWorkspacePage,
+  loadDetail = fetchWorkspaceDetail,
   searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: PlatformWorkspaceListViewProps) {
   const { language, t } = useLanguage();
   const copy = t.platformWorkspaces;
+  const detailCopy = copy.detail;
 
   const [searchInput, setSearchInput] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -120,19 +154,28 @@ export function PlatformWorkspaceListView({
   const [pageData, setPageData] = useState<WorkspacePageResponse | null>(null);
   const [loadedQuery, setLoadedQuery] =
     useState<NormalizedWorkspaceListQuery | null>(null);
+  const [detailState, setDetailState] = useState<DetailModalState>({
+    open: false,
+  });
 
   const requestSeqRef = useRef(0);
   const activeAbortRef = useRef<AbortController | null>(null);
+  const detailRequestSeqRef = useRef(0);
+  const detailAbortRef = useRef<AbortController | null>(null);
+  const rowTriggerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const lastTriggerIdRef = useRef<string | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authRedirectedRef = useRef(false);
   const latestHandlersRef = useRef({
     loadPage,
+    loadDetail,
     onSessionExpired,
     onUnauthenticated,
     searchTooLongError: copy.states.searchTooLongError,
   });
   latestHandlersRef.current = {
     loadPage,
+    loadDetail,
     onSessionExpired,
     onUnauthenticated,
     searchTooLongError: copy.states.searchTooLongError,
@@ -144,6 +187,137 @@ export function PlatformWorkspaceListView({
       debounceTimerRef.current = null;
     }
   }, []);
+
+  const triggerAuthRedirect = useCallback((code: "SESSION_EXPIRED" | "UNAUTHENTICATED") => {
+    if (authRedirectedRef.current) {
+      return;
+    }
+    authRedirectedRef.current = true;
+    detailAbortRef.current?.abort();
+    detailRequestSeqRef.current += 1;
+    setDetailState({ open: false });
+    if (code === "UNAUTHENTICATED" && latestHandlersRef.current.onUnauthenticated) {
+      latestHandlersRef.current.onUnauthenticated();
+      return;
+    }
+    latestHandlersRef.current.onSessionExpired?.();
+  }, []);
+
+  const handleCloseDetail = useCallback(() => {
+    const returnFocusId = lastTriggerIdRef.current;
+    detailAbortRef.current?.abort();
+    detailAbortRef.current = null;
+    detailRequestSeqRef.current += 1;
+    setDetailState({ open: false });
+
+    if (returnFocusId) {
+      const targetBtn = rowTriggerRefs.current.get(returnFocusId);
+      if (targetBtn && typeof targetBtn.focus === "function") {
+        queueMicrotask(() => {
+          const currentBtn = rowTriggerRefs.current.get(returnFocusId);
+          if (currentBtn && typeof currentBtn.focus === "function") {
+            currentBtn.focus();
+          }
+        });
+      }
+    }
+  }, []);
+
+  const detailDialogRef = useDialogFocus(detailState.open, handleCloseDetail);
+
+  const executeDetailLoad = useCallback(
+    async (workspaceId: string, fallbackTitle: string) => {
+      detailAbortRef.current?.abort();
+      const controller = new AbortController();
+      detailAbortRef.current = controller;
+      const requestId = detailRequestSeqRef.current + 1;
+      detailRequestSeqRef.current = requestId;
+
+      setDetailState({
+        open: true,
+        workspaceId,
+        fallbackTitle,
+        status: "loading",
+        detail: null,
+      });
+
+      try {
+        const detail = await latestHandlersRef.current.loadDetail(workspaceId, {
+          signal: controller.signal,
+        });
+        if (
+          detailRequestSeqRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
+        setDetailState({
+          open: true,
+          workspaceId,
+          fallbackTitle: detail.enterpriseName,
+          status: "ready",
+          detail,
+        });
+      } catch (err) {
+        if (
+          isAbortError(err) ||
+          detailRequestSeqRef.current !== requestId ||
+          controller.signal.aborted
+        ) {
+          return;
+        }
+        if (isWorkspaceError(err)) {
+          if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+            triggerAuthRedirect(err.code);
+            return;
+          }
+          if (err.code === "FORBIDDEN") {
+            setDetailState({
+              open: true,
+              workspaceId,
+              fallbackTitle,
+              status: "forbidden",
+              detail: null,
+            });
+            return;
+          }
+          if (err.code === "NOT_FOUND") {
+            setDetailState({
+              open: true,
+              workspaceId,
+              fallbackTitle,
+              status: "not_found",
+              detail: null,
+            });
+            return;
+          }
+        }
+        setDetailState({
+          open: true,
+          workspaceId,
+          fallbackTitle,
+          status: "error",
+          detail: null,
+        });
+      }
+    },
+    [triggerAuthRedirect],
+  );
+
+  const handleOpenDetail = useCallback(
+    (item: WorkspaceDirectoryItem) => {
+      lastTriggerIdRef.current = item.id;
+      void executeDetailLoad(item.id, item.enterpriseName);
+    },
+    [executeDetailLoad],
+  );
+
+  const handleRetryDetail = useCallback(() => {
+    if (!detailState.open) {
+      return;
+    }
+    void executeDetailLoad(detailState.workspaceId, detailState.fallbackTitle);
+  }, [detailState, executeDetailLoad]);
 
   const executeLoad = useCallback(
     async (targetQuery: NormalizedWorkspaceListQuery) => {
@@ -186,22 +360,8 @@ export function PlatformWorkspaceListView({
           return;
         }
         if (isWorkspaceError(err)) {
-          if (err.code === "SESSION_EXPIRED") {
-            if (!authRedirectedRef.current) {
-              authRedirectedRef.current = true;
-              latestHandlersRef.current.onSessionExpired?.();
-            }
-            return;
-          }
-          if (err.code === "UNAUTHENTICATED") {
-            if (!authRedirectedRef.current) {
-              authRedirectedRef.current = true;
-              if (latestHandlersRef.current.onUnauthenticated) {
-                latestHandlersRef.current.onUnauthenticated();
-              } else {
-                latestHandlersRef.current.onSessionExpired?.();
-              }
-            }
+          if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+            triggerAuthRedirect(err.code);
             return;
           }
           if (err.code === "FORBIDDEN") {
@@ -218,7 +378,7 @@ export function PlatformWorkspaceListView({
         setStatus("error");
       }
     },
-    [],
+    [triggerAuthRedirect],
   );
 
   useEffect(() => {
@@ -229,6 +389,7 @@ export function PlatformWorkspaceListView({
     return () => {
       clearPendingDebounce();
       activeAbortRef.current?.abort();
+      detailAbortRef.current?.abort();
     };
   }, [clearPendingDebounce]);
 
@@ -409,6 +570,238 @@ export function PlatformWorkspaceListView({
     );
   };
 
+  const renderDetailValue = (rawValue: string | null | undefined) => {
+    const trimmed = typeof rawValue === "string" ? rawValue.trim() : "";
+    if (!trimmed) {
+      return <span className={styles.muted}>{copy.emptyValue}</span>;
+    }
+    return trimmed;
+  };
+
+  const renderDetailModal = () => {
+    if (!detailState.open) {
+      return null;
+    }
+    const modalTitle =
+      detailState.detail?.enterpriseName ?? detailState.fallbackTitle;
+    const isDetailLoading = detailState.status === "loading";
+
+    return (
+      <div
+        className={`${styles.onboardingModalBackdrop} ${styles.workspaceDetailBackdrop}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            handleCloseDetail();
+          }
+        }}
+      >
+        <div
+          ref={detailDialogRef}
+          className={`${styles.onboardingModalDialog} ${styles.workspaceDetailDialog}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="platform-workspace-detail-title"
+          aria-busy={isDetailLoading}
+          tabIndex={-1}
+        >
+          <div className={styles.onboardingModalHeader}>
+            <div className={styles.workspaceDetailHeaderMain}>
+              <div
+                className={`${styles.onboardingStepNumber} ${styles.workspaceDetailIconBadge}`}
+              >
+                <Building2 size={15} aria-hidden="true" />
+              </div>
+              <div className={styles.workspaceDetailTitleWrap}>
+                <h2
+                  id="platform-workspace-detail-title"
+                  className={styles.workspaceDetailTitle}
+                >
+                  {modalTitle}
+                </h2>
+                <p className={styles.onboardingCardSub}>{detailCopy.subtitle}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={styles.drawerCloseBtn}
+              aria-label={detailCopy.closeAria}
+              onClick={handleCloseDetail}
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div
+            className={`${styles.onboardingModalBody} ${styles.workspaceDetailBody}`}
+          >
+            {isDetailLoading && (
+              <div
+                className={styles.workspaceStateBox}
+                role="status"
+                aria-live="polite"
+              >
+                <strong className={styles.workspaceStateTitle}>
+                  {detailCopy.states.loadingTitle}
+                </strong>
+                <span className={styles.workspaceStateDesc}>
+                  {detailCopy.states.loadingDesc}
+                </span>
+              </div>
+            )}
+
+            {detailState.status === "forbidden" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <ShieldAlert
+                  size={22}
+                  color="var(--high-text)"
+                  aria-hidden="true"
+                />
+                <h3 className={styles.workspaceStateTitle}>
+                  {detailCopy.states.forbiddenTitle}
+                </h3>
+                <p className={styles.workspaceStateDesc}>
+                  {detailCopy.states.forbiddenDesc}
+                </p>
+              </div>
+            )}
+
+            {detailState.status === "not_found" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <AlertCircle
+                  size={22}
+                  color="var(--security-orange)"
+                  aria-hidden="true"
+                />
+                <h3 className={styles.workspaceStateTitle}>
+                  {detailCopy.states.notFoundTitle}
+                </h3>
+                <p className={styles.workspaceStateDesc}>
+                  {detailCopy.states.notFoundDesc}
+                </p>
+              </div>
+            )}
+
+            {detailState.status === "error" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <AlertCircle
+                  size={22}
+                  color="var(--critical-text)"
+                  aria-hidden="true"
+                />
+                <h3 className={styles.workspaceStateTitle}>
+                  {detailCopy.states.errorTitle}
+                </h3>
+                <p className={styles.workspaceStateDesc}>
+                  {detailCopy.states.errorDesc}
+                </p>
+                <div className={styles.workspaceStateActions}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={handleRetryDetail}
+                  >
+                    <RefreshCw size={14} aria-hidden="true" />
+                    <span>{detailCopy.retryBtn}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {detailState.status === "ready" && detailState.detail && (
+              <>
+                <section className={styles.onboardingFormSection}>
+                  <h3 className={styles.onboardingFormSectionTitle}>
+                    <Building2
+                      size={15}
+                      style={{ color: "var(--security-blue)" }}
+                      aria-hidden="true"
+                    />
+                    <span>{detailCopy.groups.enterprise}</span>
+                  </h3>
+                  <dl
+                    className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
+                  >
+                    <dt>{detailCopy.fields.workspaceKey}</dt>
+                    <dd>
+                      <code className={styles.workspaceKeyCode}>
+                        {detailState.detail.workspaceKey}
+                      </code>
+                    </dd>
+                  </dl>
+                </section>
+
+                <section className={styles.onboardingFormSection}>
+                  <h3 className={styles.onboardingFormSectionTitle}>
+                    <User
+                      size={15}
+                      style={{ color: "var(--security-blue)" }}
+                      aria-hidden="true"
+                    />
+                    <span>{detailCopy.groups.contact}</span>
+                  </h3>
+                  <dl
+                    className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
+                  >
+                    <dt>{detailCopy.fields.contactName}</dt>
+                    <dd>{renderDetailValue(detailState.detail.contactName)}</dd>
+
+                    <dt>{detailCopy.fields.contactEmail}</dt>
+                    <dd>{renderDetailValue(detailState.detail.contactEmail)}</dd>
+
+                    <dt>{detailCopy.fields.contactPhone}</dt>
+                    <dd>{renderDetailValue(detailState.detail.contactPhone)}</dd>
+                  </dl>
+                </section>
+
+                <section className={styles.onboardingFormSection}>
+                  <h3 className={styles.onboardingFormSectionTitle}>
+                    <Clock
+                      size={15}
+                      style={{ color: "var(--security-blue)" }}
+                      aria-hidden="true"
+                    />
+                    <span>{detailCopy.groups.timestamps}</span>
+                  </h3>
+                  <dl
+                    className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
+                  >
+                    <dt>{detailCopy.fields.createdAt}</dt>
+                    <dd className={styles.workspaceTimestampValue}>
+                      {formatWorkspaceTimestamp(
+                        detailState.detail.createdAt,
+                        language,
+                        copy.emptyValue,
+                      )}
+                    </dd>
+
+                    <dt>{detailCopy.fields.updatedAt}</dt>
+                    <dd className={styles.workspaceTimestampValue}>
+                      {formatWorkspaceTimestamp(
+                        detailState.detail.updatedAt,
+                        language,
+                        copy.emptyValue,
+                      )}
+                    </dd>
+                  </dl>
+                </section>
+              </>
+            )}
+          </div>
+
+          <div className={styles.onboardingModalFooter}>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleCloseDetail}
+            >
+              {detailCopy.closeBtn}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (status === "forbidden") {
     return (
       <div className={styles.authWorkspaceStack}>
@@ -583,9 +976,25 @@ export function PlatformWorkspaceListView({
                     items.map((item) => (
                       <tr key={item.id}>
                         <td className={styles.workspaceWrapCell}>
-                          <div className={styles.findingName}>
+                          <button
+                            ref={(el) => {
+                              if (el) {
+                                rowTriggerRefs.current.set(item.id, el);
+                              } else {
+                                rowTriggerRefs.current.delete(item.id);
+                              }
+                            }}
+                            type="button"
+                            className={styles.workspaceNameTrigger}
+                            aria-label={detailCopy.openAria.replace(
+                              "{name}",
+                              item.enterpriseName,
+                            )}
+                            aria-haspopup="dialog"
+                            onClick={() => handleOpenDetail(item)}
+                          >
                             {item.enterpriseName}
-                          </div>
+                          </button>
                         </td>
                         <td className={styles.workspaceKeyCell}>
                           <code className={styles.workspaceKeyCode}>
@@ -715,6 +1124,8 @@ export function PlatformWorkspaceListView({
           </>
         )}
       </section>
+
+      {renderDetailModal()}
     </div>
   );
 }

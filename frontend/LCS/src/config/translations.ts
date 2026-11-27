@@ -1297,6 +1297,36 @@ const rawTranslations = {
       "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Ứng dụng không hiển thị dữ liệu mẫu thay thế.",
       "retryBtn": "Thử lại",
       "searchTooLongError": "Từ khóa tìm kiếm không được vượt quá 100 ký tự."
+    },
+    "detail": {
+      "openAria": "Xem chi tiết doanh nghiệp {name}",
+      "subtitle": "Thông tin hành chính doanh nghiệp",
+      "closeBtn": "Đóng",
+      "closeAria": "Đóng hộp thoại chi tiết doanh nghiệp",
+      "retryBtn": "Thử lại",
+      "groups": {
+        "enterprise": "Doanh nghiệp",
+        "contact": "Liên hệ",
+        "timestamps": "Thời gian"
+      },
+      "fields": {
+        "workspaceKey": "Mã workspace",
+        "contactName": "Người liên hệ",
+        "contactEmail": "Email",
+        "contactPhone": "Số điện thoại",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật lần cuối"
+      },
+      "states": {
+        "loadingTitle": "Đang tải hồ sơ doanh nghiệp",
+        "loadingDesc": "Đang truy vấn thông tin chi tiết từ máy chủ...",
+        "forbiddenTitle": "Không có quyền xem hồ sơ doanh nghiệp này",
+        "forbiddenDesc": "Máy chủ từ chối quyền truy cập thông tin chi tiết đối với phiên đăng nhập hiện tại.",
+        "notFoundTitle": "Không tìm thấy doanh nghiệp",
+        "notFoundDesc": "Hồ sơ doanh nghiệp không tồn tại hoặc hiện không còn khả dụng. Đóng hộp thoại để quay lại danh sách.",
+        "errorTitle": "Không thể tải hồ sơ doanh nghiệp",
+        "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Vui lòng thử lại."
+      }
     }
   }
 },
@@ -2596,6 +2626,36 @@ const rawTranslations = {
       "errorDesc": "The workspace service did not respond or returned an error. Sample data is not shown in its place.",
       "retryBtn": "Retry",
       "searchTooLongError": "Search query must be 100 characters or fewer."
+    },
+    "detail": {
+      "openAria": "View enterprise details for {name}",
+      "subtitle": "Enterprise administrative profile",
+      "closeBtn": "Close",
+      "closeAria": "Close enterprise details dialog",
+      "retryBtn": "Retry",
+      "groups": {
+        "enterprise": "Enterprise",
+        "contact": "Contact",
+        "timestamps": "Timestamps"
+      },
+      "fields": {
+        "workspaceKey": "Workspace key",
+        "contactName": "Contact person",
+        "contactEmail": "Email",
+        "contactPhone": "Phone number",
+        "createdAt": "Created at",
+        "updatedAt": "Last updated"
+      },
+      "states": {
+        "loadingTitle": "Loading enterprise profile",
+        "loadingDesc": "Requesting workspace details from the server...",
+        "forbiddenTitle": "Permission required to view this enterprise",
+        "forbiddenDesc": "The server denied access to this enterprise profile for your current session.",
+        "notFoundTitle": "Enterprise not found",
+        "notFoundDesc": "This enterprise record does not exist or is no longer available. Close this dialog to return to the directory.",
+        "errorTitle": "Unable to load enterprise profile",
+        "errorDesc": "The workspace service did not respond or returned an error. Please retry."
+      }
     }
   }
 },

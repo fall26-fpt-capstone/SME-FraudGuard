@@ -40,6 +40,14 @@ export class WorkspaceServiceError extends Error {
   }
 }
 
+export function validateWorkspaceId(rawId: unknown): string | null {
+  if (typeof rawId !== "string") {
+    return null;
+  }
+  const trimmed = rawId.trim();
+  return UUID_PATTERN.test(trimmed) ? trimmed : null;
+}
+
 export type WorkspaceQueryValidationResult =
   | { readonly ok: true; readonly query: NormalizedWorkspaceListQuery }
   | { readonly ok: false; readonly detail: string };
@@ -127,7 +135,19 @@ export function buildWorkspaceUpstreamPath(
   return `${WORKSPACES_UPSTREAM_PATH}?${qs}`;
 }
 
-function parseWorkspaceDirectoryItem(
+export function buildWorkspaceDetailUpstreamPath(workspaceId: string): string {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+  return `${WORKSPACES_UPSTREAM_PATH}/${encodeURIComponent(validId)}`;
+}
+
+export function parseWorkspaceDirectoryItem(
   value: unknown,
 ): WorkspaceDirectoryItem | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -266,8 +286,20 @@ export interface HandleWorkspaceBridgeOptions {
   readonly fetchImpl?: typeof fetch;
 }
 
-export async function handleWorkspaceListBridgeRequest(
+export interface HandleWorkspaceDetailBridgeOptions
+  extends HandleWorkspaceBridgeOptions {
+  readonly workspaceId: string;
+}
+
+async function executeAuthenticatedWorkspaceUpstreamGet(
   options: HandleWorkspaceBridgeOptions,
+  resolveUpstreamPath: (parsedUrl: URL) =>
+    | { readonly ok: true; readonly path: string }
+    | { readonly ok: false; readonly detail: string },
+  parseSuccessBody: (
+    json: Record<string, unknown> | null,
+  ) => Record<string, unknown> | null,
+  invalidFormatMessage: string,
 ): Promise<BridgeResult> {
   const { method, requestUrl, headers } = options;
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -295,13 +327,9 @@ export async function handleWorkspaceListBridgeRequest(
     return workspaceErrorResult(400, "VALIDATION_ERROR", "Invalid request URL.");
   }
 
-  const validatedQuery = validateWorkspaceListQuery({
-    search: parsedUrl.searchParams.get("search"),
-    page: parsedUrl.searchParams.get("page"),
-    size: parsedUrl.searchParams.get("size"),
-  });
-  if (!validatedQuery.ok) {
-    return workspaceErrorResult(400, "VALIDATION_ERROR", validatedQuery.detail);
+  const target = resolveUpstreamPath(parsedUrl);
+  if (!target.ok) {
+    return workspaceErrorResult(400, "VALIDATION_ERROR", target.detail);
   }
 
   let baseUrl: string;
@@ -314,12 +342,11 @@ export async function handleWorkspaceListBridgeRequest(
     return workspaceErrorResult(503, "BACKEND_UNAVAILABLE");
   }
 
-  const upstreamPath = buildWorkspaceUpstreamPath(validatedQuery.query);
   let upstreamRes: Response;
   try {
     upstreamRes = await callUpstream(
       baseUrl,
-      upstreamPath,
+      target.path,
       {
         method: "GET",
         headers: {
@@ -346,6 +373,9 @@ export async function handleWorkspaceListBridgeRequest(
   if (upstreamRes.status === 403) {
     return workspaceErrorResult(403, "FORBIDDEN", parsedUpstream.detail);
   }
+  if (upstreamRes.status === 404) {
+    return workspaceErrorResult(404, "NOT_FOUND", parsedUpstream.detail);
+  }
   if (upstreamRes.status === 400) {
     return workspaceErrorResult(400, "VALIDATION_ERROR", parsedUpstream.detail);
   }
@@ -356,19 +386,65 @@ export async function handleWorkspaceListBridgeRequest(
     );
   }
 
-  const sanitizedPage = parseWorkspacePagePayload(parsedUpstream.json);
-  if (!sanitizedPage) {
-    return workspaceErrorResult(
-      502,
-      "UPSTREAM_ERROR",
-      "Invalid workspace list response format.",
-    );
+  const sanitizedBody = parseSuccessBody(parsedUpstream.json);
+  if (!sanitizedBody) {
+    return workspaceErrorResult(502, "UPSTREAM_ERROR", invalidFormatMessage);
   }
 
   return {
     status: 200,
-    body: sanitizedPage as unknown as Record<string, unknown>,
+    body: sanitizedBody,
   };
+}
+
+export async function handleWorkspaceListBridgeRequest(
+  options: HandleWorkspaceBridgeOptions,
+): Promise<BridgeResult> {
+  return executeAuthenticatedWorkspaceUpstreamGet(
+    options,
+    (parsedUrl) => {
+      const validated = validateWorkspaceListQuery({
+        search: parsedUrl.searchParams.get("search"),
+        page: parsedUrl.searchParams.get("page"),
+        size: parsedUrl.searchParams.get("size"),
+      });
+      if (!validated.ok) {
+        return { ok: false, detail: validated.detail };
+      }
+      return {
+        ok: true,
+        path: buildWorkspaceUpstreamPath(validated.query),
+      };
+    },
+    (json) => {
+      const page = parseWorkspacePagePayload(json);
+      return page ? (page as unknown as Record<string, unknown>) : null;
+    },
+    "Invalid workspace list response format.",
+  );
+}
+
+export async function handleWorkspaceDetailBridgeRequest(
+  options: HandleWorkspaceDetailBridgeOptions,
+): Promise<BridgeResult> {
+  return executeAuthenticatedWorkspaceUpstreamGet(
+    options,
+    () => {
+      const validId = validateWorkspaceId(options.workspaceId);
+      if (!validId) {
+        return { ok: false, detail: "INVALID_WORKSPACE_ID" };
+      }
+      return {
+        ok: true,
+        path: buildWorkspaceDetailUpstreamPath(validId),
+      };
+    },
+    (json) => {
+      const item = parseWorkspaceDirectoryItem(json);
+      return item ? (item as unknown as Record<string, unknown>) : null;
+    },
+    "Invalid workspace detail response format.",
+  );
 }
 
 function isAbortError(err: unknown): boolean {
@@ -380,28 +456,17 @@ function isAbortError(err: unknown): boolean {
   );
 }
 
-export async function fetchWorkspacePage(
-  query: WorkspaceListQuery = {},
+async function fetchWorkspaceBridgeJson(
+  url: string,
   options?: {
     readonly signal?: AbortSignal;
     readonly fetchImpl?: typeof fetch;
   },
-): Promise<WorkspacePageResponse> {
-  const validated = validateWorkspaceListQuery({
-    search: query.search,
-    page: query.page,
-    size: query.size,
-  });
-  if (!validated.ok) {
-    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.detail);
-  }
-
+): Promise<Record<string, unknown> | null> {
   const fetchFn = options?.fetchImpl ?? fetch;
-  const qs = buildWorkspaceQueryParams(validated.query).toString();
-
   let response: Response;
   try {
-    response = await fetchFn(`/api/workspaces?${qs}`, {
+    response = await fetchFn(url, {
       method: "GET",
       credentials: "same-origin",
       cache: "no-store",
@@ -438,14 +503,38 @@ export async function fetchWorkspacePage(
           ? "UNAUTHENTICATED"
           : response.status === 403
             ? "FORBIDDEN"
-            : response.status === 400
-              ? "VALIDATION_ERROR"
-              : response.status === 503 || response.status === 502
-                ? "BACKEND_UNAVAILABLE"
-                : "UPSTREAM_ERROR";
+            : response.status === 404
+              ? "NOT_FOUND"
+              : response.status === 400
+                ? "VALIDATION_ERROR"
+                : response.status === 503 || response.status === 502
+                  ? "BACKEND_UNAVAILABLE"
+                  : "UPSTREAM_ERROR";
     const detail = typeof data?.detail === "string" ? data.detail : undefined;
     throw new WorkspaceServiceError(code, response.status, detail);
   }
+
+  return data;
+}
+
+export async function fetchWorkspacePage(
+  query: WorkspaceListQuery = {},
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspacePageResponse> {
+  const validated = validateWorkspaceListQuery({
+    search: query.search,
+    page: query.page,
+    size: query.size,
+  });
+  if (!validated.ok) {
+    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.detail);
+  }
+
+  const qs = buildWorkspaceQueryParams(validated.query).toString();
+  const data = await fetchWorkspaceBridgeJson(`/api/workspaces?${qs}`, options);
 
   const pageResponse = parseWorkspacePagePayload(data);
   if (!pageResponse) {
@@ -457,4 +546,37 @@ export async function fetchWorkspacePage(
   }
 
   return pageResponse;
+}
+
+export async function fetchWorkspaceDetail(
+  workspaceId: string,
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspaceDirectoryItem> {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+
+  const data = await fetchWorkspaceBridgeJson(
+    `/api/workspaces/${encodeURIComponent(validId)}`,
+    options,
+  );
+
+  const item = parseWorkspaceDirectoryItem(data);
+  if (!item) {
+    throw new WorkspaceServiceError(
+      "UPSTREAM_ERROR",
+      502,
+      "Invalid workspace detail payload.",
+    );
+  }
+
+  return item;
 }
