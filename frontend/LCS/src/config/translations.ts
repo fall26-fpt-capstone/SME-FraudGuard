@@ -1258,6 +1258,46 @@ const rawTranslations = {
       "enterpriseSectionUnavailableTitle": "Màn hình doanh nghiệp \"{section}\" đang chờ giai đoạn tích hợp tiếp theo",
       "enterpriseSectionUnavailableDesc": "Tài khoản doanh nghiệp đã xác thực hợp lệ với mã không gian làm việc \"{workspace}\". Các màn hình nghiệp vụ phụ thuộc không gian làm việc chưa được mở trong đợt này."
     }
+  },
+  "platformWorkspaces": {
+    "title": "Danh sách doanh nghiệp",
+    "subtitle": "Tra cứu thông tin định danh, mã workspace và đầu mối liên hệ hành chính của các doanh nghiệp trên nền tảng.",
+    "refreshBtn": "Làm mới",
+    "refreshingBtn": "Đang tải...",
+    "searchLabel": "Tìm doanh nghiệp theo tên hoặc mã workspace",
+    "searchPlaceholder": "Tìm theo tên doanh nghiệp hoặc mã workspace...",
+    "clearSearchBtn": "Xóa tìm kiếm",
+    "pageSizeAria": "Số dòng trên mỗi trang",
+    "perPageSuffix": "/ trang",
+    "totalBadge": "{count} doanh nghiệp",
+    "emptyValue": "-",
+    "columns": {
+      "enterprise": "Doanh nghiệp",
+      "workspaceKey": "Mã workspace",
+      "contact": "Thông tin liên hệ",
+      "updatedAt": "Cập nhật lần cuối"
+    },
+    "pagination": {
+      "showingRange": "Hiển thị {from}-{to} trên tổng số {total} doanh nghiệp",
+      "pageStatus": "Trang {page}/{totalPages}",
+      "previous": "Trang trước",
+      "next": "Trang sau",
+      "goToPageAria": "Chuyển tới trang {page}"
+    },
+    "states": {
+      "loadingTitle": "Đang tải danh sách doanh nghiệp",
+      "loadingDesc": "Đang truy vấn dữ liệu không gian làm việc từ máy chủ...",
+      "emptyTitle": "Chưa có doanh nghiệp nào trên hệ thống",
+      "emptyDesc": "Danh mục không gian làm việc trên máy chủ hiện chưa có bản ghi nào.",
+      "noMatchesTitle": "Không tìm thấy doanh nghiệp phù hợp",
+      "noMatchesDesc": "Không có tên doanh nghiệp hoặc mã workspace nào khớp với từ khóa \"{query}\".",
+      "forbiddenTitle": "Không có quyền xem danh sách doanh nghiệp",
+      "forbiddenDesc": "Máy chủ từ chối quyền truy cập danh mục không gian làm việc đối với phiên đăng nhập hiện tại.",
+      "errorTitle": "Không thể tải danh sách doanh nghiệp",
+      "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Ứng dụng không hiển thị dữ liệu mẫu thay thế.",
+      "retryBtn": "Thử lại",
+      "searchTooLongError": "Từ khóa tìm kiếm không được vượt quá 100 ký tự."
+    }
   }
 },
   en: {
@@ -2516,6 +2556,46 @@ const rawTranslations = {
       "platformSectionUnavailableDesc": "This integration phase connects real authentication, session verification, password management, and logout only. Plan catalogue, workspace administration, rule lifecycle, and audit views remain disconnected rather than showing simulated metrics or local-only edits.",
       "enterpriseSectionUnavailableTitle": "\"{section}\" awaits the next enterprise integration phase",
       "enterpriseSectionUnavailableDesc": "Your enterprise account is authenticated for workspace key \"{workspace}\". Workspace-dependent business screens are not enabled in this phase."
+    }
+  },
+  "platformWorkspaces": {
+    "title": "Enterprise Directory",
+    "subtitle": "Search enterprise names, workspace keys, and administrative contacts registered on the platform.",
+    "refreshBtn": "Refresh",
+    "refreshingBtn": "Loading...",
+    "searchLabel": "Search enterprises by name or workspace key",
+    "searchPlaceholder": "Search by enterprise name or workspace key...",
+    "clearSearchBtn": "Clear search",
+    "pageSizeAria": "Rows per page",
+    "perPageSuffix": "/ page",
+    "totalBadge": "{count} enterprises",
+    "emptyValue": "-",
+    "columns": {
+      "enterprise": "Enterprise",
+      "workspaceKey": "Workspace key",
+      "contact": "Contact information",
+      "updatedAt": "Last updated"
+    },
+    "pagination": {
+      "showingRange": "Showing {from}-{to} of {total} enterprises",
+      "pageStatus": "Page {page} of {totalPages}",
+      "previous": "Previous",
+      "next": "Next",
+      "goToPageAria": "Go to page {page}"
+    },
+    "states": {
+      "loadingTitle": "Loading enterprises",
+      "loadingDesc": "Requesting workspace records from the server...",
+      "emptyTitle": "No enterprises registered yet",
+      "emptyDesc": "The server workspace directory currently contains no enterprise records.",
+      "noMatchesTitle": "No matching enterprises found",
+      "noMatchesDesc": "No enterprise name or workspace key matched \"{query}\".",
+      "forbiddenTitle": "Permission required to view enterprises",
+      "forbiddenDesc": "The server denied access to the workspace directory for your current session.",
+      "errorTitle": "Unable to load enterprise directory",
+      "errorDesc": "The workspace service did not respond or returned an error. Sample data is not shown in its place.",
+      "retryBtn": "Retry",
+      "searchTooLongError": "Search query must be 100 characters or fewer."
     }
   }
 },
