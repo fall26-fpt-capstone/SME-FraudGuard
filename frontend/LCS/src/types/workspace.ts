@@ -34,6 +34,7 @@ export type WorkspaceErrorCode =
   | "UNAUTHENTICATED"
   | "SESSION_EXPIRED"
   | "FORBIDDEN"
+  | "NOT_FOUND"
   | "VALIDATION_ERROR"
   | "BACKEND_UNAVAILABLE"
   | "UPSTREAM_ERROR";

@@ -6029,3 +6029,112 @@
     flex-wrap: wrap;
   }
 }
+
+
+/* Platform Admin workspace detail trigger & modal */
+.workspaceNameTrigger {
+  display: inline-flex;
+  align-items: flex-start;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--security-text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.workspaceNameTrigger:hover {
+  color: var(--security-blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.workspaceNameTrigger:focus-visible {
+  outline: 2px solid var(--security-blue);
+  outline-offset: 3px;
+}
+
+.workspaceDetailDialog {
+  width: min(600px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+}
+
+.workspaceDetailHeaderMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.workspaceDetailIconBadge {
+  background: var(--security-blue-bg);
+  border-color: var(--security-blue);
+  color: var(--security-blue);
+  margin-top: 2px;
+}
+
+.workspaceDetailTitleWrap {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.workspaceDetailTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--security-text);
+  overflow-wrap: anywhere;
+}
+
+.workspaceDetailBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.workspaceDetailInfoList {
+  grid-template-columns: minmax(120px, 165px) minmax(0, 1fr);
+}
+
+.workspaceTimestampValue {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 680px) {
+  .workspaceNameTrigger {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .workspaceDetailBackdrop {
+    padding: 12px;
+  }
+
+  .workspaceDetailDialog {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .workspaceDetailInfoList {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .workspaceDetailInfoList dd {
+    margin-bottom: 8px;
+  }
+
+  .workspaceDetailInfoList dd:last-child {
+    margin-bottom: 0;
+  }
+}
