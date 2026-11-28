@@ -38,6 +38,33 @@ export interface WorkspacePageResponse {
   readonly totalPages: number;
 }
 
+export interface WorkspaceHistoryQuery {
+  readonly page?: number;
+  readonly size?: number;
+}
+
+export interface NormalizedWorkspaceHistoryQuery {
+  readonly page: number;
+  readonly size: number;
+}
+
+export interface WorkspaceHistoryItem {
+  readonly id: string;
+  readonly actorId: string;
+  readonly action: string;
+  readonly workspaceVersion: number;
+  readonly occurredAt: string;
+  readonly details: Record<string, unknown> | null;
+}
+
+export interface WorkspaceHistoryPageResponse {
+  readonly items: readonly WorkspaceHistoryItem[];
+  readonly page: number;
+  readonly size: number;
+  readonly totalElements: number;
+  readonly totalPages: number;
+}
+
 export type WorkspaceErrorCode =
   | "UNAUTHENTICATED"
   | "SESSION_EXPIRED"

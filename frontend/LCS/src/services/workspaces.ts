@@ -1,9 +1,13 @@
 import type {
+  NormalizedWorkspaceHistoryQuery,
   NormalizedWorkspaceListQuery,
   WorkspaceApiErrorBody,
   WorkspaceConflictReason,
   WorkspaceDirectoryItem,
   WorkspaceErrorCode,
+  WorkspaceHistoryItem,
+  WorkspaceHistoryPageResponse,
+  WorkspaceHistoryQuery,
   WorkspaceListQuery,
   WorkspaceMetadataUpdatePayload,
   WorkspacePageResponse,
@@ -218,20 +222,14 @@ export type WorkspaceQueryValidationResult =
   | { readonly ok: true; readonly query: NormalizedWorkspaceListQuery }
   | { readonly ok: false; readonly detail: string };
 
-export function validateWorkspaceListQuery(input: {
-  readonly search?: string | null;
+export type WorkspaceHistoryQueryValidationResult =
+  | { readonly ok: true; readonly query: NormalizedWorkspaceHistoryQuery }
+  | { readonly ok: false; readonly detail: string };
+
+function validateWorkspacePaginationBounds(input: {
   readonly page?: string | number | null;
   readonly size?: string | number | null;
-}): WorkspaceQueryValidationResult {
-  const rawSearch = input.search == null ? "" : String(input.search);
-  if (rawSearch.length > MAX_WORKSPACE_SEARCH_LENGTH) {
-    return { ok: false, detail: "SEARCH_TOO_LONG" };
-  }
-  const search = rawSearch.trim();
-  if (search.length > MAX_WORKSPACE_SEARCH_LENGTH) {
-    return { ok: false, detail: "SEARCH_TOO_LONG" };
-  }
-
+}): WorkspaceHistoryQueryValidationResult {
   let page = 0;
   if (input.page !== undefined && input.page !== null && input.page !== "") {
     if (typeof input.page === "number") {
@@ -275,9 +273,47 @@ export function validateWorkspaceListQuery(input: {
   return {
     ok: true,
     query: {
-      search,
       page,
       size,
+    },
+  };
+}
+
+export function validateWorkspaceHistoryQuery(input: {
+  readonly page?: string | number | null;
+  readonly size?: string | number | null;
+}): WorkspaceHistoryQueryValidationResult {
+  return validateWorkspacePaginationBounds(input);
+}
+
+export function validateWorkspaceListQuery(input: {
+  readonly search?: string | null;
+  readonly page?: string | number | null;
+  readonly size?: string | number | null;
+}): WorkspaceQueryValidationResult {
+  const rawSearch = input.search == null ? "" : String(input.search);
+  if (rawSearch.length > MAX_WORKSPACE_SEARCH_LENGTH) {
+    return { ok: false, detail: "SEARCH_TOO_LONG" };
+  }
+  const search = rawSearch.trim();
+  if (search.length > MAX_WORKSPACE_SEARCH_LENGTH) {
+    return { ok: false, detail: "SEARCH_TOO_LONG" };
+  }
+
+  const pagination = validateWorkspacePaginationBounds({
+    page: input.page,
+    size: input.size,
+  });
+  if (!pagination.ok) {
+    return pagination;
+  }
+
+  return {
+    ok: true,
+    query: {
+      search,
+      page: pagination.query.page,
+      size: pagination.query.size,
     },
   };
 }
@@ -289,6 +325,15 @@ export function buildWorkspaceQueryParams(
   if (query.search.length > 0) {
     params.set("search", query.search);
   }
+  params.set("page", String(query.page));
+  params.set("size", String(query.size));
+  return params;
+}
+
+export function buildWorkspaceHistoryQueryParams(
+  query: NormalizedWorkspaceHistoryQuery,
+): URLSearchParams {
+  const params = new URLSearchParams();
   params.set("page", String(query.page));
   params.set("size", String(query.size));
   return params;
@@ -311,6 +356,15 @@ export function buildWorkspaceDetailUpstreamPath(workspaceId: string): string {
     );
   }
   return `${WORKSPACES_UPSTREAM_PATH}/${encodeURIComponent(validId)}`;
+}
+
+export function buildWorkspaceHistoryUpstreamPath(
+  workspaceId: string,
+  query: NormalizedWorkspaceHistoryQuery,
+): string {
+  const basePath = buildWorkspaceDetailUpstreamPath(workspaceId);
+  const qs = buildWorkspaceHistoryQueryParams(query).toString();
+  return `${basePath}/history?${qs}`;
 }
 
 export function parseWorkspaceDirectoryItem(
@@ -411,6 +465,101 @@ export function parseWorkspacePagePayload(
   const items: WorkspaceDirectoryItem[] = [];
   for (const rawItem of record.items) {
     const parsedItem = parseWorkspaceDirectoryItem(rawItem);
+    if (!parsedItem) {
+      return null;
+    }
+    items.push(parsedItem);
+  }
+
+  return {
+    items,
+    page,
+    size,
+    totalElements,
+    totalPages,
+  };
+}
+
+export function parseWorkspaceHistoryItem(
+  value: unknown,
+): WorkspaceHistoryItem | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const id = typeof record.id === "string" ? record.id.trim() : "";
+  const actorId =
+    typeof record.actorId === "string" ? record.actorId.trim() : "";
+  const action = typeof record.action === "string" ? record.action.trim() : "";
+  const workspaceVersion = record.workspaceVersion;
+  const occurredAt =
+    typeof record.occurredAt === "string" ? record.occurredAt.trim() : "";
+  const rawDetails = record.details;
+  const details =
+    rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)
+      ? (rawDetails as Record<string, unknown>)
+      : null;
+
+  if (
+    !UUID_PATTERN.test(id) ||
+    !UUID_PATTERN.test(actorId) ||
+    !action ||
+    typeof workspaceVersion !== "number" ||
+    !Number.isInteger(workspaceVersion) ||
+    workspaceVersion < 0 ||
+    !occurredAt ||
+    !Number.isFinite(Date.parse(occurredAt))
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    actorId,
+    action,
+    workspaceVersion,
+    occurredAt,
+    details,
+  };
+}
+
+export function parseWorkspaceHistoryPagePayload(
+  value: unknown,
+): WorkspaceHistoryPageResponse | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (!Array.isArray(record.items)) {
+    return null;
+  }
+
+  const page = record.page;
+  const size = record.size;
+  const totalElements = record.totalElements;
+  const totalPages = record.totalPages;
+
+  if (
+    typeof page !== "number" ||
+    !Number.isInteger(page) ||
+    page < 0 ||
+    typeof size !== "number" ||
+    !Number.isInteger(size) ||
+    size < 1 ||
+    size > MAX_WORKSPACE_PAGE_SIZE ||
+    typeof totalElements !== "number" ||
+    !Number.isInteger(totalElements) ||
+    totalElements < 0 ||
+    typeof totalPages !== "number" ||
+    !Number.isInteger(totalPages) ||
+    totalPages < 0
+  ) {
+    return null;
+  }
+
+  const items: WorkspaceHistoryItem[] = [];
+  for (const rawItem of record.items) {
+    const parsedItem = parseWorkspaceHistoryItem(rawItem);
     if (!parsedItem) {
       return null;
     }
@@ -629,6 +778,36 @@ export async function handleWorkspaceDetailBridgeRequest(
       return item ? (item as unknown as Record<string, unknown>) : null;
     },
     "Invalid workspace detail response format.",
+  );
+}
+
+export async function handleWorkspaceHistoryBridgeRequest(
+  options: HandleWorkspaceDetailBridgeOptions,
+): Promise<BridgeResult> {
+  return executeAuthenticatedWorkspaceUpstreamGet(
+    options,
+    (parsedUrl) => {
+      const validId = validateWorkspaceId(options.workspaceId);
+      if (!validId) {
+        return { ok: false, detail: "INVALID_WORKSPACE_ID" };
+      }
+      const validated = validateWorkspaceHistoryQuery({
+        page: parsedUrl.searchParams.get("page"),
+        size: parsedUrl.searchParams.get("size"),
+      });
+      if (!validated.ok) {
+        return { ok: false, detail: validated.detail };
+      }
+      return {
+        ok: true,
+        path: buildWorkspaceHistoryUpstreamPath(validId, validated.query),
+      };
+    },
+    (json) => {
+      const page = parseWorkspaceHistoryPagePayload(json);
+      return page ? (page as unknown as Record<string, unknown>) : null;
+    },
+    "Invalid workspace history response format.",
   );
 }
 
@@ -920,6 +1099,49 @@ export async function fetchWorkspaceDetail(
   }
 
   return item;
+}
+
+export async function fetchWorkspaceHistory(
+  workspaceId: string,
+  query: WorkspaceHistoryQuery = {},
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspaceHistoryPageResponse> {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+
+  const validated = validateWorkspaceHistoryQuery({
+    page: query.page,
+    size: query.size,
+  });
+  if (!validated.ok) {
+    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.detail);
+  }
+
+  const qs = buildWorkspaceHistoryQueryParams(validated.query).toString();
+  const data = await fetchWorkspaceBridgeJson(
+    `/api/workspaces/${encodeURIComponent(validId)}/history?${qs}`,
+    options,
+  );
+
+  const pageResponse = parseWorkspaceHistoryPagePayload(data);
+  if (!pageResponse) {
+    throw new WorkspaceServiceError(
+      "UPSTREAM_ERROR",
+      502,
+      "Invalid workspace history payload.",
+    );
+  }
+
+  return pageResponse;
 }
 
 export async function updateWorkspaceMetadata(

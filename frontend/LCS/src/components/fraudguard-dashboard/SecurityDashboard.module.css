@@ -6188,3 +6188,195 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+
+/* Platform Admin workspace history view */
+.workspaceHistoryToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--security-border);
+}
+
+.workspaceHistoryMetaGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspaceHistoryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workspaceHistoryItem {
+  border: 1px solid var(--security-border);
+  border-radius: 6px;
+  background: var(--security-panel);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workspaceHistoryRowHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+}
+
+.workspaceHistoryHeadingGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.workspaceHistoryActionTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--security-text);
+  overflow-wrap: anywhere;
+}
+
+.workspaceHistoryTime {
+  font-size: 12px;
+  color: var(--security-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.workspaceHistoryToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--security-border-strong);
+  border-radius: 5px;
+  background: var(--security-control);
+  color: var(--security-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.workspaceHistoryToggleBtn:hover {
+  border-color: var(--security-blue);
+  color: var(--security-text);
+}
+
+.workspaceHistoryToggleBtn:focus-visible {
+  outline: 2px solid var(--security-blue);
+  outline-offset: 2px;
+}
+
+.workspaceHistorySummaryList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workspaceHistorySummaryLine,
+.workspaceHistorySummaryClamp {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--security-text);
+  overflow-wrap: anywhere;
+}
+
+.workspaceHistorySummaryClamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.workspaceHistoryDetailBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-surface-subtle);
+}
+
+.workspaceHistoryMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+
+.workspaceHistoryMetaLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--security-text-secondary);
+}
+
+.workspaceHistorySpecSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workspaceHistorySpecLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--security-text);
+}
+
+.workspaceHistorySpecDiffGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.workspaceHistorySpecPane {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--security-border);
+  border-radius: 4px;
+  background: var(--security-panel);
+  min-width: 0;
+}
+
+.workspaceHistorySpecText {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--security-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.workspaceHistoryPagination {
+  border: 1px solid var(--security-border);
+  border-radius: 6px;
+}
+
+@media (max-width: 680px) {
+  .workspaceHistoryToggleBtn {
+    min-height: 44px;
+  }
+
+  .workspaceHistorySpecDiffGrid {
+    grid-template-columns: 1fr;
+  }
+}
