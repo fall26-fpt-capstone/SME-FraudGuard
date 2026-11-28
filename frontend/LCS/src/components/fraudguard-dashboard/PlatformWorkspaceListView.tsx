@@ -15,21 +15,32 @@ import {
   Search,
   ShieldAlert,
   User,
+  UserPlus,
+  Users,
   X,
 } from "lucide-react";
 import type { TranslationKey } from "@/config/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import type {
+  NormalizedWorkspaceEligibleStaffQuery,
   NormalizedWorkspaceHistoryQuery,
   NormalizedWorkspaceListQuery,
+  NormalizedWorkspaceStaffAssignmentsQuery,
+  WorkspaceAssignStaffPayload,
   WorkspaceDirectoryItem,
+  WorkspaceEligibleStaffItem,
+  WorkspaceEligibleStaffPageResponse,
+  WorkspaceEligibleStaffQuery,
   WorkspaceHistoryItem,
   WorkspaceHistoryPageResponse,
   WorkspaceHistoryQuery,
   WorkspaceListQuery,
   WorkspaceMetadataUpdatePayload,
   WorkspacePageResponse,
+  WorkspaceStaffAssignmentPageResponse,
+  WorkspaceStaffAssignmentResult,
+  WorkspaceStaffAssignmentsQuery,
 } from "@/types/workspace";
 import {
   DEFAULT_WORKSPACE_PAGE_SIZE,
@@ -41,10 +52,13 @@ import {
   type WorkspaceMetadataField,
   type WorkspaceMetadataValidationCode,
   WorkspaceServiceError,
+  assignWorkspaceStaff,
   classifyWorkspaceConflict,
   fetchWorkspaceDetail,
+  fetchWorkspaceEligibleStaff,
   fetchWorkspaceHistory,
   fetchWorkspacePage,
+  fetchWorkspaceStaffAssignments,
   updateWorkspaceMetadata,
   validateWorkspaceMetadataInput,
 } from "@/services/workspaces";
@@ -69,6 +83,21 @@ export interface PlatformWorkspaceListViewProps {
     query: WorkspaceHistoryQuery,
     options?: { readonly signal?: AbortSignal },
   ) => Promise<WorkspaceHistoryPageResponse>;
+  readonly loadStaffAssignments?: (
+    workspaceId: string,
+    query: WorkspaceStaffAssignmentsQuery,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<WorkspaceStaffAssignmentPageResponse>;
+  readonly loadEligibleStaff?: (
+    workspaceId: string,
+    query: WorkspaceEligibleStaffQuery,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<WorkspaceEligibleStaffPageResponse>;
+  readonly assignStaff?: (
+    workspaceId: string,
+    payload: WorkspaceAssignStaffPayload,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<WorkspaceStaffAssignmentResult>;
   readonly saveMetadata?: (
     workspaceId: string,
     payload: WorkspaceMetadataUpdatePayload,
@@ -86,7 +115,7 @@ type DetailModalStatus =
   | "not_found"
   | "error";
 
-type ModalPanelMode = "view" | "edit" | "history";
+type ModalPanelMode = "view" | "edit" | "history" | "staff";
 
 type DetailModalState =
   | { readonly open: false }
@@ -103,6 +132,26 @@ interface HistoryPanelState {
   readonly pageData: WorkspaceHistoryPageResponse | null;
 }
 
+interface StaffAssignmentsPanelState {
+  readonly status: DetailModalStatus;
+  readonly pageData: WorkspaceStaffAssignmentPageResponse | null;
+}
+
+interface EligibleStaffPanelState {
+  readonly status: DetailModalStatus;
+  readonly pageData: WorkspaceEligibleStaffPageResponse | null;
+}
+
+type StaffBannerState =
+  | { readonly kind: "info"; readonly message: string }
+  | { readonly kind: "conflict_stale"; readonly message: string }
+  | { readonly kind: "network"; readonly message: string }
+  | { readonly kind: "ineligible"; readonly message: string }
+  | {
+      readonly kind: "validation" | "forbidden" | "not_found" | "csrf";
+      readonly message: string;
+    };
+
 interface EditFormDraft {
   readonly enterpriseName: string;
   readonly contactName: string;
@@ -113,7 +162,7 @@ interface EditFormDraft {
 type EditBannerState =
   | { readonly kind: "validation" | "forbidden" | "csrf"; readonly message: string }
   | {
-      readonly kind: "conflict_stale" | "conflict_generic";
+      readonly kind: "conflict_stale" | "conflict_generic" | "reload_failed";
       readonly message: string;
     }
   | { readonly kind: "conflict_duplicate"; readonly message: string }
@@ -132,6 +181,7 @@ export interface DescribedWorkspaceHistoryEvent {
   readonly staffAssignmentDetail?: {
     readonly label: string;
     readonly staffId: string;
+    readonly staffLoginName?: string;
   };
   readonly specBlocks?: readonly FormattedSpecBlock[];
   readonly hasLongChangeText: boolean;
@@ -150,6 +200,7 @@ function normalizeOptionalText(value: unknown): string {
 export function describeWorkspaceHistoryEvent(
   event: WorkspaceHistoryItem,
   detailCopy: TranslationKey["platformWorkspaces"]["detail"],
+  knownStaffLoginsById?: ReadonlyMap<string, string>,
 ): DescribedWorkspaceHistoryEvent {
   const historyCopy = detailCopy.history;
   const details = event.details;
@@ -216,6 +267,10 @@ export function describeWorkspaceHistoryEvent(
   if (event.action === "STAFF_ASSIGNED" || event.action === "STAFF_REMOVED") {
     const isAssigned = event.action === "STAFF_ASSIGNED";
     const staffId = normalizeOptionalText(details?.staffId);
+    const knownLogin =
+      staffId && knownStaffLoginsById
+        ? knownStaffLoginsById.get(staffId)
+        : undefined;
     return {
       title: isAssigned
         ? historyCopy.actions.staffAssigned
@@ -232,6 +287,7 @@ export function describeWorkspaceHistoryEvent(
                 ? historyCopy.assignedStaffIdLabel
                 : historyCopy.removedStaffIdLabel,
               staffId,
+              ...(knownLogin ? { staffLoginName: knownLogin } : {}),
             },
           }
         : {}),
@@ -417,6 +473,9 @@ export function PlatformWorkspaceListView({
   loadPage = fetchWorkspacePage,
   loadDetail = fetchWorkspaceDetail,
   loadHistory = fetchWorkspaceHistory,
+  loadStaffAssignments = fetchWorkspaceStaffAssignments,
+  loadEligibleStaff = fetchWorkspaceEligibleStaff,
+  assignStaff = assignWorkspaceStaff,
   saveMetadata = updateWorkspaceMetadata,
   searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: PlatformWorkspaceListViewProps) {
@@ -425,6 +484,7 @@ export function PlatformWorkspaceListView({
   const detailCopy = copy.detail;
   const editCopy = detailCopy.edit;
   const historyCopy = detailCopy.history;
+  const staffCopy = detailCopy.staff;
 
   const [searchInput, setSearchInput] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -455,6 +515,12 @@ export function PlatformWorkspaceListView({
   >({});
   const [editBanner, setEditBanner] = useState<EditBannerState | null>(null);
   const [viewNotice, setViewNotice] = useState<string>("");
+  const [knownWorkspaceVersion, setKnownWorkspaceVersion] = useState<
+    number | null
+  >(null);
+  const [isRefreshingDetail, setIsRefreshingDetail] = useState(false);
+  const [isPreparingEdit, setIsPreparingEdit] = useState(false);
+  const [detailRefreshError, setDetailRefreshError] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [isInspectingCurrent, setIsInspectingCurrent] = useState(false);
 
@@ -471,13 +537,69 @@ export function PlatformWorkspaceListView({
     ReadonlySet<string>
   >(() => new Set());
 
+  const [assignmentsQuery, setAssignmentsQuery] =
+    useState<NormalizedWorkspaceStaffAssignmentsQuery>({
+      page: 0,
+      size: DEFAULT_WORKSPACE_PAGE_SIZE,
+    });
+  const [assignmentsState, setAssignmentsState] =
+    useState<StaffAssignmentsPanelState>({
+      status: "loading",
+      pageData: null,
+    });
+
+  const [eligibleSearchInput, setEligibleSearchInput] = useState("");
+  const [eligibleSearchError, setEligibleSearchError] = useState("");
+  const [eligibleQuery, setEligibleQuery] =
+    useState<NormalizedWorkspaceEligibleStaffQuery>({
+      search: "",
+      page: 0,
+      size: DEFAULT_WORKSPACE_PAGE_SIZE,
+    });
+  const [eligibleLoadedQuery, setEligibleLoadedQuery] =
+    useState<NormalizedWorkspaceEligibleStaffQuery | null>(null);
+  const [eligibleState, setEligibleState] = useState<EligibleStaffPanelState>({
+    status: "loading",
+    pageData: null,
+  });
+
+  const [knownStaffLoginsById, setKnownStaffLoginsById] = useState<
+    ReadonlyMap<string, string>
+  >(() => new Map());
+  const [confirmedAssignedStaffIds, setConfirmedAssignedStaffIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [isReloadingStaffStatus, setIsReloadingStaffStatus] = useState(false);
+  const [staffBanner, setStaffBanner] = useState<StaffBannerState | null>(null);
+
   const requestSeqRef = useRef(0);
   const activeAbortRef = useRef<AbortController | null>(null);
   const detailRequestSeqRef = useRef(0);
   const detailAbortRef = useRef<AbortController | null>(null);
+  const detailSyncSeqRef = useRef(0);
+  const detailSyncAbortRef = useRef<AbortController | null>(null);
+  const loadedDetailRef = useRef<WorkspaceDirectoryItem | null>(null);
+  const knownWorkspaceVersionRef = useRef<number | null>(null);
+  const isRefreshingDetailRef = useRef(false);
+  const pendingEditOnRefreshRef = useRef(false);
+  const lastRefreshIntentEditRef = useRef(false);
+  const modalModeRef = useRef<ModalPanelMode>("view");
   const saveAbortRef = useRef<AbortController | null>(null);
   const historyRequestSeqRef = useRef(0);
   const historyAbortRef = useRef<AbortController | null>(null);
+  const assignmentsRequestSeqRef = useRef(0);
+  const assignmentsAbortRef = useRef<AbortController | null>(null);
+  const eligibleRequestSeqRef = useRef(0);
+  const eligibleAbortRef = useRef<AbortController | null>(null);
+  const eligibleDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const assignRequestSeqRef = useRef(0);
+  const assignAbortRef = useRef<AbortController | null>(null);
+  const confirmedAssignmentsVersionRef = useRef<number | null>(null);
+  const isAssigningRef = useRef(false);
   const isSavingRef = useRef(false);
   const openWorkspaceIdRef = useRef<string | null>(null);
   const rowTriggerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -487,37 +609,80 @@ export function PlatformWorkspaceListView({
   const authRedirectedRef = useRef(false);
 
   openWorkspaceIdRef.current = detailState.open ? detailState.workspaceId : null;
+  modalModeRef.current = modalMode;
 
   const latestHandlersRef = useRef({
     loadPage,
     loadDetail,
     loadHistory,
+    loadStaffAssignments,
+    loadEligibleStaff,
+    assignStaff,
     saveMetadata,
     onSessionExpired,
     onUnauthenticated,
     searchTooLongError: copy.states.searchTooLongError,
     editCopy,
+    staffCopy,
   });
   latestHandlersRef.current = {
     loadPage,
     loadDetail,
     loadHistory,
+    loadStaffAssignments,
+    loadEligibleStaff,
+    assignStaff,
     saveMetadata,
     onSessionExpired,
     onUnauthenticated,
     searchTooLongError: copy.states.searchTooLongError,
     editCopy,
+    staffCopy,
   };
+
+  const clearPendingEligibleDebounce = useCallback(() => {
+    if (eligibleDebounceTimerRef.current !== null) {
+      clearTimeout(eligibleDebounceTimerRef.current);
+      eligibleDebounceTimerRef.current = null;
+    }
+  }, []);
 
   const resetModalSubStates = useCallback(() => {
     saveAbortRef.current?.abort();
     saveAbortRef.current = null;
+    detailSyncAbortRef.current?.abort();
+    detailSyncAbortRef.current = null;
+    detailSyncSeqRef.current += 1;
+    loadedDetailRef.current = null;
+    knownWorkspaceVersionRef.current = null;
+    isRefreshingDetailRef.current = false;
+    pendingEditOnRefreshRef.current = false;
+    lastRefreshIntentEditRef.current = false;
     historyAbortRef.current?.abort();
     historyAbortRef.current = null;
     historyRequestSeqRef.current += 1;
+    assignmentsAbortRef.current?.abort();
+    assignmentsAbortRef.current = null;
+    assignmentsRequestSeqRef.current += 1;
+    eligibleAbortRef.current?.abort();
+    eligibleAbortRef.current = null;
+    eligibleRequestSeqRef.current += 1;
+    assignAbortRef.current?.abort();
+    assignAbortRef.current = null;
+    assignRequestSeqRef.current += 1;
+    clearPendingEligibleDebounce();
+    confirmedAssignmentsVersionRef.current = null;
+    isAssigningRef.current = false;
     isSavingRef.current = false;
+    modalModeRef.current = "view";
     setIsSaving(false);
     setIsInspectingCurrent(false);
+    setIsRefreshingDetail(false);
+    setIsPreparingEdit(false);
+    setKnownWorkspaceVersion(null);
+    setDetailRefreshError("");
+    setIsAssigning(false);
+    setIsReloadingStaffStatus(false);
     setModalMode("view");
     setEditFieldErrors({});
     setEditBanner(null);
@@ -525,7 +690,22 @@ export function PlatformWorkspaceListView({
     setHistoryQuery({ page: 0, size: DEFAULT_WORKSPACE_PAGE_SIZE });
     setHistoryState({ status: "loading", pageData: null });
     setExpandedHistoryIds(new Set());
-  }, []);
+    setAssignmentsQuery({ page: 0, size: DEFAULT_WORKSPACE_PAGE_SIZE });
+    setAssignmentsState({ status: "loading", pageData: null });
+    setEligibleSearchInput("");
+    setEligibleSearchError("");
+    setEligibleQuery({
+      search: "",
+      page: 0,
+      size: DEFAULT_WORKSPACE_PAGE_SIZE,
+    });
+    setEligibleLoadedQuery(null);
+    setEligibleState({ status: "loading", pageData: null });
+    setKnownStaffLoginsById(new Map());
+    setConfirmedAssignedStaffIds(new Set());
+    setSelectedStaffId("");
+    setStaffBanner(null);
+  }, [clearPendingEligibleDebounce]);
 
   const clearPendingDebounce = useCallback(() => {
     if (debounceTimerRef.current !== null) {
@@ -541,14 +721,34 @@ export function PlatformWorkspaceListView({
       }
       authRedirectedRef.current = true;
       detailAbortRef.current?.abort();
+      detailSyncAbortRef.current?.abort();
       saveAbortRef.current?.abort();
       historyAbortRef.current?.abort();
+      assignmentsAbortRef.current?.abort();
+      eligibleAbortRef.current?.abort();
+      assignAbortRef.current?.abort();
+      clearPendingEligibleDebounce();
       detailRequestSeqRef.current += 1;
+      detailSyncSeqRef.current += 1;
       historyRequestSeqRef.current += 1;
+      assignmentsRequestSeqRef.current += 1;
+      eligibleRequestSeqRef.current += 1;
+      assignRequestSeqRef.current += 1;
+      loadedDetailRef.current = null;
+      knownWorkspaceVersionRef.current = null;
+      isRefreshingDetailRef.current = false;
+      pendingEditOnRefreshRef.current = false;
+      lastRefreshIntentEditRef.current = false;
+      isAssigningRef.current = false;
       isSavingRef.current = false;
       openWorkspaceIdRef.current = null;
+      modalModeRef.current = "view";
       setIsSaving(false);
       setIsInspectingCurrent(false);
+      setIsRefreshingDetail(false);
+      setIsPreparingEdit(false);
+      setIsAssigning(false);
+      setIsReloadingStaffStatus(false);
       setModalMode("view");
       setDetailState({ open: false });
       if (
@@ -560,7 +760,7 @@ export function PlatformWorkspaceListView({
       }
       latestHandlersRef.current.onSessionExpired?.();
     },
-    [],
+    [clearPendingEligibleDebounce],
   );
 
   const handleCloseDetail = useCallback(() => {
@@ -588,6 +788,40 @@ export function PlatformWorkspaceListView({
   }, [resetModalSubStates]);
 
   const detailDialogRef = useDialogFocus(detailState.open, handleCloseDetail);
+
+  const commitCompleteWorkspaceDetail = useCallback(
+    (
+      workspaceId: string,
+      incoming: WorkspaceDirectoryItem,
+    ): WorkspaceDirectoryItem | null => {
+      if (openWorkspaceIdRef.current !== workspaceId) {
+        return null;
+      }
+      const existing = loadedDetailRef.current;
+      if (existing && incoming.version < existing.version) {
+        return existing;
+      }
+      loadedDetailRef.current = incoming;
+      const nextKnown = Math.max(
+        knownWorkspaceVersionRef.current ?? 0,
+        incoming.version,
+      );
+      knownWorkspaceVersionRef.current = nextKnown;
+      setKnownWorkspaceVersion(nextKnown);
+      if (incoming.version >= nextKnown) {
+        setDetailRefreshError("");
+      }
+      setDetailState({
+        open: true,
+        workspaceId,
+        fallbackTitle: incoming.enterpriseName,
+        status: "ready",
+        detail: incoming,
+      });
+      return incoming;
+    },
+    [],
+  );
 
   const executeDetailLoad = useCallback(
     async (workspaceId: string, fallbackTitle: string) => {
@@ -617,13 +851,7 @@ export function PlatformWorkspaceListView({
         ) {
           return;
         }
-        setDetailState({
-          open: true,
-          workspaceId,
-          fallbackTitle: detail.enterpriseName,
-          status: "ready",
-          detail,
-        });
+        commitCompleteWorkspaceDetail(workspaceId, detail);
       } catch (err) {
         if (
           isAbortError(err) ||
@@ -667,7 +895,11 @@ export function PlatformWorkspaceListView({
         });
       }
     },
-    [resetModalSubStates, triggerAuthRedirect],
+      [
+        commitCompleteWorkspaceDetail,
+        resetModalSubStates,
+        triggerAuthRedirect,
+      ],
   );
 
   const executeHistoryLoad = useCallback(
@@ -766,10 +998,13 @@ export function PlatformWorkspaceListView({
     if (!detailState.open || detailState.status !== "ready" || !detailState.detail) {
       return;
     }
+    pendingEditOnRefreshRef.current = false;
+    setIsPreparingEdit(false);
     const nextHistoryQuery: NormalizedWorkspaceHistoryQuery = {
       page: 0,
       size: historyQuery.size,
     };
+    modalModeRef.current = "history";
     setModalMode("history");
     setHistoryQuery(nextHistoryQuery);
     setHistoryState({ status: "loading", pageData: null });
@@ -780,7 +1015,925 @@ export function PlatformWorkspaceListView({
     historyAbortRef.current?.abort();
     historyAbortRef.current = null;
     historyRequestSeqRef.current += 1;
+    assignmentsAbortRef.current?.abort();
+    assignmentsAbortRef.current = null;
+    assignmentsRequestSeqRef.current += 1;
+    eligibleAbortRef.current?.abort();
+    eligibleAbortRef.current = null;
+    eligibleRequestSeqRef.current += 1;
+    clearPendingEligibleDebounce();
+    modalModeRef.current = "view";
     setModalMode("view");
+  };
+
+  const refreshWorkspaceDetail = useCallback(
+    async (
+      workspaceId: string,
+      options?: { readonly openEditWhenReady?: boolean },
+    ) => {
+      if (openWorkspaceIdRef.current !== workspaceId) {
+        return;
+      }
+      if (options?.openEditWhenReady) {
+        pendingEditOnRefreshRef.current = true;
+        lastRefreshIntentEditRef.current = true;
+        setIsPreparingEdit(true);
+      }
+      setDetailRefreshError("");
+
+      if (isRefreshingDetailRef.current) {
+        return;
+      }
+
+      detailSyncAbortRef.current?.abort();
+      const controller = new AbortController();
+      detailSyncAbortRef.current = controller;
+      const syncId = detailSyncSeqRef.current + 1;
+      detailSyncSeqRef.current = syncId;
+      isRefreshingDetailRef.current = true;
+      setIsRefreshingDetail(true);
+      const priorVersion = loadedDetailRef.current?.version ?? -1;
+
+      try {
+        const freshDetail = await latestHandlersRef.current.loadDetail(
+          workspaceId,
+          { signal: controller.signal },
+        );
+        if (
+          detailSyncSeqRef.current !== syncId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+
+        const committed = commitCompleteWorkspaceDetail(
+          workspaceId,
+          freshDetail,
+        );
+        const targetKnown = knownWorkspaceVersionRef.current ?? 0;
+        const wantOpenEdit = pendingEditOnRefreshRef.current;
+
+        isRefreshingDetailRef.current = false;
+        setIsRefreshingDetail(false);
+
+        if (!committed || committed.version < targetKnown) {
+          if (committed && committed.version > priorVersion) {
+            void refreshWorkspaceDetail(workspaceId, {
+              openEditWhenReady: wantOpenEdit,
+            });
+            return;
+          }
+          pendingEditOnRefreshRef.current = false;
+          setIsPreparingEdit(false);
+          setDetailRefreshError(
+            latestHandlersRef.current.editCopy.errors.refreshBeforeEditFailed,
+          );
+          return;
+        }
+
+        pendingEditOnRefreshRef.current = false;
+        setIsPreparingEdit(false);
+        lastRefreshIntentEditRef.current = false;
+
+        if (wantOpenEdit && modalModeRef.current === "view") {
+          setViewNotice("");
+          setEditFieldErrors({});
+          setEditBanner(null);
+          setEditBaseVersion(committed.version);
+          setEditDraft(draftFromItem(committed));
+          modalModeRef.current = "edit";
+          setModalMode("edit");
+        }
+      } catch (err) {
+        if (
+          isAbortError(err) ||
+          detailSyncSeqRef.current !== syncId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        isRefreshingDetailRef.current = false;
+        pendingEditOnRefreshRef.current = false;
+        setIsRefreshingDetail(false);
+        setIsPreparingEdit(false);
+
+        if (isWorkspaceError(err)) {
+          if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+            triggerAuthRedirect(err.code);
+            return;
+          }
+          if (err.code === "NOT_FOUND" && modalModeRef.current !== "edit") {
+            const fallback =
+              loadedDetailRef.current?.enterpriseName ?? "";
+            resetModalSubStates();
+            setDetailState({
+              open: true,
+              workspaceId,
+              fallbackTitle: fallback,
+              status: "not_found",
+              detail: null,
+            });
+            setReloadNonce((n) => n + 1);
+            return;
+          }
+        }
+
+        if (modalModeRef.current !== "edit") {
+          setDetailRefreshError(
+            latestHandlersRef.current.editCopy.errors.refreshBeforeEditFailed,
+          );
+        }
+      }
+    },
+    [commitCompleteWorkspaceDetail, resetModalSubStates, triggerAuthRedirect],
+  );
+
+  const observeWorkspaceVersion = useCallback(
+    (workspaceId: string, observedVersion: number) => {
+      if (openWorkspaceIdRef.current !== workspaceId) {
+        return;
+      }
+      const nextKnown = Math.max(
+        knownWorkspaceVersionRef.current ?? 0,
+        observedVersion,
+      );
+      knownWorkspaceVersionRef.current = nextKnown;
+      setKnownWorkspaceVersion(nextKnown);
+      if (
+        loadedDetailRef.current &&
+        loadedDetailRef.current.version < nextKnown &&
+        modalModeRef.current !== "edit"
+      ) {
+        void refreshWorkspaceDetail(workspaceId);
+      }
+    },
+    [refreshWorkspaceDetail],
+  );
+
+  const applyConfirmedAssignmentsPage = useCallback(
+    (
+      workspaceId: string,
+      pageResult: WorkspaceStaffAssignmentPageResponse,
+      extraAssignedStaffId?: string,
+    ) => {
+      const sameVersion =
+        confirmedAssignmentsVersionRef.current === pageResult.workspaceVersion;
+      confirmedAssignmentsVersionRef.current = pageResult.workspaceVersion;
+      setConfirmedAssignedStaffIds((prev) => {
+        const next = sameVersion ? new Set(prev) : new Set<string>();
+        for (const row of pageResult.items) {
+          next.add(row.staffId);
+        }
+        if (extraAssignedStaffId) {
+          next.add(extraAssignedStaffId);
+        }
+        return next;
+      });
+      observeWorkspaceVersion(workspaceId, pageResult.workspaceVersion);
+    },
+    [observeWorkspaceVersion],
+  );
+
+  const executeAssignmentsLoad = useCallback(
+    async (
+      workspaceId: string,
+      targetQuery: NormalizedWorkspaceStaffAssignmentsQuery,
+      extraAssignedStaffId?: string,
+    ) => {
+      assignmentsAbortRef.current?.abort();
+      const controller = new AbortController();
+      assignmentsAbortRef.current = controller;
+      const reqId = assignmentsRequestSeqRef.current + 1;
+      assignmentsRequestSeqRef.current = reqId;
+
+      setAssignmentsState((prev) => ({
+        status: "loading",
+        pageData: prev.pageData,
+      }));
+
+      try {
+        const result = await latestHandlersRef.current.loadStaffAssignments(
+          workspaceId,
+          targetQuery,
+          { signal: controller.signal },
+        );
+        if (
+          assignmentsRequestSeqRef.current !== reqId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        if (
+          result.items.length === 0 &&
+          result.totalElements > 0 &&
+          result.totalPages > 0 &&
+          targetQuery.page >= result.totalPages
+        ) {
+          const clamped = {
+            page: Math.max(0, result.totalPages - 1),
+            size: targetQuery.size,
+          };
+          setAssignmentsQuery(clamped);
+          void executeAssignmentsLoad(
+            workspaceId,
+            clamped,
+            extraAssignedStaffId,
+          );
+          return;
+        }
+        applyConfirmedAssignmentsPage(
+          workspaceId,
+          result,
+          extraAssignedStaffId,
+        );
+        setAssignmentsState({
+          status: "ready",
+          pageData: result,
+        });
+      } catch (err) {
+        if (
+          isAbortError(err) ||
+          assignmentsRequestSeqRef.current !== reqId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        if (isWorkspaceError(err)) {
+          if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+            triggerAuthRedirect(err.code);
+            return;
+          }
+          if (err.code === "FORBIDDEN") {
+            setAssignmentsState({ status: "forbidden", pageData: null });
+            return;
+          }
+          if (err.code === "NOT_FOUND") {
+            setAssignmentsState({ status: "not_found", pageData: null });
+            return;
+          }
+        }
+        setAssignmentsState({ status: "error", pageData: null });
+      }
+    },
+    [applyConfirmedAssignmentsPage, triggerAuthRedirect],
+  );
+
+  const executeEligibleStaffLoad = useCallback(
+    async (
+      workspaceId: string,
+      targetQuery: NormalizedWorkspaceEligibleStaffQuery,
+    ) => {
+      eligibleAbortRef.current?.abort();
+      const controller = new AbortController();
+      eligibleAbortRef.current = controller;
+      const reqId = eligibleRequestSeqRef.current + 1;
+      eligibleRequestSeqRef.current = reqId;
+
+      setEligibleState((prev) => ({
+        status: "loading",
+        pageData: prev.pageData,
+      }));
+
+      try {
+        const result = await latestHandlersRef.current.loadEligibleStaff(
+          workspaceId,
+          targetQuery,
+          { signal: controller.signal },
+        );
+        if (
+          eligibleRequestSeqRef.current !== reqId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        if (result.items.length > 0) {
+          setKnownStaffLoginsById((prev) => {
+            const next = new Map(prev);
+            for (const staffItem of result.items) {
+              next.set(staffItem.id, staffItem.loginName);
+            }
+            return next;
+          });
+        }
+        if (
+          result.items.length === 0 &&
+          result.totalElements > 0 &&
+          result.totalPages > 0 &&
+          targetQuery.page >= result.totalPages
+        ) {
+          const clamped = {
+            search: targetQuery.search,
+            page: Math.max(0, result.totalPages - 1),
+            size: targetQuery.size,
+          };
+          setEligibleQuery(clamped);
+          void executeEligibleStaffLoad(workspaceId, clamped);
+          return;
+        }
+        setEligibleLoadedQuery(targetQuery);
+        setEligibleState({
+          status: "ready",
+          pageData: result,
+        });
+      } catch (err) {
+        if (
+          isAbortError(err) ||
+          eligibleRequestSeqRef.current !== reqId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        if (isWorkspaceError(err)) {
+          if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+            triggerAuthRedirect(err.code);
+            return;
+          }
+          if (err.code === "FORBIDDEN") {
+            setEligibleState({ status: "forbidden", pageData: null });
+            return;
+          }
+          if (err.code === "NOT_FOUND") {
+            setEligibleState({ status: "not_found", pageData: null });
+            return;
+          }
+          if (err.code === "VALIDATION_ERROR" && err.detail === "SEARCH_TOO_LONG") {
+            setEligibleSearchError(
+              latestHandlersRef.current.staffCopy.assign.errors.searchTooLong,
+            );
+            setEligibleState((prev) => ({
+              status: "ready",
+              pageData: prev.pageData,
+            }));
+            return;
+          }
+        }
+        setEligibleState({ status: "error", pageData: null });
+      }
+    },
+    [triggerAuthRedirect],
+  );
+
+  const handleOpenStaff = () => {
+    if (!detailState.open || detailState.status !== "ready" || !detailState.detail) {
+      return;
+    }
+    pendingEditOnRefreshRef.current = false;
+    setIsPreparingEdit(false);
+    historyAbortRef.current?.abort();
+    historyRequestSeqRef.current += 1;
+    clearPendingEligibleDebounce();
+
+    const nextAssignmentsQuery: NormalizedWorkspaceStaffAssignmentsQuery = {
+      page: 0,
+      size: assignmentsQuery.size,
+    };
+    const nextEligibleQuery: NormalizedWorkspaceEligibleStaffQuery = {
+      search: "",
+      page: 0,
+      size: eligibleQuery.size,
+    };
+
+    modalModeRef.current = "staff";
+    setModalMode("staff");
+    setStaffBanner(null);
+    setSelectedStaffId("");
+    setEligibleSearchInput("");
+    setEligibleSearchError("");
+    setAssignmentsQuery(nextAssignmentsQuery);
+    setEligibleQuery(nextEligibleQuery);
+    setEligibleLoadedQuery(null);
+    setAssignmentsState({ status: "loading", pageData: null });
+    setEligibleState({ status: "loading", pageData: null });
+    void executeAssignmentsLoad(detailState.workspaceId, nextAssignmentsQuery);
+    void executeEligibleStaffLoad(detailState.workspaceId, nextEligibleQuery);
+  };
+
+  const handleAssignmentsPageChange = (nextZeroBasedPage: number) => {
+    if (
+      !detailState.open ||
+      nextZeroBasedPage < 0 ||
+      nextZeroBasedPage === assignmentsQuery.page
+    ) {
+      return;
+    }
+    const nextQuery = {
+      page: nextZeroBasedPage,
+      size: assignmentsQuery.size,
+    };
+    setAssignmentsQuery(nextQuery);
+    void executeAssignmentsLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleAssignmentsPageSizeChange = (nextSize: number) => {
+    if (!detailState.open) {
+      return;
+    }
+    const nextQuery = {
+      page: 0,
+      size: nextSize,
+    };
+    setAssignmentsQuery(nextQuery);
+    void executeAssignmentsLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleRetryOrRefreshAssignments = () => {
+    if (!detailState.open) {
+      return;
+    }
+    void executeAssignmentsLoad(detailState.workspaceId, assignmentsQuery);
+  };
+
+  const commitEligibleSearch = useCallback(
+    (workspaceId: string, rawValue: string, currentSize: number) => {
+      clearPendingEligibleDebounce();
+      if (rawValue.length > MAX_WORKSPACE_SEARCH_LENGTH) {
+        setEligibleSearchError(
+          latestHandlersRef.current.staffCopy.assign.errors.searchTooLong,
+        );
+        return;
+      }
+      setEligibleSearchError("");
+      const trimmed = rawValue.trim();
+      const nextQuery: NormalizedWorkspaceEligibleStaffQuery = {
+        search: trimmed,
+        page: 0,
+        size: currentSize,
+      };
+      setEligibleQuery(nextQuery);
+      void executeEligibleStaffLoad(workspaceId, nextQuery);
+    },
+    [clearPendingEligibleDebounce, executeEligibleStaffLoad],
+  );
+
+  const handleEligibleSearchInputChange = (nextValue: string) => {
+    setEligibleSearchInput(nextValue);
+    if (!detailState.open) {
+      return;
+    }
+    const targetWorkspaceId = detailState.workspaceId;
+    if (nextValue.length > MAX_WORKSPACE_SEARCH_LENGTH) {
+      clearPendingEligibleDebounce();
+      setEligibleSearchError(staffCopy.assign.errors.searchTooLong);
+      return;
+    }
+    if (eligibleSearchError) {
+      setEligibleSearchError("");
+    }
+    clearPendingEligibleDebounce();
+    if (searchDebounceMs <= 0) {
+      commitEligibleSearch(targetWorkspaceId, nextValue, eligibleQuery.size);
+      return;
+    }
+    eligibleDebounceTimerRef.current = setTimeout(() => {
+      eligibleDebounceTimerRef.current = null;
+      if (openWorkspaceIdRef.current === targetWorkspaceId) {
+        commitEligibleSearch(targetWorkspaceId, nextValue, eligibleQuery.size);
+      }
+    }, searchDebounceMs);
+  };
+
+  const handleEligibleSearchFormSubmit = (event: {
+    preventDefault: () => void;
+  }) => {
+    event.preventDefault();
+    if (!detailState.open) {
+      return;
+    }
+    commitEligibleSearch(
+      detailState.workspaceId,
+      eligibleSearchInput,
+      eligibleQuery.size,
+    );
+  };
+
+  const handleClearEligibleSearch = () => {
+    if (!detailState.open) {
+      return;
+    }
+    clearPendingEligibleDebounce();
+    setEligibleSearchInput("");
+    setEligibleSearchError("");
+    const nextQuery: NormalizedWorkspaceEligibleStaffQuery = {
+      search: "",
+      page: 0,
+      size: eligibleQuery.size,
+    };
+    setEligibleQuery(nextQuery);
+    void executeEligibleStaffLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleEligiblePageChange = (nextZeroBasedPage: number) => {
+    if (
+      !detailState.open ||
+      nextZeroBasedPage < 0 ||
+      nextZeroBasedPage === eligibleQuery.page
+    ) {
+      return;
+    }
+    clearPendingEligibleDebounce();
+    setEligibleSearchInput(eligibleQuery.search);
+    setEligibleSearchError("");
+    const nextQuery: NormalizedWorkspaceEligibleStaffQuery = {
+      search: eligibleQuery.search,
+      page: nextZeroBasedPage,
+      size: eligibleQuery.size,
+    };
+    setEligibleQuery(nextQuery);
+    void executeEligibleStaffLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleEligiblePageSizeChange = (nextSize: number) => {
+    if (!detailState.open) {
+      return;
+    }
+    clearPendingEligibleDebounce();
+    const trimmed = eligibleSearchInput.trim();
+    setEligibleSearchError("");
+    const nextQuery: NormalizedWorkspaceEligibleStaffQuery = {
+      search:
+        trimmed.length <= MAX_WORKSPACE_SEARCH_LENGTH
+          ? trimmed
+          : eligibleQuery.search,
+      page: 0,
+      size: nextSize,
+    };
+    setEligibleQuery(nextQuery);
+    void executeEligibleStaffLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleRetryOrRefreshEligible = () => {
+    if (!detailState.open) {
+      return;
+    }
+    clearPendingEligibleDebounce();
+    const trimmed = eligibleSearchInput.trim();
+    if (
+      eligibleSearchInput.length <= MAX_WORKSPACE_SEARCH_LENGTH &&
+      trimmed !== eligibleQuery.search
+    ) {
+      const nextQuery: NormalizedWorkspaceEligibleStaffQuery = {
+        search: trimmed,
+        page: 0,
+        size: eligibleQuery.size,
+      };
+      setEligibleQuery(nextQuery);
+      void executeEligibleStaffLoad(detailState.workspaceId, nextQuery);
+      return;
+    }
+    void executeEligibleStaffLoad(detailState.workspaceId, eligibleQuery);
+  };
+
+  const handleSelectEligibleStaff = (candidate: WorkspaceEligibleStaffItem) => {
+    setSelectedStaffId(candidate.id);
+    setKnownStaffLoginsById((prev) => {
+      if (prev.get(candidate.id) === candidate.loginName) {
+        return prev;
+      }
+      const next = new Map(prev);
+      next.set(candidate.id, candidate.loginName);
+      return next;
+    });
+    if (staffBanner?.kind === "validation") {
+      setStaffBanner(null);
+    }
+  };
+
+  const handleReloadAssignmentsAfterConflict = async () => {
+    if (!detailState.open || isAssigning || isReloadingStaffStatus) {
+      return;
+    }
+    const targetWorkspaceId = detailState.workspaceId;
+    const reqId = assignmentsRequestSeqRef.current + 1;
+    assignmentsRequestSeqRef.current = reqId;
+    assignmentsAbortRef.current?.abort();
+    const controller = new AbortController();
+    assignmentsAbortRef.current = controller;
+    setIsReloadingStaffStatus(true);
+
+    const nextQuery = { page: 0, size: assignmentsQuery.size };
+    setAssignmentsQuery(nextQuery);
+
+    try {
+      const freshAssignments =
+        await latestHandlersRef.current.loadStaffAssignments(
+          targetWorkspaceId,
+          nextQuery,
+          { signal: controller.signal },
+        );
+      if (
+        assignmentsRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      applyConfirmedAssignmentsPage(targetWorkspaceId, freshAssignments);
+      setAssignmentsState({
+        status: "ready",
+        pageData: freshAssignments,
+      });
+      setStaffBanner({
+        kind: "info",
+        message:
+          latestHandlersRef.current.staffCopy.assign.notices
+            .reloadedVersionNotice,
+      });
+      void refreshWorkspaceDetail(targetWorkspaceId);
+      setReloadNonce((n) => n + 1);
+    } catch (err) {
+      if (
+        isAbortError(err) ||
+        assignmentsRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      if (isWorkspaceError(err)) {
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          triggerAuthRedirect(err.code);
+          return;
+        }
+        if (err.code === "NOT_FOUND") {
+          setAssignmentsState({ status: "not_found", pageData: null });
+          setStaffBanner({
+            kind: "not_found",
+            message:
+              latestHandlersRef.current.staffCopy.assign.errors.notFoundAssign,
+          });
+          return;
+        }
+        if (err.code === "FORBIDDEN") {
+          setAssignmentsState({ status: "forbidden", pageData: null });
+          setStaffBanner({
+            kind: "forbidden",
+            message:
+              latestHandlersRef.current.staffCopy.assign.errors.forbiddenAssign,
+          });
+          return;
+        }
+      }
+      setStaffBanner({
+        kind: "network",
+        message:
+          latestHandlersRef.current.staffCopy.assign.errors.assignUnavailable,
+      });
+    } finally {
+      if (
+        assignmentsRequestSeqRef.current === reqId &&
+        openWorkspaceIdRef.current === targetWorkspaceId
+      ) {
+        setIsReloadingStaffStatus(false);
+      }
+    }
+  };
+
+  const handleReloadStatusAfterAssignDisconnect = async () => {
+    if (!detailState.open || isAssigning || isReloadingStaffStatus) {
+      return;
+    }
+    const targetWorkspaceId = detailState.workspaceId;
+    const reqId = assignmentsRequestSeqRef.current + 1;
+    assignmentsRequestSeqRef.current = reqId;
+    assignmentsAbortRef.current?.abort();
+    const controller = new AbortController();
+    assignmentsAbortRef.current = controller;
+    setIsReloadingStaffStatus(true);
+
+    const nextQuery = { page: 0, size: assignmentsQuery.size };
+    setAssignmentsQuery(nextQuery);
+
+    try {
+      const freshAssignments =
+        await latestHandlersRef.current.loadStaffAssignments(
+          targetWorkspaceId,
+          nextQuery,
+          { signal: controller.signal },
+        );
+      if (
+        assignmentsRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      applyConfirmedAssignmentsPage(targetWorkspaceId, freshAssignments);
+      setAssignmentsState({
+        status: "ready",
+        pageData: freshAssignments,
+      });
+      void refreshWorkspaceDetail(targetWorkspaceId);
+      setReloadNonce((n) => n + 1);
+
+      const isSelectedNowOnFirstPage =
+        Boolean(selectedStaffId) &&
+        freshAssignments.items.some((i) => i.staffId === selectedStaffId);
+      setStaffBanner({
+        kind: "info",
+        message: isSelectedNowOnFirstPage
+          ? latestHandlersRef.current.staffCopy.assign.notices
+              .reconnectedAssignedNotice
+          : latestHandlersRef.current.staffCopy.assign.notices
+              .reconnectedNotConfirmedNotice,
+      });
+    } catch (err) {
+      if (
+        isAbortError(err) ||
+        assignmentsRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      if (isWorkspaceError(err)) {
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          triggerAuthRedirect(err.code);
+          return;
+        }
+        if (err.code === "NOT_FOUND") {
+          setAssignmentsState({ status: "not_found", pageData: null });
+          setStaffBanner({
+            kind: "not_found",
+            message:
+              latestHandlersRef.current.staffCopy.assign.errors.notFoundAssign,
+          });
+          return;
+        }
+      }
+      setStaffBanner({
+        kind: "network",
+        message:
+          latestHandlersRef.current.staffCopy.assign.errors.assignUnavailable,
+      });
+    } finally {
+      if (
+        assignmentsRequestSeqRef.current === reqId &&
+        openWorkspaceIdRef.current === targetWorkspaceId
+      ) {
+        setIsReloadingStaffStatus(false);
+      }
+    }
+  };
+
+  const handleAssignStaffSubmit = async () => {
+    if (
+      isAssigningRef.current ||
+      isReloadingStaffStatus ||
+      !detailState.open ||
+      assignmentsState.status !== "ready" ||
+      assignmentsState.pageData === null
+    ) {
+      return;
+    }
+
+    if (!selectedStaffId) {
+      setStaffBanner({
+        kind: "validation",
+        message: staffCopy.assign.errors.staffSelectionRequired,
+      });
+      return;
+    }
+
+    const targetWorkspaceId = detailState.workspaceId;
+    const targetStaffId = selectedStaffId;
+    const submittedVersion = assignmentsState.pageData.workspaceVersion;
+
+    const reqId = assignRequestSeqRef.current + 1;
+    assignRequestSeqRef.current = reqId;
+    assignAbortRef.current?.abort();
+    const controller = new AbortController();
+    assignAbortRef.current = controller;
+    isAssigningRef.current = true;
+    setIsAssigning(true);
+    setStaffBanner(null);
+
+    try {
+      const result = await latestHandlersRef.current.assignStaff(
+        targetWorkspaceId,
+        {
+          staffId: targetStaffId,
+          version: submittedVersion,
+        },
+        { signal: controller.signal },
+      );
+
+      if (
+        assignRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+
+      isAssigningRef.current = false;
+      setIsAssigning(false);
+
+      const wasAlreadyActiveNoop =
+        result.workspaceVersion === submittedVersion;
+
+      confirmedAssignmentsVersionRef.current = result.workspaceVersion;
+      if (result.assigned) {
+        setConfirmedAssignedStaffIds((prev) => {
+          const next = new Set(prev);
+          next.add(result.staffId);
+          return next;
+        });
+      }
+
+      observeWorkspaceVersion(targetWorkspaceId, result.workspaceVersion);
+
+      setHistoryState({ status: "loading", pageData: null });
+      setHistoryQuery((prev) => ({ page: 0, size: prev.size }));
+
+      setStaffBanner({
+        kind: "info",
+        message: wasAlreadyActiveNoop
+          ? latestHandlersRef.current.staffCopy.assign.notices
+              .alreadyAssignedNoop
+          : latestHandlersRef.current.staffCopy.assign.notices.assignedSuccess,
+      });
+
+      const refreshedAssignmentsQuery = {
+        page: 0,
+        size: assignmentsQuery.size,
+      };
+      setAssignmentsQuery(refreshedAssignmentsQuery);
+      void executeAssignmentsLoad(
+        targetWorkspaceId,
+        refreshedAssignmentsQuery,
+        result.assigned ? result.staffId : undefined,
+      );
+
+      if (!wasAlreadyActiveNoop) {
+        setReloadNonce((n) => n + 1);
+      }
+    } catch (err) {
+      if (
+        isAbortError(err) ||
+        assignRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+
+      isAssigningRef.current = false;
+      setIsAssigning(false);
+
+      const errs = latestHandlersRef.current.staffCopy.assign.errors;
+      if (isWorkspaceError(err)) {
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          triggerAuthRedirect(err.code);
+          return;
+        }
+        if (err.code === "CONFLICT") {
+          setStaffBanner({
+            kind: "conflict_stale",
+            message: errs.staleVersionConflict,
+          });
+          return;
+        }
+        if (err.code === "FORBIDDEN") {
+          setStaffBanner({
+            kind: "forbidden",
+            message: errs.forbiddenAssign,
+          });
+          return;
+        }
+        if (err.code === "CSRF_REJECTED") {
+          setStaffBanner({
+            kind: "csrf",
+            message: errs.csrfRejected,
+          });
+          return;
+        }
+        if (err.code === "NOT_FOUND") {
+          setStaffBanner({
+            kind: "not_found",
+            message: errs.notFoundAssign,
+          });
+          return;
+        }
+        if (err.code === "VALIDATION_ERROR") {
+          setStaffBanner({
+            kind: "ineligible",
+            message: errs.ineligibleOrInvalid,
+          });
+          return;
+        }
+      }
+
+      setStaffBanner({
+        kind: "network",
+        message: errs.assignUnavailable,
+      });
+    }
   };
 
   const handleHistoryPageChange = (nextZeroBasedPage: number) => {
@@ -858,16 +2011,40 @@ export function PlatformWorkspaceListView({
   );
 
   const handleStartEdit = () => {
-    if (!detailState.open || detailState.status !== "ready" || !detailState.detail) {
+    if (
+      !detailState.open ||
+      detailState.status !== "ready" ||
+      !detailState.detail ||
+      isPreparingEdit
+    ) {
       return;
     }
     historyAbortRef.current?.abort();
     historyRequestSeqRef.current += 1;
     setViewNotice("");
+    setDetailRefreshError("");
+
+    const currentDetail = loadedDetailRef.current ?? detailState.detail;
+    const latestKnown = knownWorkspaceVersionRef.current;
+    if (latestKnown !== null && latestKnown > currentDetail.version) {
+      lastRefreshIntentEditRef.current = true;
+      void refreshWorkspaceDetail(detailState.workspaceId, {
+        openEditWhenReady: true,
+      });
+      return;
+    }
+
+    detailSyncAbortRef.current?.abort();
+    detailSyncAbortRef.current = null;
+    detailSyncSeqRef.current += 1;
+    isRefreshingDetailRef.current = false;
+    setIsRefreshingDetail(false);
+    lastRefreshIntentEditRef.current = false;
     setEditFieldErrors({});
     setEditBanner(null);
-    setEditBaseVersion(detailState.detail.version);
-    setEditDraft(draftFromItem(detailState.detail));
+    setEditBaseVersion(currentDetail.version);
+    setEditDraft(draftFromItem(currentDetail));
+    modalModeRef.current = "edit";
     setModalMode("edit");
   };
 
@@ -875,6 +2052,7 @@ export function PlatformWorkspaceListView({
     if (isSaving) {
       return;
     }
+    modalModeRef.current = "view";
     setModalMode("view");
     setEditFieldErrors({});
     setEditBanner(null);
@@ -914,15 +2092,10 @@ export function PlatformWorkspaceListView({
       ) {
         return;
       }
-      setDetailState({
-        open: true,
-        workspaceId: targetWorkspaceId,
-        fallbackTitle: fresh.enterpriseName,
-        status: "ready",
-        detail: fresh,
-      });
-      setEditBaseVersion(fresh.version);
-      setEditDraft(draftFromItem(fresh));
+      const authoritative =
+        commitCompleteWorkspaceDetail(targetWorkspaceId, fresh) ?? fresh;
+      setEditBaseVersion(authoritative.version);
+      setEditDraft(draftFromItem(authoritative));
       setEditFieldErrors({});
       setEditBanner({
         kind: "info",
@@ -964,8 +2137,8 @@ export function PlatformWorkspaceListView({
         }
       }
       setEditBanner({
-        kind: "network",
-        message: latestHandlersRef.current.editCopy.errors.saveUnavailable,
+        kind: "reload_failed",
+        message: latestHandlersRef.current.editCopy.errors.reloadCurrentFailed,
       });
     } finally {
       if (
@@ -1006,15 +2179,10 @@ export function PlatformWorkspaceListView({
       ) {
         return;
       }
-      setDetailState({
-        open: true,
-        workspaceId: targetWorkspaceId,
-        fallbackTitle: fresh.enterpriseName,
-        status: "ready",
-        detail: fresh,
-      });
+      const authoritative =
+        commitCompleteWorkspaceDetail(targetWorkspaceId, fresh) ?? fresh;
 
-      if (fresh.version === editBaseVersion) {
+      if (authoritative.version === editBaseVersion) {
         setEditBanner({
           kind: "info",
           message: latestHandlersRef.current.editCopy.reconnectedUnchangedNotice,
@@ -1023,14 +2191,15 @@ export function PlatformWorkspaceListView({
       }
 
       const matchesSubmittedDraft =
-        fresh.enterpriseName === editDraft.enterpriseName.trim() &&
-        fresh.contactName === editDraft.contactName.trim() &&
-        fresh.contactEmail === editDraft.contactEmail.trim() &&
-        (fresh.contactPhone ?? null) === normalizedDraftPhone;
+        authoritative.enterpriseName === editDraft.enterpriseName.trim() &&
+        authoritative.contactName === editDraft.contactName.trim() &&
+        authoritative.contactEmail === editDraft.contactEmail.trim() &&
+        (authoritative.contactPhone ?? null) === normalizedDraftPhone;
 
       setReloadNonce((n) => n + 1);
 
       if (matchesSubmittedDraft) {
+        modalModeRef.current = "view";
         setModalMode("view");
         setEditFieldErrors({});
         setEditBanner(null);
@@ -1148,19 +2317,14 @@ export function PlatformWorkspaceListView({
 
       isSavingRef.current = false;
       setIsSaving(false);
+      modalModeRef.current = "view";
       setModalMode("view");
       setEditFieldErrors({});
       setEditBanner(null);
       setHistoryState({ status: "loading", pageData: null });
       setHistoryQuery((prev) => ({ page: 0, size: prev.size }));
       setViewNotice(latestHandlersRef.current.editCopy.savedNotice);
-      setDetailState({
-        open: true,
-        workspaceId: targetWorkspaceId,
-        fallbackTitle: updated.enterpriseName,
-        status: "ready",
-        detail: updated,
-      });
+      commitCompleteWorkspaceDetail(targetWorkspaceId, updated);
     } catch (err) {
       if (
         isAbortError(err) ||
@@ -1314,12 +2478,17 @@ export function PlatformWorkspaceListView({
   useEffect(() => {
     return () => {
       clearPendingDebounce();
+      clearPendingEligibleDebounce();
       activeAbortRef.current?.abort();
       detailAbortRef.current?.abort();
+      detailSyncAbortRef.current?.abort();
       saveAbortRef.current?.abort();
       historyAbortRef.current?.abort();
+      assignmentsAbortRef.current?.abort();
+      eligibleAbortRef.current?.abort();
+      assignAbortRef.current?.abort();
     };
-  }, [clearPendingDebounce]);
+  }, [clearPendingDebounce, clearPendingEligibleDebounce]);
 
   const commitSearch = useCallback(
     (rawValue: string) => {
@@ -1509,6 +2678,97 @@ export function PlatformWorkspaceListView({
     return `${showing} · ${pagePart}`;
   }, [copy.pagination.pageStatus, historyCopy.showingRange, historyPageData]);
 
+  const assignmentsPageData = assignmentsState.pageData;
+  const assignmentsTotalElements = assignmentsPageData?.totalElements ?? 0;
+  const assignmentsTotalPages = assignmentsPageData?.totalPages ?? 0;
+  const currentAssignmentsPage =
+    assignmentsPageData?.page ?? assignmentsQuery.page;
+  const currentAssignmentsSize =
+    assignmentsPageData?.size ?? assignmentsQuery.size;
+  const isAssignmentsLoading = assignmentsState.status === "loading";
+
+  const assignmentsPaginationTokens = useMemo(
+    () => buildPaginationTokens(currentAssignmentsPage, assignmentsTotalPages),
+    [currentAssignmentsPage, assignmentsTotalPages],
+  );
+
+  const assignmentsRangeText = useMemo(() => {
+    if (
+      !assignmentsPageData ||
+      assignmentsPageData.totalElements === 0 ||
+      assignmentsPageData.items.length === 0
+    ) {
+      return "";
+    }
+    const from = assignmentsPageData.page * assignmentsPageData.size + 1;
+    const to = Math.min(
+      assignmentsPageData.page * assignmentsPageData.size +
+        assignmentsPageData.items.length,
+      assignmentsPageData.totalElements,
+    );
+    const showing = staffCopy.assigned.showingRange
+      .replace("{from}", String(from))
+      .replace("{to}", String(to))
+      .replace("{total}", String(assignmentsPageData.totalElements));
+    const pagePart = copy.pagination.pageStatus
+      .replace("{page}", String(assignmentsPageData.page + 1))
+      .replace(
+        "{totalPages}",
+        String(Math.max(1, assignmentsPageData.totalPages)),
+      );
+    return `${showing} · ${pagePart}`;
+  }, [
+    assignmentsPageData,
+    copy.pagination.pageStatus,
+    staffCopy.assigned.showingRange,
+  ]);
+
+  const eligiblePageData = eligibleState.pageData;
+  const eligibleTotalElements = eligiblePageData?.totalElements ?? 0;
+  const eligibleTotalPages = eligiblePageData?.totalPages ?? 0;
+  const currentEligiblePage = eligiblePageData?.page ?? eligibleQuery.page;
+  const currentEligibleSize = eligiblePageData?.size ?? eligibleQuery.size;
+  const isEligibleLoading = eligibleState.status === "loading";
+  const effectiveEligibleSearch = eligibleLoadedQuery
+    ? eligibleLoadedQuery.search
+    : eligibleQuery.search;
+
+  const eligiblePaginationTokens = useMemo(
+    () => buildPaginationTokens(currentEligiblePage, eligibleTotalPages),
+    [currentEligiblePage, eligibleTotalPages],
+  );
+
+  const eligibleRangeText = useMemo(() => {
+    if (
+      !eligiblePageData ||
+      eligiblePageData.totalElements === 0 ||
+      eligiblePageData.items.length === 0
+    ) {
+      return "";
+    }
+    const from = eligiblePageData.page * eligiblePageData.size + 1;
+    const to = Math.min(
+      eligiblePageData.page * eligiblePageData.size +
+        eligiblePageData.items.length,
+      eligiblePageData.totalElements,
+    );
+    const showing = staffCopy.assign.showingRange
+      .replace("{from}", String(from))
+      .replace("{to}", String(to))
+      .replace("{total}", String(eligiblePageData.totalElements));
+    const pagePart = copy.pagination.pageStatus
+      .replace("{page}", String(eligiblePageData.page + 1))
+      .replace(
+        "{totalPages}",
+        String(Math.max(1, eligiblePageData.totalPages)),
+      );
+    return `${showing} · ${pagePart}`;
+  }, [
+    copy.pagination.pageStatus,
+    eligiblePageData,
+    staffCopy.assign.showingRange,
+  ]);
+
   const renderContactCell = (item: WorkspaceDirectoryItem) => {
     const hasName = item.contactName.trim().length > 0;
     const hasEmail = item.contactEmail.trim().length > 0;
@@ -1548,7 +2808,8 @@ export function PlatformWorkspaceListView({
     const isInfo = editBanner.kind === "info";
     const showReloadCurrent =
       editBanner.kind === "conflict_stale" ||
-      editBanner.kind === "conflict_generic";
+      editBanner.kind === "conflict_generic" ||
+      editBanner.kind === "reload_failed";
     const showCheckStatus = editBanner.kind === "network";
 
     return (
@@ -1757,6 +3018,7 @@ export function PlatformWorkspaceListView({
                 const described = describeWorkspaceHistoryEvent(
                   eventItem,
                   detailCopy,
+                  knownStaffLoginsById,
                 );
                 const isExpanded = expandedHistoryIds.has(eventItem.id);
 
@@ -1817,6 +3079,11 @@ export function PlatformWorkspaceListView({
                             <span className={styles.workspaceHistoryMetaLabel}>
                               {described.staffAssignmentDetail.label}:
                             </span>
+                            {described.staffAssignmentDetail.staffLoginName && (
+                              <strong className={styles.workspaceStaffPrimaryLogin}>
+                                {described.staffAssignmentDetail.staffLoginName}
+                              </strong>
+                            )}
                             <code className={styles.workspaceKeyCode}>
                               {described.staffAssignmentDetail.staffId}
                             </code>
@@ -1955,6 +3222,759 @@ export function PlatformWorkspaceListView({
     );
   };
 
+  const renderStaffBanner = () => {
+    if (!staffBanner) {
+      return null;
+    }
+    const isInfo = staffBanner.kind === "info";
+    const showConflictReload = staffBanner.kind === "conflict_stale";
+    const showDisconnectReload = staffBanner.kind === "network";
+    const showIneligibleRefresh = staffBanner.kind === "ineligible";
+
+    return (
+      <div
+        className={
+          isInfo ? styles.workspaceNoticeBanner : styles.workspaceEditErrorBanner
+        }
+        role={isInfo ? "status" : "alert"}
+      >
+        <div className={styles.workspaceBannerRow}>
+          {isInfo ? (
+            <CheckCircle2 size={16} aria-hidden="true" />
+          ) : (
+            <AlertCircle size={16} aria-hidden="true" />
+          )}
+          <span>{staffBanner.message}</span>
+        </div>
+
+        {(showConflictReload || showDisconnectReload || showIneligibleRefresh) && (
+          <div className={styles.workspaceBannerActions}>
+            {showConflictReload && (
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => void handleReloadAssignmentsAfterConflict()}
+                disabled={isAssigning || isReloadingStaffStatus}
+                aria-busy={isReloadingStaffStatus}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>
+                  {isReloadingStaffStatus
+                    ? staffCopy.assign.reloadingAssignmentsBtn
+                    : staffCopy.assign.reloadAssignmentsBtn}
+                </span>
+              </button>
+            )}
+
+            {showDisconnectReload && (
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => void handleReloadStatusAfterAssignDisconnect()}
+                disabled={isAssigning || isReloadingStaffStatus}
+                aria-busy={isReloadingStaffStatus}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>
+                  {isReloadingStaffStatus
+                    ? staffCopy.assign.reloadingCurrentStatusBtn
+                    : staffCopy.assign.reloadCurrentStatusBtn}
+                </span>
+              </button>
+            )}
+
+            {showIneligibleRefresh && (
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => {
+                  handleRetryOrRefreshEligible();
+                  handleRetryOrRefreshAssignments();
+                }}
+                disabled={isAssigning || isReloadingStaffStatus}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>{staffCopy.assign.refreshEligibleBtn}</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderStaffMode = () => {
+    const assignedItems =
+      assignmentsState.status === "ready" && assignmentsPageData
+        ? assignmentsPageData.items
+        : [];
+    const eligibleItems =
+      eligibleState.status === "ready" && eligiblePageData
+        ? eligiblePageData.items
+        : [];
+    const hasLoadedAssignmentVersion =
+      assignmentsState.status === "ready" && assignmentsPageData !== null;
+    const canAssignNow =
+      hasLoadedAssignmentVersion &&
+      Boolean(selectedStaffId) &&
+      !isAssigning &&
+      !isReloadingStaffStatus;
+
+    return (
+      <>
+        <div
+          className={`${styles.onboardingModalBody} ${styles.workspaceDetailBody}`}
+        >
+          <div className={styles.workspaceHistoryToolbar}>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleBackToDetailInfo}
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              <span>{staffCopy.backToInfoBtn}</span>
+            </button>
+
+            <div className={styles.workspaceHistoryMetaGroup}>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={handleOpenHistory}
+              >
+                <History size={14} aria-hidden="true" />
+                <span>{historyCopy.openBtn}</span>
+              </button>
+            </div>
+          </div>
+
+          {renderStaffBanner()}
+
+          <section className={styles.onboardingFormSection}>
+            <div className={styles.workspaceStaffSectionHeader}>
+              <h3 className={styles.onboardingFormSectionTitle}>
+                <Users
+                  size={15}
+                  style={{ color: "var(--security-blue)" }}
+                  aria-hidden="true"
+                />
+                <span>{staffCopy.assigned.sectionTitle}</span>
+              </h3>
+
+              <div className={styles.workspaceStaffSectionControls}>
+                {assignmentsState.status === "ready" && assignmentsPageData && (
+                  <span className={styles.tabCount}>
+                    {staffCopy.assigned.totalBadge.replace(
+                      "{count}",
+                      String(assignmentsTotalElements),
+                    )}
+                  </span>
+                )}
+                <select
+                  className={styles.control}
+                  aria-label={staffCopy.assigned.pageSizeAria}
+                  value={currentAssignmentsSize}
+                  onChange={(e) =>
+                    handleAssignmentsPageSizeChange(Number(e.target.value))
+                  }
+                  disabled={isAssignmentsLoading}
+                >
+                  {PAGE_SIZE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt} {staffCopy.assigned.perPageSuffix}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={handleRetryOrRefreshAssignments}
+                  disabled={isAssignmentsLoading}
+                  aria-busy={isAssignmentsLoading}
+                  aria-label={staffCopy.assigned.refreshBtn}
+                  title={staffCopy.assigned.refreshBtn}
+                >
+                  <RefreshCw size={14} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {isAssignmentsLoading && (
+              <div
+                className={styles.workspaceStateBox}
+                role="status"
+                aria-live="polite"
+              >
+                <strong className={styles.workspaceStateTitle}>
+                  {staffCopy.assigned.states.loadingTitle}
+                </strong>
+                <span className={styles.workspaceStateDesc}>
+                  {staffCopy.assigned.states.loadingDesc}
+                </span>
+              </div>
+            )}
+
+            {assignmentsState.status === "forbidden" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <ShieldAlert
+                  size={22}
+                  color="var(--high-text)"
+                  aria-hidden="true"
+                />
+                <h4 className={styles.workspaceStateTitle}>
+                  {staffCopy.assigned.states.forbiddenTitle}
+                </h4>
+                <p className={styles.workspaceStateDesc}>
+                  {staffCopy.assigned.states.forbiddenDesc}
+                </p>
+              </div>
+            )}
+
+            {assignmentsState.status === "not_found" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <AlertCircle
+                  size={22}
+                  color="var(--security-orange)"
+                  aria-hidden="true"
+                />
+                <h4 className={styles.workspaceStateTitle}>
+                  {staffCopy.assigned.states.notFoundTitle}
+                </h4>
+                <p className={styles.workspaceStateDesc}>
+                  {staffCopy.assigned.states.notFoundDesc}
+                </p>
+              </div>
+            )}
+
+            {assignmentsState.status === "error" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <AlertCircle
+                  size={22}
+                  color="var(--critical-text)"
+                  aria-hidden="true"
+                />
+                <h4 className={styles.workspaceStateTitle}>
+                  {staffCopy.assigned.states.errorTitle}
+                </h4>
+                <p className={styles.workspaceStateDesc}>
+                  {staffCopy.assigned.states.errorDesc}
+                </p>
+                <div className={styles.workspaceStateActions}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={handleRetryOrRefreshAssignments}
+                  >
+                    <RefreshCw size={14} aria-hidden="true" />
+                    <span>{staffCopy.assigned.states.retryBtn}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {assignmentsState.status === "ready" && assignedItems.length === 0 && (
+              <div className={styles.workspaceStateBox}>
+                <strong className={styles.workspaceStateTitle}>
+                  {staffCopy.assigned.states.emptyTitle}
+                </strong>
+                <span className={styles.workspaceStateDesc}>
+                  {staffCopy.assigned.states.emptyDesc}
+                </span>
+              </div>
+            )}
+
+            {assignmentsState.status === "ready" && assignedItems.length > 0 && (
+              <ul className={styles.workspaceStaffList}>
+                {assignedItems.map((assignment) => {
+                  const exactKnownLogin = knownStaffLoginsById.get(
+                    assignment.staffId,
+                  );
+                  return (
+                    <li
+                      key={assignment.staffId}
+                      className={styles.workspaceStaffAssignedRow}
+                    >
+                      <div className={styles.workspaceStaffIdentityBlock}>
+                        {exactKnownLogin && (
+                          <strong className={styles.workspaceStaffPrimaryLogin}>
+                            {exactKnownLogin}
+                          </strong>
+                        )}
+                        <span className={styles.workspaceStaffIdLine}>
+                          <span>{staffCopy.assigned.staffIdLabel}:</span>
+                          <code className={styles.workspaceKeyCode}>
+                            {assignment.staffId}
+                          </code>
+                        </span>
+                      </div>
+                      <div className={styles.workspaceStaffTimeBlock}>
+                        <span>{staffCopy.assigned.assignedAtLabel}</span>
+                        <span>
+                          {formatWorkspaceTimestamp(
+                            assignment.assignedAt,
+                            language,
+                            copy.emptyValue,
+                          )}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {assignmentsState.status === "ready" &&
+              assignmentsTotalElements > 0 && (
+                <div
+                  className={`${styles.pagination} ${styles.workspaceHistoryPagination}`}
+                >
+                  <span className={styles.paginationInfo}>
+                    {assignmentsRangeText}
+                  </span>
+                  <div className={styles.paginationControls}>
+                    <button
+                      type="button"
+                      className={styles.paginationBtn}
+                      onClick={() =>
+                        handleAssignmentsPageChange(currentAssignmentsPage - 1)
+                      }
+                      disabled={
+                        isAssignmentsLoading || currentAssignmentsPage <= 0
+                      }
+                    >
+                      {copy.pagination.previous}
+                    </button>
+
+                    {assignmentsPaginationTokens.map((token) =>
+                      typeof token === "number" ? (
+                        <button
+                          key={token}
+                          type="button"
+                          className={`${styles.paginationBtn} ${
+                            token === currentAssignmentsPage
+                              ? styles.paginationBtnActive
+                              : ""
+                          }`}
+                          aria-label={copy.pagination.goToPageAria.replace(
+                            "{page}",
+                            String(token + 1),
+                          )}
+                          aria-current={
+                            token === currentAssignmentsPage ? "page" : undefined
+                          }
+                          onClick={() => handleAssignmentsPageChange(token)}
+                          disabled={isAssignmentsLoading}
+                        >
+                          {token + 1}
+                        </button>
+                      ) : (
+                        <span
+                          key={token}
+                          className={styles.workspacePaginationEllipsis}
+                          aria-hidden="true"
+                        >
+                          ...
+                        </span>
+                      ),
+                    )}
+
+                    <button
+                      type="button"
+                      className={styles.paginationBtn}
+                      onClick={() =>
+                        handleAssignmentsPageChange(currentAssignmentsPage + 1)
+                      }
+                      disabled={
+                        isAssignmentsLoading ||
+                        assignmentsTotalPages === 0 ||
+                        currentAssignmentsPage + 1 >= assignmentsTotalPages
+                      }
+                    >
+                      {copy.pagination.next}
+                    </button>
+                  </div>
+                </div>
+              )}
+          </section>
+
+          <section className={styles.onboardingFormSection}>
+            <div className={styles.workspaceStaffSectionHeader}>
+              <h3 className={styles.onboardingFormSectionTitle}>
+                <UserPlus
+                  size={15}
+                  style={{ color: "var(--security-blue)" }}
+                  aria-hidden="true"
+                />
+                <span>{staffCopy.assign.sectionTitle}</span>
+              </h3>
+
+              <div className={styles.workspaceStaffSectionControls}>
+                {eligibleState.status === "ready" && eligiblePageData && (
+                  <span className={styles.tabCount}>
+                    {staffCopy.assign.totalBadge.replace(
+                      "{count}",
+                      String(eligibleTotalElements),
+                    )}
+                  </span>
+                )}
+                <select
+                  className={styles.control}
+                  aria-label={staffCopy.assign.pageSizeAria}
+                  value={currentEligibleSize}
+                  onChange={(e) =>
+                    handleEligiblePageSizeChange(Number(e.target.value))
+                  }
+                  disabled={isEligibleLoading}
+                >
+                  {PAGE_SIZE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt} {staffCopy.assign.perPageSuffix}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={handleRetryOrRefreshEligible}
+                  disabled={isEligibleLoading}
+                  aria-busy={isEligibleLoading}
+                  aria-label={staffCopy.assign.refreshEligibleBtn}
+                  title={staffCopy.assign.refreshEligibleBtn}
+                >
+                  <RefreshCw size={14} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <p className={styles.workspaceStaffSectionHint}>
+              {staffCopy.assign.sectionHint}
+            </p>
+
+            <form
+              className={styles.workspaceStaffSearchRow}
+              onSubmit={handleEligibleSearchFormSubmit}
+              role="search"
+            >
+              <div className={styles.onboardingSearchBox}>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  type="search"
+                  name="eligibleStaffSearch"
+                  className={`${styles.onboardingSearchInput} ${styles.searchInput}`}
+                  aria-label={staffCopy.assign.searchLabel}
+                  placeholder={staffCopy.assign.searchPlaceholder}
+                  value={eligibleSearchInput}
+                  maxLength={MAX_WORKSPACE_SEARCH_LENGTH}
+                  onChange={(e) => handleEligibleSearchInputChange(e.target.value)}
+                  aria-invalid={Boolean(eligibleSearchError)}
+                />
+              </div>
+
+              {(eligibleSearchInput.length > 0 ||
+                eligibleQuery.search.length > 0) && (
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={handleClearEligibleSearch}
+                >
+                  <X size={14} aria-hidden="true" />
+                  <span>{staffCopy.assign.clearSearchBtn}</span>
+                </button>
+              )}
+            </form>
+
+            {eligibleSearchError && (
+              <div className={styles.workspaceInlineError} role="alert">
+                <AlertCircle size={15} aria-hidden="true" />
+                <span>{eligibleSearchError}</span>
+              </div>
+            )}
+
+            {isEligibleLoading && (
+              <div
+                className={styles.workspaceStateBox}
+                role="status"
+                aria-live="polite"
+              >
+                <strong className={styles.workspaceStateTitle}>
+                  {staffCopy.assign.states.loadingTitle}
+                </strong>
+                <span className={styles.workspaceStateDesc}>
+                  {staffCopy.assign.states.loadingDesc}
+                </span>
+              </div>
+            )}
+
+            {eligibleState.status === "forbidden" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <ShieldAlert
+                  size={22}
+                  color="var(--high-text)"
+                  aria-hidden="true"
+                />
+                <h4 className={styles.workspaceStateTitle}>
+                  {staffCopy.assign.states.forbiddenTitle}
+                </h4>
+                <p className={styles.workspaceStateDesc}>
+                  {staffCopy.assign.states.forbiddenDesc}
+                </p>
+              </div>
+            )}
+
+            {eligibleState.status === "not_found" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <AlertCircle
+                  size={22}
+                  color="var(--security-orange)"
+                  aria-hidden="true"
+                />
+                <h4 className={styles.workspaceStateTitle}>
+                  {staffCopy.assign.states.notFoundTitle}
+                </h4>
+                <p className={styles.workspaceStateDesc}>
+                  {staffCopy.assign.states.notFoundDesc}
+                </p>
+              </div>
+            )}
+
+            {eligibleState.status === "error" && (
+              <div className={styles.workspaceStateBox} role="alert">
+                <AlertCircle
+                  size={22}
+                  color="var(--critical-text)"
+                  aria-hidden="true"
+                />
+                <h4 className={styles.workspaceStateTitle}>
+                  {staffCopy.assign.states.errorTitle}
+                </h4>
+                <p className={styles.workspaceStateDesc}>
+                  {staffCopy.assign.states.errorDesc}
+                </p>
+                <div className={styles.workspaceStateActions}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={handleRetryOrRefreshEligible}
+                  >
+                    <RefreshCw size={14} aria-hidden="true" />
+                    <span>{staffCopy.assign.states.retryBtn}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {eligibleState.status === "ready" &&
+              eligibleItems.length === 0 &&
+              effectiveEligibleSearch === "" && (
+                <div className={styles.workspaceStateBox}>
+                  <strong className={styles.workspaceStateTitle}>
+                    {staffCopy.assign.states.emptyTitle}
+                  </strong>
+                  <span className={styles.workspaceStateDesc}>
+                    {staffCopy.assign.states.emptyDesc}
+                  </span>
+                </div>
+              )}
+
+            {eligibleState.status === "ready" &&
+              eligibleItems.length === 0 &&
+              effectiveEligibleSearch !== "" && (
+                <div className={styles.workspaceStateBox}>
+                  <strong className={styles.workspaceStateTitle}>
+                    {staffCopy.assign.states.noMatchesTitle}
+                  </strong>
+                  <span className={styles.workspaceStateDesc}>
+                    {staffCopy.assign.states.noMatchesDesc.replace(
+                      "{query}",
+                      effectiveEligibleSearch,
+                    )}
+                  </span>
+                  <div className={styles.workspaceStateActions}>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      onClick={handleClearEligibleSearch}
+                    >
+                      <X size={14} aria-hidden="true" />
+                      <span>{staffCopy.assign.clearSearchBtn}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {eligibleState.status === "ready" && eligibleItems.length > 0 && (
+              <fieldset className={styles.workspaceStaffCandidateGroup}>
+                <legend className={styles.workspaceStaffSrOnly}>
+                  {staffCopy.assign.candidateGroupLabel}
+                </legend>
+                {eligibleItems.map((candidate) => {
+                  const isSelected = selectedStaffId === candidate.id;
+                  const isKnownAssigned = confirmedAssignedStaffIds.has(
+                    candidate.id,
+                  );
+
+                  return (
+                    <label
+                      key={candidate.id}
+                      className={`${styles.workspaceStaffCandidateOption} ${
+                        isSelected ? styles.workspaceStaffCandidateSelected : ""
+                      }`}
+                    >
+                      <div className={styles.workspaceStaffCandidateLeft}>
+                        <input
+                          type="radio"
+                          name="eligibleStaffCandidate"
+                          className={styles.workspaceStaffRadioInput}
+                          value={candidate.id}
+                          checked={isSelected}
+                          disabled={isAssigning || isReloadingStaffStatus}
+                          aria-label={staffCopy.assign.selectStaffAria
+                            .replace("{loginName}", candidate.loginName)
+                            .replace("{staffId}", candidate.id)}
+                          onChange={() => handleSelectEligibleStaff(candidate)}
+                        />
+                        <div className={styles.workspaceStaffIdentityBlock}>
+                          <strong className={styles.workspaceStaffPrimaryLogin}>
+                            {candidate.loginName}
+                          </strong>
+                          <span className={styles.workspaceStaffIdLine}>
+                            <span>{staffCopy.assigned.staffIdLabel}:</span>
+                            <code className={styles.workspaceKeyCode}>
+                              {candidate.id}
+                            </code>
+                          </span>
+                        </div>
+                      </div>
+
+                      {(isKnownAssigned || isSelected) && (
+                        <div className={styles.workspaceStaffBadgeRow}>
+                          {isKnownAssigned && (
+                            <span className={styles.workspaceStaffStatusBadge}>
+                              {staffCopy.assign.alreadyAssignedBadge}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className={styles.workspaceStaffSelectedBadge}>
+                              {staffCopy.assign.selectedBadge}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </label>
+                  );
+                })}
+              </fieldset>
+            )}
+
+            {eligibleState.status === "ready" && eligibleTotalElements > 0 && (
+              <div
+                className={`${styles.pagination} ${styles.workspaceHistoryPagination}`}
+              >
+                <span className={styles.paginationInfo}>{eligibleRangeText}</span>
+                <div className={styles.paginationControls}>
+                  <button
+                    type="button"
+                    className={styles.paginationBtn}
+                    onClick={() =>
+                      handleEligiblePageChange(currentEligiblePage - 1)
+                    }
+                    disabled={isEligibleLoading || currentEligiblePage <= 0}
+                  >
+                    {copy.pagination.previous}
+                  </button>
+
+                  {eligiblePaginationTokens.map((token) =>
+                    typeof token === "number" ? (
+                      <button
+                        key={token}
+                        type="button"
+                        className={`${styles.paginationBtn} ${
+                          token === currentEligiblePage
+                            ? styles.paginationBtnActive
+                            : ""
+                        }`}
+                        aria-label={copy.pagination.goToPageAria.replace(
+                          "{page}",
+                          String(token + 1),
+                        )}
+                        aria-current={
+                          token === currentEligiblePage ? "page" : undefined
+                        }
+                        onClick={() => handleEligiblePageChange(token)}
+                        disabled={isEligibleLoading}
+                      >
+                        {token + 1}
+                      </button>
+                    ) : (
+                      <span
+                        key={token}
+                        className={styles.workspacePaginationEllipsis}
+                        aria-hidden="true"
+                      >
+                        ...
+                      </span>
+                    ),
+                  )}
+
+                  <button
+                    type="button"
+                    className={styles.paginationBtn}
+                    onClick={() =>
+                      handleEligiblePageChange(currentEligiblePage + 1)
+                    }
+                    disabled={
+                      isEligibleLoading ||
+                      eligibleTotalPages === 0 ||
+                      currentEligiblePage + 1 >= eligibleTotalPages
+                    }
+                  >
+                    {copy.pagination.next}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {eligibleState.status !== "forbidden" &&
+              eligibleState.status !== "not_found" && (
+                <div className={styles.workspaceStaffAssignBar}>
+                  <span className={styles.workspaceStaffSectionHint}>
+                    {!hasLoadedAssignmentVersion
+                      ? staffCopy.assign.waitingVersionHint
+                      : !selectedStaffId
+                        ? staffCopy.assign.selectPromptHint
+                        : ""}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={() => void handleAssignStaffSubmit()}
+                    disabled={!canAssignNow}
+                    aria-busy={isAssigning}
+                  >
+                    <UserPlus size={14} aria-hidden="true" />
+                    <span>
+                      {isAssigning
+                        ? staffCopy.assign.assigningBtn
+                        : staffCopy.assign.assignBtn}
+                    </span>
+                  </button>
+                </div>
+              )}
+          </section>
+        </div>
+
+        <div className={styles.onboardingModalFooter}>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            onClick={handleCloseDetail}
+          >
+            {detailCopy.closeBtn}
+          </button>
+        </div>
+      </>
+    );
+  };
+
   const renderDetailModal = () => {
     if (!detailState.open) {
       return null;
@@ -1964,6 +3984,11 @@ export function PlatformWorkspaceListView({
     const isDetailLoading = detailState.status === "loading";
     const isEditing = modalMode === "edit";
     const isHistory = modalMode === "history";
+    const isStaff = modalMode === "staff";
+    const isDetailOutdated =
+      detailState.detail !== null &&
+      knownWorkspaceVersion !== null &&
+      knownWorkspaceVersion > detailState.detail.version;
     const canShowReadyActions =
       detailState.status === "ready" &&
       detailState.detail !== null &&
@@ -1985,7 +4010,16 @@ export function PlatformWorkspaceListView({
           aria-modal="true"
           aria-labelledby="platform-workspace-detail-title"
           aria-busy={
-            isDetailLoading || isSaving || (isHistory && isHistoryLoading)
+            isDetailLoading ||
+            isRefreshingDetail ||
+            isPreparingEdit ||
+            isSaving ||
+            (isHistory && isHistoryLoading) ||
+            (isStaff &&
+              (isAssignmentsLoading ||
+                isEligibleLoading ||
+                isAssigning ||
+                isReloadingStaffStatus))
           }
           tabIndex={-1}
         >
@@ -2004,7 +4038,11 @@ export function PlatformWorkspaceListView({
                   {modalTitle}
                 </h2>
                 <p className={styles.onboardingCardSub}>
-                  {isHistory ? historyCopy.subtitle : detailCopy.subtitle}
+                  {isHistory
+                    ? historyCopy.subtitle
+                    : isStaff
+                      ? staffCopy.subtitle
+                      : detailCopy.subtitle}
                 </p>
               </div>
             </div>
@@ -2020,6 +4058,8 @@ export function PlatformWorkspaceListView({
 
           {isHistory ? (
             renderHistoryMode()
+          ) : isStaff ? (
+            renderStaffMode()
           ) : isEditing &&
             detailState.status === "ready" &&
             detailState.detail ? (
@@ -2357,6 +4397,56 @@ export function PlatformWorkspaceListView({
 
                 {detailState.status === "ready" && detailState.detail && (
                   <>
+                    {detailRefreshError && (
+                      <div
+                        className={styles.workspaceEditErrorBanner}
+                        role="alert"
+                      >
+                        <div className={styles.workspaceBannerRow}>
+                          <AlertCircle size={16} aria-hidden="true" />
+                          <span>{detailRefreshError}</span>
+                        </div>
+                        <div className={styles.workspaceBannerActions}>
+                          <button
+                            type="button"
+                            className={styles.btnSecondary}
+                            onClick={() =>
+                              void refreshWorkspaceDetail(
+                                detailState.workspaceId,
+                                {
+                                  openEditWhenReady:
+                                    lastRefreshIntentEditRef.current,
+                                },
+                              )
+                            }
+                            disabled={isRefreshingDetail}
+                            aria-busy={isRefreshingDetail}
+                          >
+                            <RefreshCw size={14} aria-hidden="true" />
+                            <span>
+                              {isRefreshingDetail
+                                ? editCopy.reloadingCurrentBtn
+                                : detailCopy.retryBtn}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!detailRefreshError &&
+                      isRefreshingDetail &&
+                      isDetailOutdated && (
+                        <div
+                          className={styles.workspaceNoticeBanner}
+                          role="status"
+                        >
+                          <div className={styles.workspaceBannerRow}>
+                            <RefreshCw size={16} aria-hidden="true" />
+                            <span>{editCopy.refreshingBeforeEditNotice}</span>
+                          </div>
+                        </div>
+                      )}
+
                     {viewNotice && (
                       <div
                         className={styles.workspaceNoticeBanner}
@@ -2467,6 +4557,14 @@ export function PlatformWorkspaceListView({
                     <button
                       type="button"
                       className={styles.btnSecondary}
+                      onClick={handleOpenStaff}
+                    >
+                      <Users size={14} aria-hidden="true" />
+                      <span>{staffCopy.openBtn}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
                       onClick={handleOpenHistory}
                     >
                       <History size={14} aria-hidden="true" />
@@ -2476,9 +4574,15 @@ export function PlatformWorkspaceListView({
                       type="button"
                       className={styles.btnPrimary}
                       onClick={handleStartEdit}
+                      disabled={isPreparingEdit}
+                      aria-busy={isPreparingEdit}
                     >
                       <Pencil size={14} aria-hidden="true" />
-                      <span>{editCopy.editBtn}</span>
+                      <span>
+                        {isPreparingEdit
+                          ? editCopy.reloadingCurrentBtn
+                          : editCopy.editBtn}
+                      </span>
                     </button>
                   </>
                 )}

@@ -1342,6 +1342,7 @@ const rawTranslations = {
         "savedNotice": "Đã lưu thông tin doanh nghiệp.",
         "reloadedCurrentNotice": "Đã tải lại dữ liệu mới nhất từ máy chủ. Hãy kiểm tra trước khi lưu.",
         "reconnectedUnchangedNotice": "Đã kết nối lại: hồ sơ trên máy chủ chưa thay đổi. Bạn có thể bấm Lưu để gửi lại thay đổi.",
+        "refreshingBeforeEditNotice": "Hồ sơ vừa có cập nhật mới trên máy chủ. Đang tải lại thông tin doanh nghiệp mới nhất...",
         "errors": {
           "enterpriseNameRequired": "Vui lòng nhập tên doanh nghiệp.",
           "enterpriseNameTooLong": "Tên doanh nghiệp không được vượt quá 255 ký tự.",
@@ -1357,7 +1358,9 @@ const rawTranslations = {
           "staleVersionConflict": "Hồ sơ đã được cập nhật ở phiên làm việc khác nên phiên bản không còn khớp. Nội dung bạn đang nhập vẫn được giữ; hãy tải lại dữ liệu hiện tại trước khi lưu.",
           "duplicateNameConflict": "Tên doanh nghiệp này đã tồn tại trên hệ thống. Vui lòng chọn tên doanh nghiệp khác.",
           "genericConflict": "Không thể lưu do xung đột dữ liệu: tên doanh nghiệp có thể đã tồn tại hoặc hồ sơ vừa được cập nhật ở phiên khác. Nội dung bạn đang nhập vẫn được giữ.",
-          "saveUnavailable": "Mất kết nối hoặc máy chủ không phản hồi trong lúc lưu. Nội dung bạn vừa nhập vẫn được giữ; hãy kiểm tra lại trạng thái hồ sơ trước khi lưu tiếp."
+          "saveUnavailable": "Mất kết nối hoặc máy chủ không phản hồi trong lúc lưu. Nội dung bạn vừa nhập vẫn được giữ; hãy kiểm tra lại trạng thái hồ sơ trước khi lưu tiếp.",
+          "refreshBeforeEditFailed": "Hồ sơ đã có phiên bản mới trên máy chủ nhưng chưa thể tải lại thông tin chi tiết. Vui lòng thử lại trước khi chỉnh sửa.",
+          "reloadCurrentFailed": "Không thể tải lại dữ liệu hiện tại từ máy chủ. Bản nháp và phiên bản đang mở vẫn được giữ nguyên; vui lòng thử lại."
         }
       },
       "history": {
@@ -1414,6 +1417,90 @@ const rawTranslations = {
           "errorTitle": "Không thể tải lịch sử thay đổi",
           "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Thông tin doanh nghiệp đã tải vẫn được giữ nguyên.",
           "retryBtn": "Thử lại"
+        }
+      },
+      "staff": {
+        "openBtn": "Nhân sự phụ trách",
+        "backToInfoBtn": "Quay lại thông tin doanh nghiệp",
+        "subtitle": "Nhân sự triển khai phụ trách không gian làm việc",
+        "assigned": {
+          "sectionTitle": "Nhân sự đang phụ trách",
+          "totalBadge": "{count} nhân sự",
+          "refreshBtn": "Làm mới danh sách phụ trách",
+          "pageSizeAria": "Số nhân sự phụ trách mỗi trang",
+          "perPageSuffix": "/ trang",
+          "showingRange": "Hiển thị {from}-{to} trên tổng số {total} nhân sự phụ trách",
+          "staffIdLabel": "Mã nhân sự",
+          "assignedAtLabel": "Thời điểm phân công",
+          "states": {
+            "loadingTitle": "Đang tải danh sách nhân sự phụ trách",
+            "loadingDesc": "Đang truy vấn các phân công hiện hành từ máy chủ...",
+            "emptyTitle": "Chưa có nhân sự phụ trách",
+            "emptyDesc": "Doanh nghiệp này hiện chưa có Implementation Staff nào được phân công.",
+            "forbiddenTitle": "Không có quyền xem nhân sự phụ trách",
+            "forbiddenDesc": "Máy chủ từ chối quyền xem danh sách phân công đối với phiên hiện tại.",
+            "notFoundTitle": "Không tìm thấy doanh nghiệp",
+            "notFoundDesc": "Hồ sơ doanh nghiệp không tồn tại hoặc hiện không còn khả dụng.",
+            "errorTitle": "Không thể tải danh sách nhân sự phụ trách",
+            "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Vui lòng thử lại.",
+            "retryBtn": "Thử lại"
+          }
+        },
+        "assign": {
+          "sectionTitle": "Phân công Implementation Staff",
+          "sectionHint": "Tìm theo tên đăng nhập, chọn một nhân sự đủ điều kiện rồi bấm Phân công.",
+          "searchLabel": "Tìm Implementation Staff theo tên đăng nhập",
+          "searchPlaceholder": "Nhập tên đăng nhập nhân sự...",
+          "clearSearchBtn": "Xóa tìm kiếm",
+          "refreshEligibleBtn": "Làm mới danh sách chọn",
+          "pageSizeAria": "Số kết quả nhân sự mỗi trang",
+          "perPageSuffix": "/ trang",
+          "totalBadge": "{count} kết quả",
+          "showingRange": "Hiển thị {from}-{to} trên tổng số {total} nhân sự đủ điều kiện",
+          "candidateGroupLabel": "Danh sách Implementation Staff đủ điều kiện",
+          "selectStaffAria": "Chọn nhân sự {loginName} (Mã nhân sự {staffId})",
+          "selectedBadge": "Đang chọn",
+          "alreadyAssignedBadge": "Đang phụ trách",
+          "assignBtn": "Phân công",
+          "assigningBtn": "Đang phân công...",
+          "selectPromptHint": "Chọn một nhân sự trong danh sách trên để bật nút Phân công.",
+          "waitingVersionHint": "Cần tải xong danh sách nhân sự đang phụ trách để đồng bộ phiên bản trước khi phân công.",
+          "reloadAssignmentsBtn": "Tải lại danh sách phân công",
+          "reloadingAssignmentsBtn": "Đang tải lại...",
+          "reloadCurrentStatusBtn": "Tải lại trạng thái hiện tại",
+          "reloadingCurrentStatusBtn": "Đang kiểm tra...",
+          "notices": {
+            "assignedSuccess": "Đã phân công nhân sự phụ trách doanh nghiệp.",
+            "alreadyAssignedNoop": "Nhân sự này đã nằm trong danh sách phụ trách hiện tại; hệ thống giữ nguyên phân công và không tạo thêm sự kiện lịch sử.",
+            "reloadedVersionNotice": "Đã tải lại danh sách phân công và cập nhật phiên bản mới nhất. Hãy kiểm tra trước khi bấm Phân công.",
+            "reconnectedAssignedNotice": "Đã tải lại trạng thái hiện tại: nhân sự đang chọn đã có trong danh sách phụ trách.",
+            "reconnectedNotConfirmedNotice": "Đã tải lại trạng thái hiện tại với phiên bản mới nhất. Hãy kiểm tra danh sách rồi bấm Phân công nếu cần thực hiện lại."
+          },
+          "states": {
+            "loadingTitle": "Đang tải danh sách nhân sự đủ điều kiện",
+            "loadingDesc": "Đang truy vấn danh mục Implementation Staff từ máy chủ...",
+            "emptyTitle": "Chưa có nhân sự đủ điều kiện",
+            "emptyDesc": "Hệ thống hiện chưa có tài khoản Implementation Staff đang kích hoạt.",
+            "noMatchesTitle": "Không tìm thấy nhân sự phù hợp",
+            "noMatchesDesc": "Không có tài khoản Implementation Staff nào khớp với từ khóa \"{query}\".",
+            "forbiddenTitle": "Không có quyền phân công nhân sự",
+            "forbiddenDesc": "Chỉ tài khoản Quản trị nền tảng (Platform Admin) mới có quyền tra cứu và phân công Implementation Staff.",
+            "notFoundTitle": "Không tìm thấy doanh nghiệp",
+            "notFoundDesc": "Hồ sơ doanh nghiệp không tồn tại hoặc hiện không còn khả dụng.",
+            "errorTitle": "Không thể tải danh sách nhân sự để chọn",
+            "errorDesc": "Dịch vụ xác thực/workspace chưa phản hồi hoặc trả về lỗi. Vui lòng thử lại.",
+            "retryBtn": "Thử lại"
+          },
+          "errors": {
+            "searchTooLong": "Từ khóa tìm kiếm nhân sự không được vượt quá 100 ký tự.",
+            "staffSelectionRequired": "Vui lòng chọn một Implementation Staff trước khi phân công.",
+            "staleVersionConflict": "Hồ sơ doanh nghiệp đã thay đổi ở phiên làm việc khác nên phiên bản không còn khớp. Hãy tải lại danh sách phân công để lấy phiên bản mới trước khi thực hiện lại.",
+            "ineligibleOrInvalid": "Tài khoản nhân sự đã chọn không còn đủ điều kiện phân công. Hãy làm mới danh sách nhân sự để chọn lại.",
+            "forbiddenAssign": "Phiên hiện tại không có quyền phân công nhân sự cho doanh nghiệp này.",
+            "notFoundAssign": "Không tìm thấy hồ sơ doanh nghiệp hoặc doanh nghiệp không còn khả dụng.",
+            "csrfRejected": "Yêu cầu bị từ chối do không khớp nguồn gửi của ứng dụng. Hãy tải lại trang và thử lại.",
+            "assignUnavailable": "Mất kết nối hoặc máy chủ không phản hồi trong lúc phân công. Hãy tải lại trạng thái hiện tại trước khi quyết định thử lại."
+          }
         }
       }
     }
@@ -2760,6 +2847,7 @@ const rawTranslations = {
         "savedNotice": "Enterprise details saved.",
         "reloadedCurrentNotice": "Reloaded the latest server record. Review the current values before saving.",
         "reconnectedUnchangedNotice": "Reconnected: the server record has not changed. You can click Save to submit your edits.",
+        "refreshingBeforeEditNotice": "New updates were recorded on the server. Reloading the latest enterprise details...",
         "errors": {
           "enterpriseNameRequired": "Please enter the enterprise name.",
           "enterpriseNameTooLong": "Enterprise name must be 255 characters or fewer.",
@@ -2775,7 +2863,9 @@ const rawTranslations = {
           "staleVersionConflict": "This record was updated in another session and your version is out of date. Your edits are preserved; reload the current data before saving.",
           "duplicateNameConflict": "An enterprise with this name already exists. Enter a different enterprise name.",
           "genericConflict": "Could not save due to a data conflict: the enterprise name may already exist or the record was updated concurrently. Your edits are preserved.",
-          "saveUnavailable": "Connection failed while saving. Your edits are preserved; check the record status before submitting again."
+          "saveUnavailable": "Connection failed while saving. Your edits are preserved; check the record status before submitting again.",
+          "refreshBeforeEditFailed": "A newer version exists on the server, but the latest enterprise details could not be loaded. Please retry before editing.",
+          "reloadCurrentFailed": "Unable to reload the current record from the server. Your open draft and version remain intact; please retry."
         }
       },
       "history": {
@@ -2832,6 +2922,90 @@ const rawTranslations = {
           "errorTitle": "Unable to load change history",
           "errorDesc": "The workspace service did not respond or returned an error. Your loaded enterprise details remain intact.",
           "retryBtn": "Retry"
+        }
+      },
+      "staff": {
+        "openBtn": "Assigned staff",
+        "backToInfoBtn": "Back to enterprise info",
+        "subtitle": "Implementation Staff assigned to this workspace",
+        "assigned": {
+          "sectionTitle": "Currently assigned staff",
+          "totalBadge": "{count} staff",
+          "refreshBtn": "Refresh assigned staff",
+          "pageSizeAria": "Assigned staff per page",
+          "perPageSuffix": "/ page",
+          "showingRange": "Showing {from}-{to} of {total} assigned staff",
+          "staffIdLabel": "Staff ID",
+          "assignedAtLabel": "Assigned at",
+          "states": {
+            "loadingTitle": "Loading assigned staff",
+            "loadingDesc": "Requesting active staff assignments from the server...",
+            "emptyTitle": "No assigned staff yet",
+            "emptyDesc": "No Implementation Staff members are currently assigned to this enterprise.",
+            "forbiddenTitle": "Permission required to view assigned staff",
+            "forbiddenDesc": "The server denied access to this workspace's staff assignments for your current session.",
+            "notFoundTitle": "Enterprise not found",
+            "notFoundDesc": "This enterprise record does not exist or is no longer available.",
+            "errorTitle": "Unable to load assigned staff",
+            "errorDesc": "The workspace service did not respond or returned an error. Please retry.",
+            "retryBtn": "Retry"
+          }
+        },
+        "assign": {
+          "sectionTitle": "Assign Implementation Staff",
+          "sectionHint": "Search by login identifier, select one eligible staff member, then click Assign.",
+          "searchLabel": "Search Implementation Staff by login identifier",
+          "searchPlaceholder": "Search by staff login identifier...",
+          "clearSearchBtn": "Clear search",
+          "refreshEligibleBtn": "Refresh eligible staff",
+          "pageSizeAria": "Eligible staff per page",
+          "perPageSuffix": "/ page",
+          "totalBadge": "{count} results",
+          "showingRange": "Showing {from}-{to} of {total} eligible staff",
+          "candidateGroupLabel": "Eligible Implementation Staff list",
+          "selectStaffAria": "Select staff {loginName} (Staff ID {staffId})",
+          "selectedBadge": "Selected",
+          "alreadyAssignedBadge": "Currently assigned",
+          "assignBtn": "Assign",
+          "assigningBtn": "Assigning...",
+          "selectPromptHint": "Select a staff member above to enable Assign.",
+          "waitingVersionHint": "Current assignments must finish loading to synchronize the record version before assigning.",
+          "reloadAssignmentsBtn": "Reload assignments",
+          "reloadingAssignmentsBtn": "Reloading...",
+          "reloadCurrentStatusBtn": "Reload current status",
+          "reloadingCurrentStatusBtn": "Checking...",
+          "notices": {
+            "assignedSuccess": "Assigned the selected staff member to this enterprise.",
+            "alreadyAssignedNoop": "This staff member is already assigned; the existing assignment was kept without recording a duplicate history event.",
+            "reloadedVersionNotice": "Reloaded current assignments and updated the record version. Review before clicking Assign.",
+            "reconnectedAssignedNotice": "Reloaded current status: the selected staff member is already assigned.",
+            "reconnectedNotConfirmedNotice": "Reloaded current status with the latest version. Review the list and click Assign if you still want to assign this staff member."
+          },
+          "states": {
+            "loadingTitle": "Loading eligible staff",
+            "loadingDesc": "Requesting eligible Implementation Staff accounts from the server...",
+            "emptyTitle": "No eligible staff available",
+            "emptyDesc": "No enabled Implementation Staff accounts are currently registered on the platform.",
+            "noMatchesTitle": "No matching staff found",
+            "noMatchesDesc": "No Implementation Staff login matched \"{query}\".",
+            "forbiddenTitle": "Permission required to assign staff",
+            "forbiddenDesc": "Only Platform Admin accounts can search and assign Implementation Staff.",
+            "notFoundTitle": "Enterprise not found",
+            "notFoundDesc": "This enterprise record does not exist or is no longer available.",
+            "errorTitle": "Unable to load eligible staff",
+            "errorDesc": "The workspace service did not respond or returned an error. Please retry.",
+            "retryBtn": "Retry"
+          },
+          "errors": {
+            "searchTooLong": "Staff search query must be 100 characters or fewer.",
+            "staffSelectionRequired": "Select an Implementation Staff member before assigning.",
+            "staleVersionConflict": "This enterprise record changed in another session and your version is out of date. Reload the assignments list to obtain the latest version before assigning.",
+            "ineligibleOrInvalid": "The selected account is no longer eligible for assignment. Refresh the eligible staff list and choose again.",
+            "forbiddenAssign": "Your current session does not have permission to assign staff to this enterprise.",
+            "notFoundAssign": "This enterprise record was not found or is no longer available.",
+            "csrfRejected": "Request rejected due to origin verification failure. Reload the page and try again.",
+            "assignUnavailable": "Connection failed while assigning staff. Reload the current status before deciding whether to retry."
+          }
         }
       }
     }

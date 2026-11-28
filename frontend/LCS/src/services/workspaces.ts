@@ -1,9 +1,15 @@
 import type {
+  NormalizedWorkspaceEligibleStaffQuery,
   NormalizedWorkspaceHistoryQuery,
   NormalizedWorkspaceListQuery,
+  NormalizedWorkspaceStaffAssignmentsQuery,
   WorkspaceApiErrorBody,
+  WorkspaceAssignStaffPayload,
   WorkspaceConflictReason,
   WorkspaceDirectoryItem,
+  WorkspaceEligibleStaffItem,
+  WorkspaceEligibleStaffPageResponse,
+  WorkspaceEligibleStaffQuery,
   WorkspaceErrorCode,
   WorkspaceHistoryItem,
   WorkspaceHistoryPageResponse,
@@ -11,6 +17,10 @@ import type {
   WorkspaceListQuery,
   WorkspaceMetadataUpdatePayload,
   WorkspacePageResponse,
+  WorkspaceStaffAssignmentItem,
+  WorkspaceStaffAssignmentPageResponse,
+  WorkspaceStaffAssignmentResult,
+  WorkspaceStaffAssignmentsQuery,
 } from "@/types/workspace";
 import {
   AuthServiceError,
@@ -48,6 +58,8 @@ const ALLOWED_METADATA_KEYS = new Set([
   "contactEmail",
   "contactPhone",
 ]);
+
+const ALLOWED_STAFF_ASSIGNMENT_KEYS = new Set(["staffId", "version"]);
 
 export class WorkspaceServiceError extends Error {
   readonly code: WorkspaceErrorCode;
@@ -286,6 +298,54 @@ export function validateWorkspaceHistoryQuery(input: {
   return validateWorkspacePaginationBounds(input);
 }
 
+export function validateWorkspaceStaffAssignmentsQuery(input: {
+  readonly page?: string | number | null;
+  readonly size?: string | number | null;
+}): WorkspaceHistoryQueryValidationResult {
+  return validateWorkspacePaginationBounds(input);
+}
+
+export function validateWorkspaceEligibleStaffQuery(input: {
+  readonly search?: string | null;
+  readonly page?: string | number | null;
+  readonly size?: string | number | null;
+}): WorkspaceQueryValidationResult {
+  return validateWorkspaceListQuery(input);
+}
+
+export type WorkspaceAssignStaffValidationCode =
+  | "INVALID_STAFF_ID"
+  | "INVALID_VERSION";
+
+export type WorkspaceAssignStaffValidationResult =
+  | { readonly ok: true; readonly payload: WorkspaceAssignStaffPayload }
+  | { readonly ok: false; readonly code: WorkspaceAssignStaffValidationCode };
+
+export function validateWorkspaceAssignStaffInput(input: {
+  readonly staffId: unknown;
+  readonly version: unknown;
+}): WorkspaceAssignStaffValidationResult {
+  const validStaffId = validateWorkspaceId(input.staffId);
+  if (!validStaffId) {
+    return { ok: false, code: "INVALID_STAFF_ID" };
+  }
+  const version = input.version;
+  if (
+    typeof version !== "number" ||
+    !Number.isSafeInteger(version) ||
+    version < 0
+  ) {
+    return { ok: false, code: "INVALID_VERSION" };
+  }
+  return {
+    ok: true,
+    payload: {
+      staffId: validStaffId,
+      version,
+    },
+  };
+}
+
 export function validateWorkspaceListQuery(input: {
   readonly search?: string | null;
   readonly page?: string | number | null;
@@ -365,6 +425,31 @@ export function buildWorkspaceHistoryUpstreamPath(
   const basePath = buildWorkspaceDetailUpstreamPath(workspaceId);
   const qs = buildWorkspaceHistoryQueryParams(query).toString();
   return `${basePath}/history?${qs}`;
+}
+
+export function buildWorkspaceStaffAssignmentsUpstreamPath(
+  workspaceId: string,
+  query: NormalizedWorkspaceStaffAssignmentsQuery,
+): string {
+  const basePath = buildWorkspaceDetailUpstreamPath(workspaceId);
+  const qs = buildWorkspaceHistoryQueryParams(query).toString();
+  return `${basePath}/staff-assignments?${qs}`;
+}
+
+export function buildWorkspaceStaffAssignmentsMutationUpstreamPath(
+  workspaceId: string,
+): string {
+  const basePath = buildWorkspaceDetailUpstreamPath(workspaceId);
+  return `${basePath}/staff-assignments`;
+}
+
+export function buildWorkspaceEligibleStaffUpstreamPath(
+  workspaceId: string,
+  query: NormalizedWorkspaceEligibleStaffQuery,
+): string {
+  const basePath = buildWorkspaceDetailUpstreamPath(workspaceId);
+  const qs = buildWorkspaceQueryParams(query).toString();
+  return `${basePath}/eligible-staff?${qs}`;
 }
 
 export function parseWorkspaceDirectoryItem(
@@ -572,6 +657,195 @@ export function parseWorkspaceHistoryPagePayload(
     size,
     totalElements,
     totalPages,
+  };
+}
+
+export function parseWorkspaceStaffAssignmentItem(
+  value: unknown,
+): WorkspaceStaffAssignmentItem | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const staffId =
+    typeof record.staffId === "string" ? record.staffId.trim() : "";
+  const assignedAt =
+    typeof record.assignedAt === "string" ? record.assignedAt.trim() : "";
+
+  if (
+    !UUID_PATTERN.test(staffId) ||
+    !assignedAt ||
+    !Number.isFinite(Date.parse(assignedAt))
+  ) {
+    return null;
+  }
+
+  return {
+    staffId,
+    assignedAt,
+  };
+}
+
+export function parseWorkspaceStaffAssignmentPagePayload(
+  value: unknown,
+): WorkspaceStaffAssignmentPageResponse | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (!Array.isArray(record.items)) {
+    return null;
+  }
+
+  const workspaceVersion = record.workspaceVersion;
+  const page = record.page;
+  const size = record.size;
+  const totalElements = record.totalElements;
+  const totalPages = record.totalPages;
+
+  if (
+    typeof workspaceVersion !== "number" ||
+    !Number.isSafeInteger(workspaceVersion) ||
+    workspaceVersion < 0 ||
+    typeof page !== "number" ||
+    !Number.isInteger(page) ||
+    page < 0 ||
+    typeof size !== "number" ||
+    !Number.isInteger(size) ||
+    size < 1 ||
+    size > MAX_WORKSPACE_PAGE_SIZE ||
+    typeof totalElements !== "number" ||
+    !Number.isInteger(totalElements) ||
+    totalElements < 0 ||
+    typeof totalPages !== "number" ||
+    !Number.isInteger(totalPages) ||
+    totalPages < 0
+  ) {
+    return null;
+  }
+
+  const items: WorkspaceStaffAssignmentItem[] = [];
+  for (const rawItem of record.items) {
+    const parsedItem = parseWorkspaceStaffAssignmentItem(rawItem);
+    if (!parsedItem) {
+      return null;
+    }
+    items.push(parsedItem);
+  }
+
+  return {
+    items,
+    workspaceVersion,
+    page,
+    size,
+    totalElements,
+    totalPages,
+  };
+}
+
+export function parseWorkspaceEligibleStaffItem(
+  value: unknown,
+): WorkspaceEligibleStaffItem | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const id = typeof record.id === "string" ? record.id.trim() : "";
+  const loginName =
+    typeof record.loginName === "string" ? record.loginName.trim() : "";
+
+  if (!UUID_PATTERN.test(id) || !loginName || loginName.length > 128) {
+    return null;
+  }
+
+  return {
+    id,
+    loginName,
+  };
+}
+
+export function parseWorkspaceEligibleStaffPagePayload(
+  value: unknown,
+): WorkspaceEligibleStaffPageResponse | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (!Array.isArray(record.items)) {
+    return null;
+  }
+
+  const page = record.page;
+  const size = record.size;
+  const totalElements = record.totalElements;
+  const totalPages = record.totalPages;
+
+  if (
+    typeof page !== "number" ||
+    !Number.isInteger(page) ||
+    page < 0 ||
+    typeof size !== "number" ||
+    !Number.isInteger(size) ||
+    size < 1 ||
+    size > MAX_WORKSPACE_PAGE_SIZE ||
+    typeof totalElements !== "number" ||
+    !Number.isInteger(totalElements) ||
+    totalElements < 0 ||
+    typeof totalPages !== "number" ||
+    !Number.isInteger(totalPages) ||
+    totalPages < 0
+  ) {
+    return null;
+  }
+
+  const items: WorkspaceEligibleStaffItem[] = [];
+  for (const rawItem of record.items) {
+    const parsedItem = parseWorkspaceEligibleStaffItem(rawItem);
+    if (!parsedItem) {
+      return null;
+    }
+    items.push(parsedItem);
+  }
+
+  return {
+    items,
+    page,
+    size,
+    totalElements,
+    totalPages,
+  };
+}
+
+export function parseWorkspaceStaffAssignmentResult(
+  value: unknown,
+): WorkspaceStaffAssignmentResult | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const workspaceId =
+    typeof record.workspaceId === "string" ? record.workspaceId.trim() : "";
+  const staffId =
+    typeof record.staffId === "string" ? record.staffId.trim() : "";
+  const assigned = record.assigned;
+  const workspaceVersion = record.workspaceVersion;
+
+  if (
+    !UUID_PATTERN.test(workspaceId) ||
+    !UUID_PATTERN.test(staffId) ||
+    typeof assigned !== "boolean" ||
+    typeof workspaceVersion !== "number" ||
+    !Number.isSafeInteger(workspaceVersion) ||
+    workspaceVersion < 0
+  ) {
+    return null;
+  }
+
+  return {
+    workspaceId,
+    staffId,
+    assigned,
+    workspaceVersion,
   };
 }
 
@@ -811,6 +1085,208 @@ export async function handleWorkspaceHistoryBridgeRequest(
   );
 }
 
+export async function handleWorkspaceStaffAssignmentsBridgeRequest(
+  options: HandleWorkspaceDetailBridgeOptions,
+): Promise<BridgeResult> {
+  return executeAuthenticatedWorkspaceUpstreamGet(
+    options,
+    (parsedUrl) => {
+      const validId = validateWorkspaceId(options.workspaceId);
+      if (!validId) {
+        return { ok: false, detail: "INVALID_WORKSPACE_ID" };
+      }
+      const validated = validateWorkspaceStaffAssignmentsQuery({
+        page: parsedUrl.searchParams.get("page"),
+        size: parsedUrl.searchParams.get("size"),
+      });
+      if (!validated.ok) {
+        return { ok: false, detail: validated.detail };
+      }
+      return {
+        ok: true,
+        path: buildWorkspaceStaffAssignmentsUpstreamPath(
+          validId,
+          validated.query,
+        ),
+      };
+    },
+    (json) => {
+      const page = parseWorkspaceStaffAssignmentPagePayload(json);
+      return page ? (page as unknown as Record<string, unknown>) : null;
+    },
+    "Invalid workspace staff assignments response format.",
+  );
+}
+
+export async function handleWorkspaceEligibleStaffBridgeRequest(
+  options: HandleWorkspaceDetailBridgeOptions,
+): Promise<BridgeResult> {
+  return executeAuthenticatedWorkspaceUpstreamGet(
+    options,
+    (parsedUrl) => {
+      const validId = validateWorkspaceId(options.workspaceId);
+      if (!validId) {
+        return { ok: false, detail: "INVALID_WORKSPACE_ID" };
+      }
+      const validated = validateWorkspaceEligibleStaffQuery({
+        search: parsedUrl.searchParams.get("search"),
+        page: parsedUrl.searchParams.get("page"),
+        size: parsedUrl.searchParams.get("size"),
+      });
+      if (!validated.ok) {
+        return { ok: false, detail: validated.detail };
+      }
+      return {
+        ok: true,
+        path: buildWorkspaceEligibleStaffUpstreamPath(validId, validated.query),
+      };
+    },
+    (json) => {
+      const page = parseWorkspaceEligibleStaffPagePayload(json);
+      return page ? (page as unknown as Record<string, unknown>) : null;
+    },
+    "Invalid eligible staff response format.",
+  );
+}
+
+export async function handleWorkspaceStaffAssignBridgeRequest(
+  options: HandleWorkspaceUpdateBridgeOptions,
+): Promise<BridgeResult> {
+  const { method, workspaceId, requestUrl, headers, readBodyText } = options;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const env = options.env ?? process.env;
+
+  if (method !== "POST") {
+    return workspaceErrorResult(405, "VALIDATION_ERROR", "Method not allowed.");
+  }
+
+  const { origin: expectedOrigin, secure } = resolveExpectedOrigin(
+    headers,
+    requestUrl,
+  );
+  const csrfCheck = verifySameOriginMutation(headers, expectedOrigin);
+  if (!csrfCheck.ok) {
+    return workspaceErrorResult(403, "CSRF_REJECTED", csrfCheck.detail);
+  }
+
+  const token = extractAuthTokenFromCookieHeader(headers.get("cookie"));
+  if (!token) {
+    return workspaceErrorResult(401, "UNAUTHENTICATED");
+  }
+
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    return workspaceErrorResult(400, "VALIDATION_ERROR", "INVALID_WORKSPACE_ID");
+  }
+
+  const contentType = headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return workspaceErrorResult(
+      400,
+      "VALIDATION_ERROR",
+      "JSON request body is required.",
+    );
+  }
+
+  let parsedBody: Record<string, unknown>;
+  try {
+    const rawText = await readBodyText();
+    const candidate: unknown = rawText ? JSON.parse(rawText) : null;
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+      return workspaceErrorResult(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid JSON payload.",
+      );
+    }
+    parsedBody = candidate as Record<string, unknown>;
+  } catch {
+    return workspaceErrorResult(
+      400,
+      "VALIDATION_ERROR",
+      "Malformed JSON payload.",
+    );
+  }
+
+  for (const key of Object.keys(parsedBody)) {
+    if (!ALLOWED_STAFF_ASSIGNMENT_KEYS.has(key)) {
+      return workspaceErrorResult(
+        400,
+        "VALIDATION_ERROR",
+        "UNKNOWN_ASSIGNMENT_PROPERTY",
+      );
+    }
+  }
+
+  const validated = validateWorkspaceAssignStaffInput({
+    staffId: parsedBody.staffId,
+    version: parsedBody.version,
+  });
+  if (!validated.ok) {
+    return workspaceErrorResult(400, "VALIDATION_ERROR", validated.code);
+  }
+
+  let baseUrl: string;
+  try {
+    baseUrl = resolveBackendBaseUrl(env);
+  } catch (err) {
+    if (err instanceof AuthServiceError) {
+      return workspaceErrorResult(503, "BACKEND_UNAVAILABLE", err.detail);
+    }
+    return workspaceErrorResult(503, "BACKEND_UNAVAILABLE");
+  }
+
+  const upstreamPath =
+    buildWorkspaceStaffAssignmentsMutationUpstreamPath(validId);
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await callUpstream(
+      baseUrl,
+      upstreamPath,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          staffId: validated.payload.staffId,
+          version: validated.payload.version,
+        }),
+      },
+      fetchImpl,
+    );
+  } catch {
+    return workspaceErrorResult(503, "BACKEND_UNAVAILABLE");
+  }
+
+  const parsedUpstream = await parseUpstreamJsonOrText(upstreamRes);
+  if (!upstreamRes.ok) {
+    return mapUpstreamWorkspaceError(
+      upstreamRes.status,
+      parsedUpstream.detail,
+      secure,
+    );
+  }
+
+  const sanitizedResult = parseWorkspaceStaffAssignmentResult(
+    parsedUpstream.json,
+  );
+  if (!sanitizedResult) {
+    return workspaceErrorResult(
+      502,
+      "UPSTREAM_ERROR",
+      "Invalid workspace staff assignment response format.",
+    );
+  }
+
+  return {
+    status: 200,
+    body: sanitizedResult as unknown as Record<string, unknown>,
+  };
+}
+
 export async function handleWorkspaceUpdateBridgeRequest(
   options: HandleWorkspaceUpdateBridgeOptions,
 ): Promise<BridgeResult> {
@@ -964,7 +1440,7 @@ function isAbortError(err: unknown): boolean {
 async function fetchWorkspaceBridgeJson(
   url: string,
   options?: {
-    readonly method?: "GET" | "PUT";
+    readonly method?: "GET" | "PUT" | "POST";
     readonly body?: string;
     readonly csrf?: boolean;
     readonly signal?: AbortSignal;
@@ -1193,4 +1669,139 @@ export async function updateWorkspaceMetadata(
   }
 
   return item;
+}
+
+export async function fetchWorkspaceStaffAssignments(
+  workspaceId: string,
+  query: WorkspaceStaffAssignmentsQuery = {},
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspaceStaffAssignmentPageResponse> {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+
+  const validated = validateWorkspaceStaffAssignmentsQuery({
+    page: query.page,
+    size: query.size,
+  });
+  if (!validated.ok) {
+    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.detail);
+  }
+
+  const qs = buildWorkspaceHistoryQueryParams(validated.query).toString();
+  const data = await fetchWorkspaceBridgeJson(
+    `/api/workspaces/${encodeURIComponent(validId)}/staff-assignments?${qs}`,
+    options,
+  );
+
+  const pageResponse = parseWorkspaceStaffAssignmentPagePayload(data);
+  if (!pageResponse) {
+    throw new WorkspaceServiceError(
+      "UPSTREAM_ERROR",
+      502,
+      "Invalid workspace staff assignments payload.",
+    );
+  }
+
+  return pageResponse;
+}
+
+export async function fetchWorkspaceEligibleStaff(
+  workspaceId: string,
+  query: WorkspaceEligibleStaffQuery = {},
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspaceEligibleStaffPageResponse> {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+
+  const validated = validateWorkspaceEligibleStaffQuery({
+    search: query.search,
+    page: query.page,
+    size: query.size,
+  });
+  if (!validated.ok) {
+    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.detail);
+  }
+
+  const qs = buildWorkspaceQueryParams(validated.query).toString();
+  const data = await fetchWorkspaceBridgeJson(
+    `/api/workspaces/${encodeURIComponent(validId)}/eligible-staff?${qs}`,
+    options,
+  );
+
+  const pageResponse = parseWorkspaceEligibleStaffPagePayload(data);
+  if (!pageResponse) {
+    throw new WorkspaceServiceError(
+      "UPSTREAM_ERROR",
+      502,
+      "Invalid eligible staff payload.",
+    );
+  }
+
+  return pageResponse;
+}
+
+export async function assignWorkspaceStaff(
+  workspaceId: string,
+  payload: WorkspaceAssignStaffPayload,
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspaceStaffAssignmentResult> {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+
+  const validated = validateWorkspaceAssignStaffInput(payload);
+  if (!validated.ok) {
+    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.code);
+  }
+
+  const data = await fetchWorkspaceBridgeJson(
+    `/api/workspaces/${encodeURIComponent(validId)}/staff-assignments`,
+    {
+      method: "POST",
+      csrf: true,
+      body: JSON.stringify({
+        staffId: validated.payload.staffId,
+        version: validated.payload.version,
+      }),
+      signal: options?.signal,
+      fetchImpl: options?.fetchImpl,
+    },
+  );
+
+  const result = parseWorkspaceStaffAssignmentResult(data);
+  if (!result) {
+    throw new WorkspaceServiceError(
+      "UPSTREAM_ERROR",
+      502,
+      "Invalid workspace staff assignment result payload.",
+    );
+  }
+
+  return result;
 }
