@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { handleWorkspaceDetailBridgeRequest } from "@/services/workspaces";
+import {
+  handleWorkspaceDetailBridgeRequest,
+  handleWorkspaceUpdateBridgeRequest,
+} from "@/services/workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +35,21 @@ export async function GET(
     workspaceId: id,
     requestUrl: request.url,
     headers: request.headers,
+  });
+  return toNextResponse(result);
+}
+
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  const { id } = await context.params;
+  const result = await handleWorkspaceUpdateBridgeRequest({
+    method: "PUT",
+    workspaceId: id,
+    requestUrl: request.url,
+    headers: request.headers,
+    readBodyText: () => request.text(),
   });
   return toNextResponse(result);
 }

@@ -6138,3 +6138,53 @@
     margin-bottom: 0;
   }
 }
+
+
+.workspaceDetailEditForm {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspaceEditErrorBanner,
+.workspaceNoticeBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.workspaceEditErrorBanner {
+  border: 1px solid var(--critical-border);
+  background: var(--critical-bg);
+  color: var(--critical-text);
+}
+
+.workspaceNoticeBanner {
+  border: 1px solid var(--low-border);
+  background: var(--low-bg);
+  color: var(--low-text);
+}
+
+.workspaceBannerRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.workspaceBannerRow svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.workspaceBannerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
