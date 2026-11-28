@@ -10,6 +10,14 @@ export interface WorkspaceDirectoryItem {
   readonly updatedAt: string;
 }
 
+export interface WorkspaceMetadataUpdatePayload {
+  readonly version: number;
+  readonly enterpriseName: string;
+  readonly contactName: string;
+  readonly contactEmail: string;
+  readonly contactPhone: string | null;
+}
+
 export interface WorkspaceListQuery {
   readonly search?: string;
   readonly page?: number;
@@ -35,9 +43,16 @@ export type WorkspaceErrorCode =
   | "SESSION_EXPIRED"
   | "FORBIDDEN"
   | "NOT_FOUND"
+  | "CONFLICT"
+  | "CSRF_REJECTED"
   | "VALIDATION_ERROR"
   | "BACKEND_UNAVAILABLE"
   | "UPSTREAM_ERROR";
+
+export type WorkspaceConflictReason =
+  | "STALE_VERSION"
+  | "DUPLICATE_NAME"
+  | "UNKNOWN";
 
 export interface WorkspaceApiErrorBody {
   readonly errorCode: WorkspaceErrorCode;

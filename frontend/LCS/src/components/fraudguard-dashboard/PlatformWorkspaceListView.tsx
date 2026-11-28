@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Building2,
+  CheckCircle2,
   Clock,
+  Pencil,
   RefreshCw,
   Search,
   ShieldAlert,
@@ -17,14 +19,24 @@ import type {
   NormalizedWorkspaceListQuery,
   WorkspaceDirectoryItem,
   WorkspaceListQuery,
+  WorkspaceMetadataUpdatePayload,
   WorkspacePageResponse,
 } from "@/types/workspace";
 import {
   DEFAULT_WORKSPACE_PAGE_SIZE,
+  MAX_CONTACT_EMAIL_LENGTH,
+  MAX_CONTACT_NAME_LENGTH,
+  MAX_CONTACT_PHONE_LENGTH,
+  MAX_ENTERPRISE_NAME_LENGTH,
   MAX_WORKSPACE_SEARCH_LENGTH,
+  type WorkspaceMetadataField,
+  type WorkspaceMetadataValidationCode,
   WorkspaceServiceError,
+  classifyWorkspaceConflict,
   fetchWorkspaceDetail,
   fetchWorkspacePage,
+  updateWorkspaceMetadata,
+  validateWorkspaceMetadataInput,
 } from "@/services/workspaces";
 import styles from "./SecurityDashboard.module.css";
 
@@ -40,6 +52,11 @@ export interface PlatformWorkspaceListViewProps {
   ) => Promise<WorkspacePageResponse>;
   readonly loadDetail?: (
     workspaceId: string,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<WorkspaceDirectoryItem>;
+  readonly saveMetadata?: (
+    workspaceId: string,
+    payload: WorkspaceMetadataUpdatePayload,
     options?: { readonly signal?: AbortSignal },
   ) => Promise<WorkspaceDirectoryItem>;
   readonly searchDebounceMs?: number;
@@ -63,6 +80,23 @@ type DetailModalState =
       readonly status: DetailModalStatus;
       readonly detail: WorkspaceDirectoryItem | null;
     };
+
+interface EditFormDraft {
+  readonly enterpriseName: string;
+  readonly contactName: string;
+  readonly contactEmail: string;
+  readonly contactPhone: string;
+}
+
+type EditBannerState =
+  | { readonly kind: "validation" | "forbidden" | "csrf"; readonly message: string }
+  | {
+      readonly kind: "conflict_stale" | "conflict_generic";
+      readonly message: string;
+    }
+  | { readonly kind: "conflict_duplicate"; readonly message: string }
+  | { readonly kind: "network"; readonly message: string }
+  | { readonly kind: "info"; readonly message: string };
 
 export function buildPaginationTokens(
   currentZeroBasedPage: number,
@@ -131,16 +165,27 @@ function isWorkspaceError(err: unknown): err is WorkspaceServiceError {
   );
 }
 
+function draftFromItem(item: WorkspaceDirectoryItem): EditFormDraft {
+  return {
+    enterpriseName: item.enterpriseName,
+    contactName: item.contactName,
+    contactEmail: item.contactEmail,
+    contactPhone: item.contactPhone ?? "",
+  };
+}
+
 export function PlatformWorkspaceListView({
   onSessionExpired,
   onUnauthenticated,
   loadPage = fetchWorkspacePage,
   loadDetail = fetchWorkspaceDetail,
+  saveMetadata = updateWorkspaceMetadata,
   searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: PlatformWorkspaceListViewProps) {
   const { language, t } = useLanguage();
   const copy = t.platformWorkspaces;
   const detailCopy = copy.detail;
+  const editCopy = detailCopy.edit;
 
   const [searchInput, setSearchInput] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -158,28 +203,67 @@ export function PlatformWorkspaceListView({
     open: false,
   });
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editBaseVersion, setEditBaseVersion] = useState<number>(0);
+  const [editDraft, setEditDraft] = useState<EditFormDraft>({
+    enterpriseName: "",
+    contactName: "",
+    contactEmail: "",
+    contactPhone: "",
+  });
+  const [editFieldErrors, setEditFieldErrors] = useState<
+    Partial<Record<WorkspaceMetadataField, string>>
+  >({});
+  const [editBanner, setEditBanner] = useState<EditBannerState | null>(null);
+  const [viewNotice, setViewNotice] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isInspectingCurrent, setIsInspectingCurrent] = useState(false);
+
   const requestSeqRef = useRef(0);
   const activeAbortRef = useRef<AbortController | null>(null);
   const detailRequestSeqRef = useRef(0);
   const detailAbortRef = useRef<AbortController | null>(null);
+  const saveAbortRef = useRef<AbortController | null>(null);
+  const isSavingRef = useRef(false);
+  const openWorkspaceIdRef = useRef<string | null>(null);
   const rowTriggerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const lastTriggerIdRef = useRef<string | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authRedirectedRef = useRef(false);
+
+  openWorkspaceIdRef.current = detailState.open ? detailState.workspaceId : null;
+
   const latestHandlersRef = useRef({
     loadPage,
     loadDetail,
+    saveMetadata,
     onSessionExpired,
     onUnauthenticated,
     searchTooLongError: copy.states.searchTooLongError,
+    editCopy,
   });
   latestHandlersRef.current = {
     loadPage,
     loadDetail,
+    saveMetadata,
     onSessionExpired,
     onUnauthenticated,
     searchTooLongError: copy.states.searchTooLongError,
+    editCopy,
   };
+
+  const resetEditState = useCallback(() => {
+    saveAbortRef.current?.abort();
+    saveAbortRef.current = null;
+    isSavingRef.current = false;
+    setIsSaving(false);
+    setIsInspectingCurrent(false);
+    setIsEditing(false);
+    setEditFieldErrors({});
+    setEditBanner(null);
+    setViewNotice("");
+  }, []);
 
   const clearPendingDebounce = useCallback(() => {
     if (debounceTimerRef.current !== null) {
@@ -188,50 +272,68 @@ export function PlatformWorkspaceListView({
     }
   }, []);
 
-  const triggerAuthRedirect = useCallback((code: "SESSION_EXPIRED" | "UNAUTHENTICATED") => {
-    if (authRedirectedRef.current) {
-      return;
-    }
-    authRedirectedRef.current = true;
-    detailAbortRef.current?.abort();
-    detailRequestSeqRef.current += 1;
-    setDetailState({ open: false });
-    if (code === "UNAUTHENTICATED" && latestHandlersRef.current.onUnauthenticated) {
-      latestHandlersRef.current.onUnauthenticated();
-      return;
-    }
-    latestHandlersRef.current.onSessionExpired?.();
-  }, []);
+  const triggerAuthRedirect = useCallback(
+    (code: "SESSION_EXPIRED" | "UNAUTHENTICATED") => {
+      if (authRedirectedRef.current) {
+        return;
+      }
+      authRedirectedRef.current = true;
+      detailAbortRef.current?.abort();
+      saveAbortRef.current?.abort();
+      detailRequestSeqRef.current += 1;
+      isSavingRef.current = false;
+      openWorkspaceIdRef.current = null;
+      setIsSaving(false);
+      setIsInspectingCurrent(false);
+      setIsEditing(false);
+      setDetailState({ open: false });
+      if (
+        code === "UNAUTHENTICATED" &&
+        latestHandlersRef.current.onUnauthenticated
+      ) {
+        latestHandlersRef.current.onUnauthenticated();
+        return;
+      }
+      latestHandlersRef.current.onSessionExpired?.();
+    },
+    [],
+  );
 
   const handleCloseDetail = useCallback(() => {
     const returnFocusId = lastTriggerIdRef.current;
     detailAbortRef.current?.abort();
     detailAbortRef.current = null;
     detailRequestSeqRef.current += 1;
+    openWorkspaceIdRef.current = null;
+    resetEditState();
     setDetailState({ open: false });
 
     if (returnFocusId) {
-      const targetBtn = rowTriggerRefs.current.get(returnFocusId);
-      if (targetBtn && typeof targetBtn.focus === "function") {
-        queueMicrotask(() => {
-          const currentBtn = rowTriggerRefs.current.get(returnFocusId);
-          if (currentBtn && typeof currentBtn.focus === "function") {
-            currentBtn.focus();
-          }
-        });
-      }
+      queueMicrotask(() => {
+        const currentBtn = rowTriggerRefs.current.get(returnFocusId);
+        if (currentBtn && typeof currentBtn.focus === "function") {
+          currentBtn.focus();
+        } else if (
+          searchInputRef.current &&
+          typeof searchInputRef.current.focus === "function"
+        ) {
+          searchInputRef.current.focus();
+        }
+      });
     }
-  }, []);
+  }, [resetEditState]);
 
   const detailDialogRef = useDialogFocus(detailState.open, handleCloseDetail);
 
   const executeDetailLoad = useCallback(
     async (workspaceId: string, fallbackTitle: string) => {
       detailAbortRef.current?.abort();
+      resetEditState();
       const controller = new AbortController();
       detailAbortRef.current = controller;
       const requestId = detailRequestSeqRef.current + 1;
       detailRequestSeqRef.current = requestId;
+      openWorkspaceIdRef.current = workspaceId;
 
       setDetailState({
         open: true,
@@ -301,7 +403,7 @@ export function PlatformWorkspaceListView({
         });
       }
     },
-    [triggerAuthRedirect],
+    [resetEditState, triggerAuthRedirect],
   );
 
   const handleOpenDetail = useCallback(
@@ -318,6 +420,418 @@ export function PlatformWorkspaceListView({
     }
     void executeDetailLoad(detailState.workspaceId, detailState.fallbackTitle);
   }, [detailState, executeDetailLoad]);
+
+  const mapMetadataFieldMessage = useCallback(
+    (code: WorkspaceMetadataValidationCode): string => {
+      const errs = latestHandlersRef.current.editCopy.errors;
+      switch (code) {
+        case "ENTERPRISE_NAME_REQUIRED":
+          return errs.enterpriseNameRequired;
+        case "ENTERPRISE_NAME_TOO_LONG":
+          return errs.enterpriseNameTooLong;
+        case "CONTACT_NAME_REQUIRED":
+          return errs.contactNameRequired;
+        case "CONTACT_NAME_TOO_LONG":
+          return errs.contactNameTooLong;
+        case "CONTACT_EMAIL_REQUIRED":
+          return errs.contactEmailRequired;
+        case "CONTACT_EMAIL_TOO_LONG":
+          return errs.contactEmailTooLong;
+        case "CONTACT_EMAIL_INVALID":
+          return errs.contactEmailInvalid;
+        case "CONTACT_PHONE_TOO_LONG":
+          return errs.contactPhoneTooLong;
+        default:
+          return errs.validationFailed;
+      }
+    },
+    [],
+  );
+
+  const handleStartEdit = () => {
+    if (!detailState.open || detailState.status !== "ready" || !detailState.detail) {
+      return;
+    }
+    setViewNotice("");
+    setEditFieldErrors({});
+    setEditBanner(null);
+    setEditBaseVersion(detailState.detail.version);
+    setEditDraft(draftFromItem(detailState.detail));
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (isSaving) {
+      return;
+    }
+    setIsEditing(false);
+    setEditFieldErrors({});
+    setEditBanner(null);
+  };
+
+  const handleDraftFieldChange = (
+    field: keyof EditFormDraft,
+    value: string,
+  ) => {
+    setEditDraft((prev) => ({ ...prev, [field]: value }));
+    if (editFieldErrors[field]) {
+      setEditFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleReloadCurrentIntoEdit = async () => {
+    if (!detailState.open || isSaving || isInspectingCurrent) {
+      return;
+    }
+    const targetWorkspaceId = detailState.workspaceId;
+    const reqId = detailRequestSeqRef.current + 1;
+    detailRequestSeqRef.current = reqId;
+    detailAbortRef.current?.abort();
+    const controller = new AbortController();
+    detailAbortRef.current = controller;
+    setIsInspectingCurrent(true);
+
+    try {
+      const fresh = await latestHandlersRef.current.loadDetail(
+        targetWorkspaceId,
+        { signal: controller.signal },
+      );
+      if (
+        detailRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      setDetailState({
+        open: true,
+        workspaceId: targetWorkspaceId,
+        fallbackTitle: fresh.enterpriseName,
+        status: "ready",
+        detail: fresh,
+      });
+      setEditBaseVersion(fresh.version);
+      setEditDraft(draftFromItem(fresh));
+      setEditFieldErrors({});
+      setEditBanner({
+        kind: "info",
+        message: latestHandlersRef.current.editCopy.reloadedCurrentNotice,
+      });
+      setReloadNonce((n) => n + 1);
+    } catch (err) {
+      if (
+        isAbortError(err) ||
+        detailRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      if (isWorkspaceError(err)) {
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          triggerAuthRedirect(err.code);
+          return;
+        }
+        if (err.code === "NOT_FOUND") {
+          resetEditState();
+          setDetailState({
+            open: true,
+            workspaceId: targetWorkspaceId,
+            fallbackTitle: detailState.fallbackTitle,
+            status: "not_found",
+            detail: null,
+          });
+          setReloadNonce((n) => n + 1);
+          return;
+        }
+        if (err.code === "FORBIDDEN") {
+          setEditBanner({
+            kind: "forbidden",
+            message: latestHandlersRef.current.editCopy.errors.forbiddenUpdate,
+          });
+          return;
+        }
+      }
+      setEditBanner({
+        kind: "network",
+        message: latestHandlersRef.current.editCopy.errors.saveUnavailable,
+      });
+    } finally {
+      if (
+        detailRequestSeqRef.current === reqId &&
+        openWorkspaceIdRef.current === targetWorkspaceId
+      ) {
+        setIsInspectingCurrent(false);
+      }
+    }
+  };
+
+  const handleCheckStatusAfterDisconnect = async () => {
+    if (!detailState.open || isSaving || isInspectingCurrent) {
+      return;
+    }
+    const targetWorkspaceId = detailState.workspaceId;
+    const reqId = detailRequestSeqRef.current + 1;
+    detailRequestSeqRef.current = reqId;
+    detailAbortRef.current?.abort();
+    const controller = new AbortController();
+    detailAbortRef.current = controller;
+    setIsInspectingCurrent(true);
+
+    const normalizedDraftPhone =
+      editDraft.contactPhone.trim().length > 0
+        ? editDraft.contactPhone.trim()
+        : null;
+
+    try {
+      const fresh = await latestHandlersRef.current.loadDetail(
+        targetWorkspaceId,
+        { signal: controller.signal },
+      );
+      if (
+        detailRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      setDetailState({
+        open: true,
+        workspaceId: targetWorkspaceId,
+        fallbackTitle: fresh.enterpriseName,
+        status: "ready",
+        detail: fresh,
+      });
+
+      if (fresh.version === editBaseVersion) {
+        setEditBanner({
+          kind: "info",
+          message: latestHandlersRef.current.editCopy.reconnectedUnchangedNotice,
+        });
+        return;
+      }
+
+      const matchesSubmittedDraft =
+        fresh.enterpriseName === editDraft.enterpriseName.trim() &&
+        fresh.contactName === editDraft.contactName.trim() &&
+        fresh.contactEmail === editDraft.contactEmail.trim() &&
+        (fresh.contactPhone ?? null) === normalizedDraftPhone;
+
+      setReloadNonce((n) => n + 1);
+
+      if (matchesSubmittedDraft) {
+        setIsEditing(false);
+        setEditFieldErrors({});
+        setEditBanner(null);
+        setViewNotice(latestHandlersRef.current.editCopy.savedNotice);
+        return;
+      }
+
+      setEditBanner({
+        kind: "conflict_stale",
+        message: latestHandlersRef.current.editCopy.errors.staleVersionConflict,
+      });
+    } catch (err) {
+      if (
+        isAbortError(err) ||
+        detailRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+      if (isWorkspaceError(err)) {
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          triggerAuthRedirect(err.code);
+          return;
+        }
+        if (err.code === "NOT_FOUND") {
+          resetEditState();
+          setDetailState({
+            open: true,
+            workspaceId: targetWorkspaceId,
+            fallbackTitle: detailState.fallbackTitle,
+            status: "not_found",
+            detail: null,
+          });
+          setReloadNonce((n) => n + 1);
+          return;
+        }
+      }
+      setEditBanner({
+        kind: "network",
+        message: latestHandlersRef.current.editCopy.errors.saveUnavailable,
+      });
+    } finally {
+      if (
+        detailRequestSeqRef.current === reqId &&
+        openWorkspaceIdRef.current === targetWorkspaceId
+      ) {
+        setIsInspectingCurrent(false);
+      }
+    }
+  };
+
+  const handleEditFormSubmit = async (event: { preventDefault: () => void }) => {
+    event.preventDefault();
+    if (
+      isSavingRef.current ||
+      isInspectingCurrent ||
+      !detailState.open ||
+      detailState.status !== "ready" ||
+      !detailState.detail
+    ) {
+      return;
+    }
+
+    setEditFieldErrors({});
+    setEditBanner(null);
+
+    const validation = validateWorkspaceMetadataInput({
+      version: editBaseVersion,
+      enterpriseName: editDraft.enterpriseName,
+      contactName: editDraft.contactName,
+      contactEmail: editDraft.contactEmail,
+      contactPhone: editDraft.contactPhone,
+    });
+
+    if (!validation.ok) {
+      const mappedFields: Partial<Record<WorkspaceMetadataField, string>> = {};
+      for (const key of Object.keys(
+        validation.fieldErrors,
+      ) as WorkspaceMetadataField[]) {
+        const code = validation.fieldErrors[key];
+        if (code) {
+          mappedFields[key] = mapMetadataFieldMessage(code);
+        }
+      }
+      setEditFieldErrors(mappedFields);
+      return;
+    }
+
+    const targetWorkspaceId = detailState.workspaceId;
+    const reqId = detailRequestSeqRef.current + 1;
+    detailRequestSeqRef.current = reqId;
+    saveAbortRef.current?.abort();
+    const controller = new AbortController();
+    saveAbortRef.current = controller;
+    isSavingRef.current = true;
+    setIsSaving(true);
+
+    try {
+      const updated = await latestHandlersRef.current.saveMetadata(
+        targetWorkspaceId,
+        validation.payload,
+        { signal: controller.signal },
+      );
+
+      // Refresh current directory query regardless so renamed records re-sort/re-filter accurately.
+      setReloadNonce((n) => n + 1);
+
+      if (
+        detailRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+
+      isSavingRef.current = false;
+      setIsSaving(false);
+      setIsEditing(false);
+      setEditFieldErrors({});
+      setEditBanner(null);
+      setViewNotice(latestHandlersRef.current.editCopy.savedNotice);
+      setDetailState({
+        open: true,
+        workspaceId: targetWorkspaceId,
+        fallbackTitle: updated.enterpriseName,
+        status: "ready",
+        detail: updated,
+      });
+    } catch (err) {
+      if (
+        isAbortError(err) ||
+        detailRequestSeqRef.current !== reqId ||
+        controller.signal.aborted ||
+        openWorkspaceIdRef.current !== targetWorkspaceId
+      ) {
+        return;
+      }
+
+      isSavingRef.current = false;
+      setIsSaving(false);
+
+      const errs = latestHandlersRef.current.editCopy.errors;
+      if (isWorkspaceError(err)) {
+        if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+          triggerAuthRedirect(err.code);
+          return;
+        }
+        if (err.code === "NOT_FOUND") {
+          resetEditState();
+          setDetailState({
+            open: true,
+            workspaceId: targetWorkspaceId,
+            fallbackTitle: detailState.fallbackTitle,
+            status: "not_found",
+            detail: null,
+          });
+          setReloadNonce((n) => n + 1);
+          return;
+        }
+        if (err.code === "FORBIDDEN") {
+          setEditBanner({
+            kind: "forbidden",
+            message: errs.forbiddenUpdate,
+          });
+          return;
+        }
+        if (err.code === "CSRF_REJECTED") {
+          setEditBanner({
+            kind: "csrf",
+            message: errs.csrfRejected,
+          });
+          return;
+        }
+        if (err.code === "VALIDATION_ERROR") {
+          setEditBanner({
+            kind: "validation",
+            message: errs.validationFailed,
+          });
+          return;
+        }
+        if (err.code === "CONFLICT") {
+          const reason = classifyWorkspaceConflict(err.detail);
+          if (reason === "STALE_VERSION") {
+            setEditBanner({
+              kind: "conflict_stale",
+              message: errs.staleVersionConflict,
+            });
+            return;
+          }
+          if (reason === "DUPLICATE_NAME") {
+            setEditFieldErrors({ enterpriseName: errs.duplicateNameConflict });
+            setEditBanner({
+              kind: "conflict_duplicate",
+              message: errs.duplicateNameConflict,
+            });
+            return;
+          }
+          setEditBanner({
+            kind: "conflict_generic",
+            message: errs.genericConflict,
+          });
+          return;
+        }
+      }
+
+      setEditBanner({
+        kind: "network",
+        message: errs.saveUnavailable,
+      });
+    }
+  };
 
   const executeLoad = useCallback(
     async (targetQuery: NormalizedWorkspaceListQuery) => {
@@ -390,6 +904,7 @@ export function PlatformWorkspaceListView({
       clearPendingDebounce();
       activeAbortRef.current?.abort();
       detailAbortRef.current?.abort();
+      saveAbortRef.current?.abort();
     };
   }, [clearPendingDebounce]);
 
@@ -578,6 +1093,73 @@ export function PlatformWorkspaceListView({
     return trimmed;
   };
 
+  const renderEditBanner = () => {
+    if (!editBanner) {
+      return null;
+    }
+    const isInfo = editBanner.kind === "info";
+    const showReloadCurrent =
+      editBanner.kind === "conflict_stale" ||
+      editBanner.kind === "conflict_generic";
+    const showCheckStatus = editBanner.kind === "network";
+
+    return (
+      <div
+        className={
+          isInfo ? styles.workspaceNoticeBanner : styles.workspaceEditErrorBanner
+        }
+        role={isInfo ? "status" : "alert"}
+      >
+        <div className={styles.workspaceBannerRow}>
+          {isInfo ? (
+            <CheckCircle2 size={16} aria-hidden="true" />
+          ) : (
+            <AlertCircle size={16} aria-hidden="true" />
+          )}
+          <span>{editBanner.message}</span>
+        </div>
+
+        {(showReloadCurrent || showCheckStatus) && (
+          <div className={styles.workspaceBannerActions}>
+            {showReloadCurrent && (
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => void handleReloadCurrentIntoEdit()}
+                disabled={isSaving || isInspectingCurrent}
+                aria-busy={isInspectingCurrent}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>
+                  {isInspectingCurrent
+                    ? editCopy.reloadingCurrentBtn
+                    : editCopy.reloadCurrentBtn}
+                </span>
+              </button>
+            )}
+
+            {showCheckStatus && (
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => void handleCheckStatusAfterDisconnect()}
+                disabled={isSaving || isInspectingCurrent}
+                aria-busy={isInspectingCurrent}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>
+                  {isInspectingCurrent
+                    ? editCopy.checkingStatusBtn
+                    : editCopy.checkStatusBtn}
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderDetailModal = () => {
     if (!detailState.open) {
       return null;
@@ -585,6 +1167,10 @@ export function PlatformWorkspaceListView({
     const modalTitle =
       detailState.detail?.enterpriseName ?? detailState.fallbackTitle;
     const isDetailLoading = detailState.status === "loading";
+    const canShowEditBtn =
+      detailState.status === "ready" &&
+      detailState.detail !== null &&
+      !isEditing;
 
     return (
       <div
@@ -601,7 +1187,7 @@ export function PlatformWorkspaceListView({
           role="dialog"
           aria-modal="true"
           aria-labelledby="platform-workspace-detail-title"
-          aria-busy={isDetailLoading}
+          aria-busy={isDetailLoading || isSaving}
           tabIndex={-1}
         >
           <div className={styles.onboardingModalHeader}>
@@ -631,84 +1217,17 @@ export function PlatformWorkspaceListView({
             </button>
           </div>
 
-          <div
-            className={`${styles.onboardingModalBody} ${styles.workspaceDetailBody}`}
-          >
-            {isDetailLoading && (
+          {isEditing && detailState.status === "ready" && detailState.detail ? (
+            <form
+              className={styles.workspaceDetailEditForm}
+              onSubmit={handleEditFormSubmit}
+              noValidate
+            >
               <div
-                className={styles.workspaceStateBox}
-                role="status"
-                aria-live="polite"
+                className={`${styles.onboardingModalBody} ${styles.workspaceDetailBody}`}
               >
-                <strong className={styles.workspaceStateTitle}>
-                  {detailCopy.states.loadingTitle}
-                </strong>
-                <span className={styles.workspaceStateDesc}>
-                  {detailCopy.states.loadingDesc}
-                </span>
-              </div>
-            )}
+                {renderEditBanner()}
 
-            {detailState.status === "forbidden" && (
-              <div className={styles.workspaceStateBox} role="alert">
-                <ShieldAlert
-                  size={22}
-                  color="var(--high-text)"
-                  aria-hidden="true"
-                />
-                <h3 className={styles.workspaceStateTitle}>
-                  {detailCopy.states.forbiddenTitle}
-                </h3>
-                <p className={styles.workspaceStateDesc}>
-                  {detailCopy.states.forbiddenDesc}
-                </p>
-              </div>
-            )}
-
-            {detailState.status === "not_found" && (
-              <div className={styles.workspaceStateBox} role="alert">
-                <AlertCircle
-                  size={22}
-                  color="var(--security-orange)"
-                  aria-hidden="true"
-                />
-                <h3 className={styles.workspaceStateTitle}>
-                  {detailCopy.states.notFoundTitle}
-                </h3>
-                <p className={styles.workspaceStateDesc}>
-                  {detailCopy.states.notFoundDesc}
-                </p>
-              </div>
-            )}
-
-            {detailState.status === "error" && (
-              <div className={styles.workspaceStateBox} role="alert">
-                <AlertCircle
-                  size={22}
-                  color="var(--critical-text)"
-                  aria-hidden="true"
-                />
-                <h3 className={styles.workspaceStateTitle}>
-                  {detailCopy.states.errorTitle}
-                </h3>
-                <p className={styles.workspaceStateDesc}>
-                  {detailCopy.states.errorDesc}
-                </p>
-                <div className={styles.workspaceStateActions}>
-                  <button
-                    type="button"
-                    className={styles.btnPrimary}
-                    onClick={handleRetryDetail}
-                  >
-                    <RefreshCw size={14} aria-hidden="true" />
-                    <span>{detailCopy.retryBtn}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {detailState.status === "ready" && detailState.detail && (
-              <>
                 <section className={styles.onboardingFormSection}>
                   <h3 className={styles.onboardingFormSectionTitle}>
                     <Building2
@@ -728,6 +1247,44 @@ export function PlatformWorkspaceListView({
                       </code>
                     </dd>
                   </dl>
+
+                  <div className={styles.onboardingFormField}>
+                    <label
+                      htmlFor="workspace-edit-enterprise-name"
+                      className={styles.onboardingFormLabel}
+                    >
+                      <span>{editCopy.enterpriseNameLabel}</span>
+                      <span style={{ color: "var(--critical-text)" }}>*</span>
+                    </label>
+                    <input
+                      id="workspace-edit-enterprise-name"
+                      name="enterpriseName"
+                      type="text"
+                      className={styles.onboardingFormInput}
+                      value={editDraft.enterpriseName}
+                      maxLength={MAX_ENTERPRISE_NAME_LENGTH}
+                      disabled={isSaving}
+                      onChange={(e) =>
+                        handleDraftFieldChange("enterpriseName", e.target.value)
+                      }
+                      aria-invalid={Boolean(editFieldErrors.enterpriseName)}
+                      aria-describedby={
+                        editFieldErrors.enterpriseName
+                          ? "workspace-edit-enterprise-name-error"
+                          : undefined
+                      }
+                      required
+                    />
+                    {editFieldErrors.enterpriseName && (
+                      <p
+                        id="workspace-edit-enterprise-name-error"
+                        className={styles.authFieldError}
+                        role="alert"
+                      >
+                        {editFieldErrors.enterpriseName}
+                      </p>
+                    )}
+                  </div>
                 </section>
 
                 <section className={styles.onboardingFormSection}>
@@ -739,18 +1296,128 @@ export function PlatformWorkspaceListView({
                     />
                     <span>{detailCopy.groups.contact}</span>
                   </h3>
-                  <dl
-                    className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
-                  >
-                    <dt>{detailCopy.fields.contactName}</dt>
-                    <dd>{renderDetailValue(detailState.detail.contactName)}</dd>
 
-                    <dt>{detailCopy.fields.contactEmail}</dt>
-                    <dd>{renderDetailValue(detailState.detail.contactEmail)}</dd>
+                  <div className={styles.onboardingFormField}>
+                    <label
+                      htmlFor="workspace-edit-contact-name"
+                      className={styles.onboardingFormLabel}
+                    >
+                      <span>{detailCopy.fields.contactName}</span>
+                      <span style={{ color: "var(--critical-text)" }}>*</span>
+                    </label>
+                    <input
+                      id="workspace-edit-contact-name"
+                      name="contactName"
+                      type="text"
+                      className={styles.onboardingFormInput}
+                      value={editDraft.contactName}
+                      maxLength={MAX_CONTACT_NAME_LENGTH}
+                      disabled={isSaving}
+                      onChange={(e) =>
+                        handleDraftFieldChange("contactName", e.target.value)
+                      }
+                      aria-invalid={Boolean(editFieldErrors.contactName)}
+                      aria-describedby={
+                        editFieldErrors.contactName
+                          ? "workspace-edit-contact-name-error"
+                          : undefined
+                      }
+                      required
+                    />
+                    {editFieldErrors.contactName && (
+                      <p
+                        id="workspace-edit-contact-name-error"
+                        className={styles.authFieldError}
+                        role="alert"
+                      >
+                        {editFieldErrors.contactName}
+                      </p>
+                    )}
+                  </div>
 
-                    <dt>{detailCopy.fields.contactPhone}</dt>
-                    <dd>{renderDetailValue(detailState.detail.contactPhone)}</dd>
-                  </dl>
+                  <div className={styles.onboardingFormField}>
+                    <label
+                      htmlFor="workspace-edit-contact-email"
+                      className={styles.onboardingFormLabel}
+                    >
+                      <span>{detailCopy.fields.contactEmail}</span>
+                      <span style={{ color: "var(--critical-text)" }}>*</span>
+                    </label>
+                    <input
+                      id="workspace-edit-contact-email"
+                      name="contactEmail"
+                      type="email"
+                      className={styles.onboardingFormInput}
+                      value={editDraft.contactEmail}
+                      maxLength={MAX_CONTACT_EMAIL_LENGTH}
+                      disabled={isSaving}
+                      onChange={(e) =>
+                        handleDraftFieldChange("contactEmail", e.target.value)
+                      }
+                      aria-invalid={Boolean(editFieldErrors.contactEmail)}
+                      aria-describedby={
+                        editFieldErrors.contactEmail
+                          ? "workspace-edit-contact-email-error"
+                          : undefined
+                      }
+                      required
+                    />
+                    {editFieldErrors.contactEmail && (
+                      <p
+                        id="workspace-edit-contact-email-error"
+                        className={styles.authFieldError}
+                        role="alert"
+                      >
+                        {editFieldErrors.contactEmail}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className={styles.onboardingFormField}>
+                    <label
+                      htmlFor="workspace-edit-contact-phone"
+                      className={styles.onboardingFormLabel}
+                    >
+                      <span>{detailCopy.fields.contactPhone}</span>
+                      <span className={styles.muted}>
+                        {editCopy.optionalHint}
+                      </span>
+                    </label>
+                    <input
+                      id="workspace-edit-contact-phone"
+                      name="contactPhone"
+                      type="tel"
+                      className={styles.onboardingFormInput}
+                      value={editDraft.contactPhone}
+                      maxLength={MAX_CONTACT_PHONE_LENGTH}
+                      disabled={isSaving}
+                      onChange={(e) =>
+                        handleDraftFieldChange("contactPhone", e.target.value)
+                      }
+                      aria-invalid={Boolean(editFieldErrors.contactPhone)}
+                      aria-describedby={
+                        editFieldErrors.contactPhone
+                          ? "workspace-edit-contact-phone-error"
+                          : "workspace-edit-contact-phone-hint"
+                      }
+                    />
+                    {editFieldErrors.contactPhone ? (
+                      <p
+                        id="workspace-edit-contact-phone-error"
+                        className={styles.authFieldError}
+                        role="alert"
+                      >
+                        {editFieldErrors.contactPhone}
+                      </p>
+                    ) : (
+                      <p
+                        id="workspace-edit-contact-phone-hint"
+                        className={styles.onboardingFormHint}
+                      >
+                        {editCopy.phoneClearHint}
+                      </p>
+                    )}
+                  </div>
                 </section>
 
                 <section className={styles.onboardingFormSection}>
@@ -784,19 +1451,225 @@ export function PlatformWorkspaceListView({
                     </dd>
                   </dl>
                 </section>
-              </>
-            )}
-          </div>
+              </div>
 
-          <div className={styles.onboardingModalFooter}>
-            <button
-              type="button"
-              className={styles.btnSecondary}
-              onClick={handleCloseDetail}
-            >
-              {detailCopy.closeBtn}
-            </button>
-          </div>
+              <div className={styles.onboardingModalFooter}>
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                >
+                  {editCopy.cancelBtn}
+                </button>
+                <button
+                  type="submit"
+                  className={styles.btnPrimary}
+                  disabled={isSaving || isInspectingCurrent}
+                  aria-busy={isSaving}
+                >
+                  {isSaving ? editCopy.savingBtn : editCopy.saveBtn}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div
+                className={`${styles.onboardingModalBody} ${styles.workspaceDetailBody}`}
+              >
+                {isDetailLoading && (
+                  <div
+                    className={styles.workspaceStateBox}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <strong className={styles.workspaceStateTitle}>
+                      {detailCopy.states.loadingTitle}
+                    </strong>
+                    <span className={styles.workspaceStateDesc}>
+                      {detailCopy.states.loadingDesc}
+                    </span>
+                  </div>
+                )}
+
+                {detailState.status === "forbidden" && (
+                  <div className={styles.workspaceStateBox} role="alert">
+                    <ShieldAlert
+                      size={22}
+                      color="var(--high-text)"
+                      aria-hidden="true"
+                    />
+                    <h3 className={styles.workspaceStateTitle}>
+                      {detailCopy.states.forbiddenTitle}
+                    </h3>
+                    <p className={styles.workspaceStateDesc}>
+                      {detailCopy.states.forbiddenDesc}
+                    </p>
+                  </div>
+                )}
+
+                {detailState.status === "not_found" && (
+                  <div className={styles.workspaceStateBox} role="alert">
+                    <AlertCircle
+                      size={22}
+                      color="var(--security-orange)"
+                      aria-hidden="true"
+                    />
+                    <h3 className={styles.workspaceStateTitle}>
+                      {detailCopy.states.notFoundTitle}
+                    </h3>
+                    <p className={styles.workspaceStateDesc}>
+                      {detailCopy.states.notFoundDesc}
+                    </p>
+                  </div>
+                )}
+
+                {detailState.status === "error" && (
+                  <div className={styles.workspaceStateBox} role="alert">
+                    <AlertCircle
+                      size={22}
+                      color="var(--critical-text)"
+                      aria-hidden="true"
+                    />
+                    <h3 className={styles.workspaceStateTitle}>
+                      {detailCopy.states.errorTitle}
+                    </h3>
+                    <p className={styles.workspaceStateDesc}>
+                      {detailCopy.states.errorDesc}
+                    </p>
+                    <div className={styles.workspaceStateActions}>
+                      <button
+                        type="button"
+                        className={styles.btnPrimary}
+                        onClick={handleRetryDetail}
+                      >
+                        <RefreshCw size={14} aria-hidden="true" />
+                        <span>{detailCopy.retryBtn}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {detailState.status === "ready" && detailState.detail && (
+                  <>
+                    {viewNotice && (
+                      <div
+                        className={styles.workspaceNoticeBanner}
+                        role="status"
+                      >
+                        <div className={styles.workspaceBannerRow}>
+                          <CheckCircle2 size={16} aria-hidden="true" />
+                          <span>{viewNotice}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <section className={styles.onboardingFormSection}>
+                      <h3 className={styles.onboardingFormSectionTitle}>
+                        <Building2
+                          size={15}
+                          style={{ color: "var(--security-blue)" }}
+                          aria-hidden="true"
+                        />
+                        <span>{detailCopy.groups.enterprise}</span>
+                      </h3>
+                      <dl
+                        className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
+                      >
+                        <dt>{detailCopy.fields.workspaceKey}</dt>
+                        <dd>
+                          <code className={styles.workspaceKeyCode}>
+                            {detailState.detail.workspaceKey}
+                          </code>
+                        </dd>
+                      </dl>
+                    </section>
+
+                    <section className={styles.onboardingFormSection}>
+                      <h3 className={styles.onboardingFormSectionTitle}>
+                        <User
+                          size={15}
+                          style={{ color: "var(--security-blue)" }}
+                          aria-hidden="true"
+                        />
+                        <span>{detailCopy.groups.contact}</span>
+                      </h3>
+                      <dl
+                        className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
+                      >
+                        <dt>{detailCopy.fields.contactName}</dt>
+                        <dd>
+                          {renderDetailValue(detailState.detail.contactName)}
+                        </dd>
+
+                        <dt>{detailCopy.fields.contactEmail}</dt>
+                        <dd>
+                          {renderDetailValue(detailState.detail.contactEmail)}
+                        </dd>
+
+                        <dt>{detailCopy.fields.contactPhone}</dt>
+                        <dd>
+                          {renderDetailValue(detailState.detail.contactPhone)}
+                        </dd>
+                      </dl>
+                    </section>
+
+                    <section className={styles.onboardingFormSection}>
+                      <h3 className={styles.onboardingFormSectionTitle}>
+                        <Clock
+                          size={15}
+                          style={{ color: "var(--security-blue)" }}
+                          aria-hidden="true"
+                        />
+                        <span>{detailCopy.groups.timestamps}</span>
+                      </h3>
+                      <dl
+                        className={`${styles.onboardingInfoList} ${styles.workspaceDetailInfoList}`}
+                      >
+                        <dt>{detailCopy.fields.createdAt}</dt>
+                        <dd className={styles.workspaceTimestampValue}>
+                          {formatWorkspaceTimestamp(
+                            detailState.detail.createdAt,
+                            language,
+                            copy.emptyValue,
+                          )}
+                        </dd>
+
+                        <dt>{detailCopy.fields.updatedAt}</dt>
+                        <dd className={styles.workspaceTimestampValue}>
+                          {formatWorkspaceTimestamp(
+                            detailState.detail.updatedAt,
+                            language,
+                            copy.emptyValue,
+                          )}
+                        </dd>
+                      </dl>
+                    </section>
+                  </>
+                )}
+              </div>
+
+              <div className={styles.onboardingModalFooter}>
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  onClick={handleCloseDetail}
+                >
+                  {detailCopy.closeBtn}
+                </button>
+                {canShowEditBtn && (
+                  <button
+                    type="button"
+                    className={styles.btnPrimary}
+                    onClick={handleStartEdit}
+                  >
+                    <Pencil size={14} aria-hidden="true" />
+                    <span>{editCopy.editBtn}</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -865,6 +1738,7 @@ export function PlatformWorkspaceListView({
             <div className={styles.onboardingSearchBox}>
               <Search size={16} aria-hidden="true" />
               <input
+                ref={searchInputRef}
                 type="search"
                 name="workspaceSearch"
                 className={`${styles.onboardingSearchInput} ${styles.searchInput}`}

@@ -1,30 +1,49 @@
 import type {
   NormalizedWorkspaceListQuery,
   WorkspaceApiErrorBody,
+  WorkspaceConflictReason,
   WorkspaceDirectoryItem,
   WorkspaceErrorCode,
   WorkspaceListQuery,
+  WorkspaceMetadataUpdatePayload,
   WorkspacePageResponse,
 } from "@/types/workspace";
 import {
   AuthServiceError,
   type BridgeResult,
+  CSRF_HEADER_NAME,
+  CSRF_HEADER_VALUE,
   buildClearSessionCookieHeader,
   callUpstream,
   extractAuthTokenFromCookieHeader,
   parseUpstreamJsonOrText,
   resolveBackendBaseUrl,
   resolveExpectedOrigin,
+  verifySameOriginMutation,
 } from "@/services/auth";
 
 export const WORKSPACES_UPSTREAM_PATH = "/api/v1/workspaces";
 export const DEFAULT_WORKSPACE_PAGE_SIZE = 20;
 export const MAX_WORKSPACE_PAGE_SIZE = 100;
 export const MAX_WORKSPACE_SEARCH_LENGTH = 100;
+export const MAX_ENTERPRISE_NAME_LENGTH = 255;
+export const MAX_CONTACT_NAME_LENGTH = 120;
+export const MAX_CONTACT_EMAIL_LENGTH = 254;
+export const MAX_CONTACT_PHONE_LENGTH = 40;
 const MAX_SIGNED_32BIT_OFFSET = 2147483647;
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const ALLOWED_METADATA_KEYS = new Set([
+  "version",
+  "enterpriseName",
+  "contactName",
+  "contactEmail",
+  "contactPhone",
+]);
 
 export class WorkspaceServiceError extends Error {
   readonly code: WorkspaceErrorCode;
@@ -40,12 +59,159 @@ export class WorkspaceServiceError extends Error {
   }
 }
 
+export function classifyWorkspaceConflict(
+  detail?: string,
+): WorkspaceConflictReason {
+  if (!detail) {
+    return "UNKNOWN";
+  }
+  const normalized = detail.trim().toLowerCase();
+  if (
+    normalized.includes("record changed") ||
+    normalized.includes("reload before saving") ||
+    normalized.includes("concurrent change")
+  ) {
+    return "STALE_VERSION";
+  }
+  if (
+    normalized.includes("enterprise name already exists") ||
+    normalized.includes("data conflicts with an existing record")
+  ) {
+    return "DUPLICATE_NAME";
+  }
+  return "UNKNOWN";
+}
+
 export function validateWorkspaceId(rawId: unknown): string | null {
   if (typeof rawId !== "string") {
     return null;
   }
   const trimmed = rawId.trim();
   return UUID_PATTERN.test(trimmed) ? trimmed : null;
+}
+
+export type WorkspaceMetadataField =
+  | "version"
+  | "enterpriseName"
+  | "contactName"
+  | "contactEmail"
+  | "contactPhone";
+
+export type WorkspaceMetadataValidationCode =
+  | "INVALID_VERSION"
+  | "ENTERPRISE_NAME_REQUIRED"
+  | "ENTERPRISE_NAME_TOO_LONG"
+  | "CONTACT_NAME_REQUIRED"
+  | "CONTACT_NAME_TOO_LONG"
+  | "CONTACT_EMAIL_REQUIRED"
+  | "CONTACT_EMAIL_TOO_LONG"
+  | "CONTACT_EMAIL_INVALID"
+  | "CONTACT_PHONE_TOO_LONG";
+
+export type WorkspaceMetadataValidationResult =
+  | { readonly ok: true; readonly payload: WorkspaceMetadataUpdatePayload }
+  | {
+      readonly ok: false;
+      readonly field: WorkspaceMetadataField;
+      readonly code: WorkspaceMetadataValidationCode;
+      readonly fieldErrors: Partial<
+        Record<WorkspaceMetadataField, WorkspaceMetadataValidationCode>
+      >;
+    };
+
+export function validateWorkspaceMetadataInput(input: {
+  readonly version: unknown;
+  readonly enterpriseName: unknown;
+  readonly contactName: unknown;
+  readonly contactEmail: unknown;
+  readonly contactPhone?: unknown;
+}): WorkspaceMetadataValidationResult {
+  const fieldErrors: Partial<
+    Record<WorkspaceMetadataField, WorkspaceMetadataValidationCode>
+  > = {};
+
+  const version = input.version;
+  if (
+    typeof version !== "number" ||
+    !Number.isSafeInteger(version) ||
+    version < 0
+  ) {
+    fieldErrors.version = "INVALID_VERSION";
+  }
+
+  const enterpriseName =
+    typeof input.enterpriseName === "string" ? input.enterpriseName.trim() : "";
+  if (!enterpriseName) {
+    fieldErrors.enterpriseName = "ENTERPRISE_NAME_REQUIRED";
+  } else if (enterpriseName.length > MAX_ENTERPRISE_NAME_LENGTH) {
+    fieldErrors.enterpriseName = "ENTERPRISE_NAME_TOO_LONG";
+  }
+
+  const contactName =
+    typeof input.contactName === "string" ? input.contactName.trim() : "";
+  if (!contactName) {
+    fieldErrors.contactName = "CONTACT_NAME_REQUIRED";
+  } else if (contactName.length > MAX_CONTACT_NAME_LENGTH) {
+    fieldErrors.contactName = "CONTACT_NAME_TOO_LONG";
+  }
+
+  const contactEmail =
+    typeof input.contactEmail === "string" ? input.contactEmail.trim() : "";
+  if (!contactEmail) {
+    fieldErrors.contactEmail = "CONTACT_EMAIL_REQUIRED";
+  } else if (contactEmail.length > MAX_CONTACT_EMAIL_LENGTH) {
+    fieldErrors.contactEmail = "CONTACT_EMAIL_TOO_LONG";
+  } else if (
+    !EMAIL_PATTERN.test(contactEmail) ||
+    contactEmail.includes("..") ||
+    contactEmail.endsWith(".")
+  ) {
+    fieldErrors.contactEmail = "CONTACT_EMAIL_INVALID";
+  }
+
+  let contactPhone: string | null = null;
+  if (input.contactPhone !== null && input.contactPhone !== undefined) {
+    if (typeof input.contactPhone !== "string") {
+      fieldErrors.contactPhone = "CONTACT_PHONE_TOO_LONG";
+    } else {
+      const trimmedPhone = input.contactPhone.trim();
+      if (trimmedPhone.length > MAX_CONTACT_PHONE_LENGTH) {
+        fieldErrors.contactPhone = "CONTACT_PHONE_TOO_LONG";
+      } else {
+        contactPhone = trimmedPhone.length > 0 ? trimmedPhone : null;
+      }
+    }
+  }
+
+  const firstFailedField = (
+    [
+      "version",
+      "enterpriseName",
+      "contactName",
+      "contactEmail",
+      "contactPhone",
+    ] as const
+  ).find((key) => fieldErrors[key] !== undefined);
+
+  if (firstFailedField) {
+    return {
+      ok: false,
+      field: firstFailedField,
+      code: fieldErrors[firstFailedField]!,
+      fieldErrors,
+    };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      version: version as number,
+      enterpriseName,
+      contactName,
+      contactEmail,
+      contactPhone,
+    },
+  };
 }
 
 export type WorkspaceQueryValidationResult =
@@ -278,6 +444,37 @@ function workspaceErrorResult(
   };
 }
 
+function mapUpstreamWorkspaceError(
+  status: number,
+  detail: string | undefined,
+  secure: boolean,
+): BridgeResult {
+  if (status === 401) {
+    return workspaceErrorResult(
+      401,
+      "SESSION_EXPIRED",
+      undefined,
+      buildClearSessionCookieHeader(secure),
+    );
+  }
+  if (status === 403) {
+    return workspaceErrorResult(403, "FORBIDDEN", detail);
+  }
+  if (status === 404) {
+    return workspaceErrorResult(404, "NOT_FOUND", detail);
+  }
+  if (status === 409) {
+    return workspaceErrorResult(409, "CONFLICT", detail);
+  }
+  if (status === 400) {
+    return workspaceErrorResult(400, "VALIDATION_ERROR", detail);
+  }
+  return workspaceErrorResult(
+    status >= 500 ? 502 : status,
+    status >= 500 ? "BACKEND_UNAVAILABLE" : "UPSTREAM_ERROR",
+  );
+}
+
 export interface HandleWorkspaceBridgeOptions {
   readonly method: string;
   readonly requestUrl: string;
@@ -289,6 +486,11 @@ export interface HandleWorkspaceBridgeOptions {
 export interface HandleWorkspaceDetailBridgeOptions
   extends HandleWorkspaceBridgeOptions {
   readonly workspaceId: string;
+}
+
+export interface HandleWorkspaceUpdateBridgeOptions
+  extends HandleWorkspaceDetailBridgeOptions {
+  readonly readBodyText: () => Promise<string>;
 }
 
 async function executeAuthenticatedWorkspaceUpstreamGet(
@@ -361,28 +563,11 @@ async function executeAuthenticatedWorkspaceUpstreamGet(
   }
 
   const parsedUpstream = await parseUpstreamJsonOrText(upstreamRes);
-
-  if (upstreamRes.status === 401) {
-    return workspaceErrorResult(
-      401,
-      "SESSION_EXPIRED",
-      undefined,
-      buildClearSessionCookieHeader(secure),
-    );
-  }
-  if (upstreamRes.status === 403) {
-    return workspaceErrorResult(403, "FORBIDDEN", parsedUpstream.detail);
-  }
-  if (upstreamRes.status === 404) {
-    return workspaceErrorResult(404, "NOT_FOUND", parsedUpstream.detail);
-  }
-  if (upstreamRes.status === 400) {
-    return workspaceErrorResult(400, "VALIDATION_ERROR", parsedUpstream.detail);
-  }
   if (!upstreamRes.ok) {
-    return workspaceErrorResult(
-      upstreamRes.status >= 500 ? 502 : upstreamRes.status,
-      upstreamRes.status >= 500 ? "BACKEND_UNAVAILABLE" : "UPSTREAM_ERROR",
+    return mapUpstreamWorkspaceError(
+      upstreamRes.status,
+      parsedUpstream.detail,
+      secure,
     );
   }
 
@@ -447,6 +632,147 @@ export async function handleWorkspaceDetailBridgeRequest(
   );
 }
 
+export async function handleWorkspaceUpdateBridgeRequest(
+  options: HandleWorkspaceUpdateBridgeOptions,
+): Promise<BridgeResult> {
+  const { method, workspaceId, requestUrl, headers, readBodyText } = options;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const env = options.env ?? process.env;
+
+  if (method !== "PUT") {
+    return workspaceErrorResult(405, "VALIDATION_ERROR", "Method not allowed.");
+  }
+
+  const { origin: expectedOrigin, secure } = resolveExpectedOrigin(
+    headers,
+    requestUrl,
+  );
+  const csrfCheck = verifySameOriginMutation(headers, expectedOrigin);
+  if (!csrfCheck.ok) {
+    return workspaceErrorResult(403, "CSRF_REJECTED", csrfCheck.detail);
+  }
+
+  const token = extractAuthTokenFromCookieHeader(headers.get("cookie"));
+  if (!token) {
+    return workspaceErrorResult(401, "UNAUTHENTICATED");
+  }
+
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    return workspaceErrorResult(400, "VALIDATION_ERROR", "INVALID_WORKSPACE_ID");
+  }
+
+  const contentType = headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return workspaceErrorResult(
+      400,
+      "VALIDATION_ERROR",
+      "JSON request body is required.",
+    );
+  }
+
+  let parsedBody: Record<string, unknown>;
+  try {
+    const rawText = await readBodyText();
+    const candidate: unknown = rawText ? JSON.parse(rawText) : null;
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+      return workspaceErrorResult(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid JSON payload.",
+      );
+    }
+    parsedBody = candidate as Record<string, unknown>;
+  } catch {
+    return workspaceErrorResult(
+      400,
+      "VALIDATION_ERROR",
+      "Malformed JSON payload.",
+    );
+  }
+
+  for (const key of Object.keys(parsedBody)) {
+    if (!ALLOWED_METADATA_KEYS.has(key)) {
+      return workspaceErrorResult(
+        400,
+        "VALIDATION_ERROR",
+        "UNKNOWN_METADATA_PROPERTY",
+      );
+    }
+  }
+
+  const validated = validateWorkspaceMetadataInput({
+    version: parsedBody.version,
+    enterpriseName: parsedBody.enterpriseName,
+    contactName: parsedBody.contactName,
+    contactEmail: parsedBody.contactEmail,
+    contactPhone: parsedBody.contactPhone,
+  });
+  if (!validated.ok) {
+    return workspaceErrorResult(400, "VALIDATION_ERROR", validated.code);
+  }
+
+  let baseUrl: string;
+  try {
+    baseUrl = resolveBackendBaseUrl(env);
+  } catch (err) {
+    if (err instanceof AuthServiceError) {
+      return workspaceErrorResult(503, "BACKEND_UNAVAILABLE", err.detail);
+    }
+    return workspaceErrorResult(503, "BACKEND_UNAVAILABLE");
+  }
+
+  const upstreamPath = buildWorkspaceDetailUpstreamPath(validId);
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await callUpstream(
+      baseUrl,
+      upstreamPath,
+      {
+        method: "PUT",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          version: validated.payload.version,
+          enterpriseName: validated.payload.enterpriseName,
+          contactName: validated.payload.contactName,
+          contactEmail: validated.payload.contactEmail,
+          contactPhone: validated.payload.contactPhone,
+        }),
+      },
+      fetchImpl,
+    );
+  } catch {
+    return workspaceErrorResult(503, "BACKEND_UNAVAILABLE");
+  }
+
+  const parsedUpstream = await parseUpstreamJsonOrText(upstreamRes);
+  if (!upstreamRes.ok) {
+    return mapUpstreamWorkspaceError(
+      upstreamRes.status,
+      parsedUpstream.detail,
+      secure,
+    );
+  }
+
+  const sanitizedItem = parseWorkspaceDirectoryItem(parsedUpstream.json);
+  if (!sanitizedItem) {
+    return workspaceErrorResult(
+      502,
+      "UPSTREAM_ERROR",
+      "Invalid workspace update response format.",
+    );
+  }
+
+  return {
+    status: 200,
+    body: sanitizedItem as unknown as Record<string, unknown>,
+  };
+}
+
 function isAbortError(err: unknown): boolean {
   return (
     (typeof DOMException !== "undefined" &&
@@ -459,20 +785,33 @@ function isAbortError(err: unknown): boolean {
 async function fetchWorkspaceBridgeJson(
   url: string,
   options?: {
+    readonly method?: "GET" | "PUT";
+    readonly body?: string;
+    readonly csrf?: boolean;
     readonly signal?: AbortSignal;
     readonly fetchImpl?: typeof fetch;
   },
 ): Promise<Record<string, unknown> | null> {
   const fetchFn = options?.fetchImpl ?? fetch;
+  const method = options?.method ?? "GET";
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+  if (options?.body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (options?.csrf) {
+    headers[CSRF_HEADER_NAME] = CSRF_HEADER_VALUE;
+  }
+
   let response: Response;
   try {
     response = await fetchFn(url, {
-      method: "GET",
+      method,
       credentials: "same-origin",
       cache: "no-store",
-      headers: {
-        Accept: "application/json",
-      },
+      headers,
+      ...(options?.body !== undefined ? { body: options.body } : {}),
       signal: options?.signal,
     });
   } catch (err) {
@@ -505,11 +844,13 @@ async function fetchWorkspaceBridgeJson(
             ? "FORBIDDEN"
             : response.status === 404
               ? "NOT_FOUND"
-              : response.status === 400
-                ? "VALIDATION_ERROR"
-                : response.status === 503 || response.status === 502
-                  ? "BACKEND_UNAVAILABLE"
-                  : "UPSTREAM_ERROR";
+              : response.status === 409
+                ? "CONFLICT"
+                : response.status === 400
+                  ? "VALIDATION_ERROR"
+                  : response.status === 503 || response.status === 502
+                    ? "BACKEND_UNAVAILABLE"
+                    : "UPSTREAM_ERROR";
     const detail = typeof data?.detail === "string" ? data.detail : undefined;
     throw new WorkspaceServiceError(code, response.status, detail);
   }
@@ -575,6 +916,57 @@ export async function fetchWorkspaceDetail(
       "UPSTREAM_ERROR",
       502,
       "Invalid workspace detail payload.",
+    );
+  }
+
+  return item;
+}
+
+export async function updateWorkspaceMetadata(
+  workspaceId: string,
+  payload: WorkspaceMetadataUpdatePayload,
+  options?: {
+    readonly signal?: AbortSignal;
+    readonly fetchImpl?: typeof fetch;
+  },
+): Promise<WorkspaceDirectoryItem> {
+  const validId = validateWorkspaceId(workspaceId);
+  if (!validId) {
+    throw new WorkspaceServiceError(
+      "VALIDATION_ERROR",
+      400,
+      "INVALID_WORKSPACE_ID",
+    );
+  }
+
+  const validated = validateWorkspaceMetadataInput(payload);
+  if (!validated.ok) {
+    throw new WorkspaceServiceError("VALIDATION_ERROR", 400, validated.code);
+  }
+
+  const data = await fetchWorkspaceBridgeJson(
+    `/api/workspaces/${encodeURIComponent(validId)}`,
+    {
+      method: "PUT",
+      csrf: true,
+      body: JSON.stringify({
+        version: validated.payload.version,
+        enterpriseName: validated.payload.enterpriseName,
+        contactName: validated.payload.contactName,
+        contactEmail: validated.payload.contactEmail,
+        contactPhone: validated.payload.contactPhone,
+      }),
+      signal: options?.signal,
+      fetchImpl: options?.fetchImpl,
+    },
+  );
+
+  const item = parseWorkspaceDirectoryItem(data);
+  if (!item) {
+    throw new WorkspaceServiceError(
+      "UPSTREAM_ERROR",
+      502,
+      "Invalid workspace update payload.",
     );
   }
 

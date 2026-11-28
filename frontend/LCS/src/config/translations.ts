@@ -1326,6 +1326,39 @@ const rawTranslations = {
         "notFoundDesc": "Hồ sơ doanh nghiệp không tồn tại hoặc hiện không còn khả dụng. Đóng hộp thoại để quay lại danh sách.",
         "errorTitle": "Không thể tải hồ sơ doanh nghiệp",
         "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Vui lòng thử lại."
+      },
+      "edit": {
+        "editBtn": "Chỉnh sửa",
+        "saveBtn": "Lưu",
+        "savingBtn": "Đang lưu...",
+        "cancelBtn": "Hủy",
+        "reloadCurrentBtn": "Tải lại dữ liệu hiện tại",
+        "reloadingCurrentBtn": "Đang tải lại...",
+        "checkStatusBtn": "Kiểm tra lại trạng thái hồ sơ",
+        "checkingStatusBtn": "Đang kiểm tra...",
+        "optionalHint": "(tùy chọn)",
+        "enterpriseNameLabel": "Tên doanh nghiệp",
+        "phoneClearHint": "Để trống nếu muốn xóa số điện thoại đã lưu.",
+        "savedNotice": "Đã lưu thông tin doanh nghiệp.",
+        "reloadedCurrentNotice": "Đã tải lại dữ liệu mới nhất từ máy chủ. Hãy kiểm tra trước khi lưu.",
+        "reconnectedUnchangedNotice": "Đã kết nối lại: hồ sơ trên máy chủ chưa thay đổi. Bạn có thể bấm Lưu để gửi lại thay đổi.",
+        "errors": {
+          "enterpriseNameRequired": "Vui lòng nhập tên doanh nghiệp.",
+          "enterpriseNameTooLong": "Tên doanh nghiệp không được vượt quá 255 ký tự.",
+          "contactNameRequired": "Vui lòng nhập tên người liên hệ.",
+          "contactNameTooLong": "Tên người liên hệ không được vượt quá 120 ký tự.",
+          "contactEmailRequired": "Vui lòng nhập địa chỉ email liên hệ.",
+          "contactEmailTooLong": "Email liên hệ không được vượt quá 254 ký tự.",
+          "contactEmailInvalid": "Địa chỉ email liên hệ không đúng định dạng.",
+          "contactPhoneTooLong": "Số điện thoại không được vượt quá 40 ký tự.",
+          "validationFailed": "Dữ liệu cập nhật chưa hợp lệ. Vui lòng kiểm tra lại các trường bắt buộc và giới hạn độ dài.",
+          "forbiddenUpdate": "Tài khoản hiện tại không có quyền chỉnh sửa thông tin doanh nghiệp này.",
+          "csrfRejected": "Yêu cầu bị từ chối do không khớp nguồn gửi của ứng dụng. Hãy tải lại trang và thử lại.",
+          "staleVersionConflict": "Hồ sơ đã được cập nhật ở phiên làm việc khác nên phiên bản không còn khớp. Nội dung bạn đang nhập vẫn được giữ; hãy tải lại dữ liệu hiện tại trước khi lưu.",
+          "duplicateNameConflict": "Tên doanh nghiệp này đã tồn tại trên hệ thống. Vui lòng chọn tên doanh nghiệp khác.",
+          "genericConflict": "Không thể lưu do xung đột dữ liệu: tên doanh nghiệp có thể đã tồn tại hoặc hồ sơ vừa được cập nhật ở phiên khác. Nội dung bạn đang nhập vẫn được giữ.",
+          "saveUnavailable": "Mất kết nối hoặc máy chủ không phản hồi trong lúc lưu. Nội dung bạn vừa nhập vẫn được giữ; hãy kiểm tra lại trạng thái hồ sơ trước khi lưu tiếp."
+        }
       }
     }
   }
@@ -2655,6 +2688,39 @@ const rawTranslations = {
         "notFoundDesc": "This enterprise record does not exist or is no longer available. Close this dialog to return to the directory.",
         "errorTitle": "Unable to load enterprise profile",
         "errorDesc": "The workspace service did not respond or returned an error. Please retry."
+      },
+      "edit": {
+        "editBtn": "Edit",
+        "saveBtn": "Save",
+        "savingBtn": "Saving...",
+        "cancelBtn": "Cancel",
+        "reloadCurrentBtn": "Reload current data",
+        "reloadingCurrentBtn": "Reloading...",
+        "checkStatusBtn": "Check record status",
+        "checkingStatusBtn": "Checking...",
+        "optionalHint": "(optional)",
+        "enterpriseNameLabel": "Enterprise name",
+        "phoneClearHint": "Leave blank to clear a previously saved phone number.",
+        "savedNotice": "Enterprise details saved.",
+        "reloadedCurrentNotice": "Reloaded the latest server record. Review the current values before saving.",
+        "reconnectedUnchangedNotice": "Reconnected: the server record has not changed. You can click Save to submit your edits.",
+        "errors": {
+          "enterpriseNameRequired": "Please enter the enterprise name.",
+          "enterpriseNameTooLong": "Enterprise name must be 255 characters or fewer.",
+          "contactNameRequired": "Please enter the contact person's name.",
+          "contactNameTooLong": "Contact person must be 120 characters or fewer.",
+          "contactEmailRequired": "Please enter the contact email address.",
+          "contactEmailTooLong": "Contact email must be 254 characters or fewer.",
+          "contactEmailInvalid": "Enter a valid contact email address.",
+          "contactPhoneTooLong": "Phone number must be 40 characters or fewer.",
+          "validationFailed": "Invalid update details. Check the required fields and permitted character limits.",
+          "forbiddenUpdate": "Your current session does not have permission to edit this enterprise.",
+          "csrfRejected": "Request rejected due to origin verification failure. Reload the page and try again.",
+          "staleVersionConflict": "This record was updated in another session and your version is out of date. Your edits are preserved; reload the current data before saving.",
+          "duplicateNameConflict": "An enterprise with this name already exists. Enter a different enterprise name.",
+          "genericConflict": "Could not save due to a data conflict: the enterprise name may already exist or the record was updated concurrently. Your edits are preserved.",
+          "saveUnavailable": "Connection failed while saving. Your edits are preserved; check the record status before submitting again."
+        }
       }
     }
   }
