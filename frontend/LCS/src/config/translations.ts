@@ -1359,6 +1359,62 @@ const rawTranslations = {
           "genericConflict": "Không thể lưu do xung đột dữ liệu: tên doanh nghiệp có thể đã tồn tại hoặc hồ sơ vừa được cập nhật ở phiên khác. Nội dung bạn đang nhập vẫn được giữ.",
           "saveUnavailable": "Mất kết nối hoặc máy chủ không phản hồi trong lúc lưu. Nội dung bạn vừa nhập vẫn được giữ; hãy kiểm tra lại trạng thái hồ sơ trước khi lưu tiếp."
         }
+      },
+      "history": {
+        "openBtn": "Lịch sử",
+        "backToInfoBtn": "Quay lại thông tin doanh nghiệp",
+        "refreshBtn": "Làm mới lịch sử",
+        "subtitle": "Lịch sử thay đổi doanh nghiệp",
+        "totalBadge": "{count} sự kiện",
+        "pageSizeAria": "Số sự kiện mỗi trang",
+        "perPageSuffix": "/ trang",
+        "showingRange": "Hiển thị {from}-{to} trên tổng số {total} sự kiện",
+        "expandBtn": "Xem chi tiết",
+        "collapseBtn": "Thu gọn",
+        "actorIdLabel": "Mã tài khoản thực hiện",
+        "assignedStaffIdLabel": "Nhân sự triển khai được phân công (Mã tài khoản)",
+        "removedStaffIdLabel": "Nhân sự triển khai được gỡ phân công (Mã tài khoản)",
+        "actions": {
+          "metadataUpdated": "Cập nhật thông tin doanh nghiệp",
+          "staffAssigned": "Phân công nhân sự",
+          "staffRemoved": "Gỡ phân công",
+          "specificationCreated": "Tạo đặc tả",
+          "specificationUpdated": "Cập nhật đặc tả",
+          "unknownEvent": "Sự kiện hệ thống ({action})"
+        },
+        "summaries": {
+          "fieldChanged": "{field}: {before} → {after}",
+          "fieldAdded": "{field}: Đã thêm {after}",
+          "fieldRemoved": "{field}: Đã xóa {before}",
+          "metadataUpdatedFallback": "Đã cập nhật thông tin hành chính doanh nghiệp.",
+          "staffAssignedSummary": "Đã phân công nhân sự triển khai phụ trách không gian làm việc.",
+          "staffRemovedSummary": "Đã gỡ phân công nhân sự triển khai khỏi không gian làm việc.",
+          "specCreatedSummary": "Đã ghi nhận đặc tả ban đầu của doanh nghiệp.",
+          "specUpdatedSummary": "Đã cập nhật nội dung: {fields}",
+          "specUpdatedFallback": "Đã cập nhật nội dung đặc tả của doanh nghiệp.",
+          "unknownSummary": "Đã ghi nhận sự kiện trên không gian làm việc."
+        },
+        "specFields": {
+          "businessSpecification": "Đặc tả nghiệp vụ",
+          "fieldDescriptions": "Mô tả trường dữ liệu",
+          "knownAnomalyConditions": "Điều kiện bất thường đã biết",
+          "beforeLabel": "Trước thay đổi",
+          "afterLabel": "Sau thay đổi",
+          "emptyText": "Chưa cung cấp"
+        },
+        "states": {
+          "loadingTitle": "Đang tải lịch sử thay đổi",
+          "loadingDesc": "Đang truy vấn nhật ký thay đổi của doanh nghiệp từ máy chủ...",
+          "emptyTitle": "Chưa có lịch sử thay đổi",
+          "emptyDesc": "Doanh nghiệp này chưa ghi nhận sự kiện cập nhật thông tin, phân công nhân sự hay đặc tả nào.",
+          "forbiddenTitle": "Không có quyền xem lịch sử thay đổi",
+          "forbiddenDesc": "Máy chủ từ chối quyền truy cập lịch sử của doanh nghiệp này đối với phiên hiện tại.",
+          "notFoundTitle": "Không tìm thấy lịch sử doanh nghiệp",
+          "notFoundDesc": "Hồ sơ doanh nghiệp không tồn tại hoặc hiện không còn khả dụng.",
+          "errorTitle": "Không thể tải lịch sử thay đổi",
+          "errorDesc": "Dịch vụ quản lý workspace chưa phản hồi hoặc trả về lỗi. Thông tin doanh nghiệp đã tải vẫn được giữ nguyên.",
+          "retryBtn": "Thử lại"
+        }
       }
     }
   }
@@ -2720,6 +2776,62 @@ const rawTranslations = {
           "duplicateNameConflict": "An enterprise with this name already exists. Enter a different enterprise name.",
           "genericConflict": "Could not save due to a data conflict: the enterprise name may already exist or the record was updated concurrently. Your edits are preserved.",
           "saveUnavailable": "Connection failed while saving. Your edits are preserved; check the record status before submitting again."
+        }
+      },
+      "history": {
+        "openBtn": "History",
+        "backToInfoBtn": "Back to enterprise info",
+        "refreshBtn": "Refresh history",
+        "subtitle": "Enterprise change history",
+        "totalBadge": "{count} events",
+        "pageSizeAria": "Events per page",
+        "perPageSuffix": "/ page",
+        "showingRange": "Showing {from}-{to} of {total} events",
+        "expandBtn": "View details",
+        "collapseBtn": "Collapse",
+        "actorIdLabel": "Performed by account ID",
+        "assignedStaffIdLabel": "Assigned Implementation Staff (Account ID)",
+        "removedStaffIdLabel": "Removed Implementation Staff (Account ID)",
+        "actions": {
+          "metadataUpdated": "Enterprise details updated",
+          "staffAssigned": "Staff assigned",
+          "staffRemoved": "Staff assignment removed",
+          "specificationCreated": "Specification created",
+          "specificationUpdated": "Specification updated",
+          "unknownEvent": "System event ({action})"
+        },
+        "summaries": {
+          "fieldChanged": "{field}: {before} → {after}",
+          "fieldAdded": "{field}: Added {after}",
+          "fieldRemoved": "{field}: Removed {before}",
+          "metadataUpdatedFallback": "Updated enterprise administrative details.",
+          "staffAssignedSummary": "Assigned an Implementation Staff member to this workspace.",
+          "staffRemovedSummary": "Removed an Implementation Staff assignment from this workspace.",
+          "specCreatedSummary": "Recorded initial enterprise specification.",
+          "specUpdatedSummary": "Updated sections: {fields}",
+          "specUpdatedFallback": "Updated enterprise specification content.",
+          "unknownSummary": "Recorded a workspace administration event."
+        },
+        "specFields": {
+          "businessSpecification": "Business specification",
+          "fieldDescriptions": "Field descriptions",
+          "knownAnomalyConditions": "Known anomaly conditions",
+          "beforeLabel": "Before",
+          "afterLabel": "After",
+          "emptyText": "Not provided"
+        },
+        "states": {
+          "loadingTitle": "Loading change history",
+          "loadingDesc": "Requesting workspace history events from the server...",
+          "emptyTitle": "No change history yet",
+          "emptyDesc": "No metadata updates, staff assignments, or specification events have been recorded for this enterprise.",
+          "forbiddenTitle": "Permission required to view change history",
+          "forbiddenDesc": "The server denied access to this workspace's history for your current session.",
+          "notFoundTitle": "Workspace history not found",
+          "notFoundDesc": "This enterprise record does not exist or is no longer available.",
+          "errorTitle": "Unable to load change history",
+          "errorDesc": "The workspace service did not respond or returned an error. Your loaded enterprise details remain intact.",
+          "retryBtn": "Retry"
         }
       }
     }

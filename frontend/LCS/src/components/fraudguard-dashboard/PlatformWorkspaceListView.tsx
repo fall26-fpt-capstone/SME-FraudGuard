@@ -3,9 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  ArrowLeft,
   Building2,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock,
+  History,
   Pencil,
   RefreshCw,
   Search,
@@ -13,11 +17,16 @@ import {
   User,
   X,
 } from "lucide-react";
+import type { TranslationKey } from "@/config/translations";
 import { useLanguage } from "@/context/LanguageContext";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import type {
+  NormalizedWorkspaceHistoryQuery,
   NormalizedWorkspaceListQuery,
   WorkspaceDirectoryItem,
+  WorkspaceHistoryItem,
+  WorkspaceHistoryPageResponse,
+  WorkspaceHistoryQuery,
   WorkspaceListQuery,
   WorkspaceMetadataUpdatePayload,
   WorkspacePageResponse,
@@ -34,6 +43,7 @@ import {
   WorkspaceServiceError,
   classifyWorkspaceConflict,
   fetchWorkspaceDetail,
+  fetchWorkspaceHistory,
   fetchWorkspacePage,
   updateWorkspaceMetadata,
   validateWorkspaceMetadataInput,
@@ -54,6 +64,11 @@ export interface PlatformWorkspaceListViewProps {
     workspaceId: string,
     options?: { readonly signal?: AbortSignal },
   ) => Promise<WorkspaceDirectoryItem>;
+  readonly loadHistory?: (
+    workspaceId: string,
+    query: WorkspaceHistoryQuery,
+    options?: { readonly signal?: AbortSignal },
+  ) => Promise<WorkspaceHistoryPageResponse>;
   readonly saveMetadata?: (
     workspaceId: string,
     payload: WorkspaceMetadataUpdatePayload,
@@ -71,6 +86,8 @@ type DetailModalStatus =
   | "not_found"
   | "error";
 
+type ModalPanelMode = "view" | "edit" | "history";
+
 type DetailModalState =
   | { readonly open: false }
   | {
@@ -80,6 +97,11 @@ type DetailModalState =
       readonly status: DetailModalStatus;
       readonly detail: WorkspaceDirectoryItem | null;
     };
+
+interface HistoryPanelState {
+  readonly status: DetailModalStatus;
+  readonly pageData: WorkspaceHistoryPageResponse | null;
+}
 
 interface EditFormDraft {
   readonly enterpriseName: string;
@@ -97,6 +119,221 @@ type EditBannerState =
   | { readonly kind: "conflict_duplicate"; readonly message: string }
   | { readonly kind: "network"; readonly message: string }
   | { readonly kind: "info"; readonly message: string };
+
+export interface FormattedSpecBlock {
+  readonly label: string;
+  readonly before?: string | null;
+  readonly after: string | null;
+}
+
+export interface DescribedWorkspaceHistoryEvent {
+  readonly title: string;
+  readonly summaryLines: readonly string[];
+  readonly staffAssignmentDetail?: {
+    readonly label: string;
+    readonly staffId: string;
+  };
+  readonly specBlocks?: readonly FormattedSpecBlock[];
+  readonly hasLongChangeText: boolean;
+}
+
+function asPlainObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function normalizeOptionalText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function describeWorkspaceHistoryEvent(
+  event: WorkspaceHistoryItem,
+  detailCopy: TranslationKey["platformWorkspaces"]["detail"],
+): DescribedWorkspaceHistoryEvent {
+  const historyCopy = detailCopy.history;
+  const details = event.details;
+
+  if (event.action === "METADATA_UPDATED") {
+    const beforeObj = asPlainObject(details?.before);
+    const afterObj = asPlainObject(details?.after);
+    const fieldSpecs: readonly {
+      readonly key:
+        | "enterpriseName"
+        | "contactName"
+        | "contactEmail"
+        | "contactPhone";
+      readonly label: string;
+    }[] = [
+      { key: "enterpriseName", label: detailCopy.edit.enterpriseNameLabel },
+      { key: "contactName", label: detailCopy.fields.contactName },
+      { key: "contactEmail", label: detailCopy.fields.contactEmail },
+      { key: "contactPhone", label: detailCopy.fields.contactPhone },
+    ];
+
+    const lines: string[] = [];
+    if (beforeObj && afterObj) {
+      for (const spec of fieldSpecs) {
+        const beforeVal = normalizeOptionalText(beforeObj[spec.key]);
+        const afterVal = normalizeOptionalText(afterObj[spec.key]);
+        if (beforeVal === afterVal) {
+          continue;
+        }
+        if (!beforeVal && afterVal) {
+          lines.push(
+            historyCopy.summaries.fieldAdded
+              .replace("{field}", spec.label)
+              .replace("{after}", afterVal),
+          );
+        } else if (beforeVal && !afterVal) {
+          lines.push(
+            historyCopy.summaries.fieldRemoved
+              .replace("{field}", spec.label)
+              .replace("{before}", beforeVal),
+          );
+        } else {
+          lines.push(
+            historyCopy.summaries.fieldChanged
+              .replace("{field}", spec.label)
+              .replace("{before}", beforeVal)
+              .replace("{after}", afterVal),
+          );
+        }
+      }
+    }
+
+    const summaryLines =
+      lines.length > 0 ? lines : [historyCopy.summaries.metadataUpdatedFallback];
+    const hasLongChangeText = summaryLines.some((l) => l.length > 110);
+
+    return {
+      title: historyCopy.actions.metadataUpdated,
+      summaryLines,
+      hasLongChangeText,
+    };
+  }
+
+  if (event.action === "STAFF_ASSIGNED" || event.action === "STAFF_REMOVED") {
+    const isAssigned = event.action === "STAFF_ASSIGNED";
+    const staffId = normalizeOptionalText(details?.staffId);
+    return {
+      title: isAssigned
+        ? historyCopy.actions.staffAssigned
+        : historyCopy.actions.staffRemoved,
+      summaryLines: [
+        isAssigned
+          ? historyCopy.summaries.staffAssignedSummary
+          : historyCopy.summaries.staffRemovedSummary,
+      ],
+      ...(staffId
+        ? {
+            staffAssignmentDetail: {
+              label: isAssigned
+                ? historyCopy.assignedStaffIdLabel
+                : historyCopy.removedStaffIdLabel,
+              staffId,
+            },
+          }
+        : {}),
+      hasLongChangeText: false,
+    };
+  }
+
+  const specFieldDefs: readonly {
+    readonly key:
+      | "businessSpecification"
+      | "fieldDescriptions"
+      | "knownAnomalyConditions";
+    readonly label: string;
+  }[] = [
+    {
+      key: "businessSpecification",
+      label: historyCopy.specFields.businessSpecification,
+    },
+    {
+      key: "fieldDescriptions",
+      label: historyCopy.specFields.fieldDescriptions,
+    },
+    {
+      key: "knownAnomalyConditions",
+      label: historyCopy.specFields.knownAnomalyConditions,
+    },
+  ];
+
+  if (event.action === "SPECIFICATION_CREATED") {
+    const specBlocks: FormattedSpecBlock[] = [];
+    if (details) {
+      for (const fieldDef of specFieldDefs) {
+        const val = normalizeOptionalText(details[fieldDef.key]);
+        if (val || fieldDef.key === "businessSpecification") {
+          specBlocks.push({
+            label: fieldDef.label,
+            after: val || null,
+          });
+        }
+      }
+    }
+    return {
+      title: historyCopy.actions.specificationCreated,
+      summaryLines: [historyCopy.summaries.specCreatedSummary],
+      ...(specBlocks.length > 0 ? { specBlocks } : {}),
+      hasLongChangeText: specBlocks.length > 0,
+    };
+  }
+
+  if (event.action === "SPECIFICATION_UPDATED") {
+    const beforeObj = asPlainObject(details?.before);
+    const afterObj = asPlainObject(details?.after);
+    const changedLabels: string[] = [];
+    const specBlocks: FormattedSpecBlock[] = [];
+
+    if (beforeObj && afterObj) {
+      for (const fieldDef of specFieldDefs) {
+        const beforeVal = normalizeOptionalText(beforeObj[fieldDef.key]);
+        const afterVal = normalizeOptionalText(afterObj[fieldDef.key]);
+        if (beforeVal !== afterVal) {
+          changedLabels.push(fieldDef.label);
+          specBlocks.push({
+            label: fieldDef.label,
+            before: beforeVal || null,
+            after: afterVal || null,
+          });
+        }
+      }
+    } else if (afterObj) {
+      for (const fieldDef of specFieldDefs) {
+        const afterVal = normalizeOptionalText(afterObj[fieldDef.key]);
+        if (afterVal) {
+          specBlocks.push({
+            label: fieldDef.label,
+            after: afterVal,
+          });
+        }
+      }
+    }
+
+    const summaryLine =
+      changedLabels.length > 0
+        ? historyCopy.summaries.specUpdatedSummary.replace(
+            "{fields}",
+            changedLabels.join(", "),
+          )
+        : historyCopy.summaries.specUpdatedFallback;
+
+    return {
+      title: historyCopy.actions.specificationUpdated,
+      summaryLines: [summaryLine],
+      ...(specBlocks.length > 0 ? { specBlocks } : {}),
+      hasLongChangeText: specBlocks.length > 0,
+    };
+  }
+
+  return {
+    title: historyCopy.actions.unknownEvent.replace("{action}", event.action),
+    summaryLines: [historyCopy.summaries.unknownSummary],
+    hasLongChangeText: false,
+  };
+}
 
 export function buildPaginationTokens(
   currentZeroBasedPage: number,
@@ -179,6 +416,7 @@ export function PlatformWorkspaceListView({
   onUnauthenticated,
   loadPage = fetchWorkspacePage,
   loadDetail = fetchWorkspaceDetail,
+  loadHistory = fetchWorkspaceHistory,
   saveMetadata = updateWorkspaceMetadata,
   searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
 }: PlatformWorkspaceListViewProps) {
@@ -186,6 +424,7 @@ export function PlatformWorkspaceListView({
   const copy = t.platformWorkspaces;
   const detailCopy = copy.detail;
   const editCopy = detailCopy.edit;
+  const historyCopy = detailCopy.history;
 
   const [searchInput, setSearchInput] = useState("");
   const [searchError, setSearchError] = useState("");
@@ -203,7 +442,7 @@ export function PlatformWorkspaceListView({
     open: false,
   });
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalPanelMode>("view");
   const [editBaseVersion, setEditBaseVersion] = useState<number>(0);
   const [editDraft, setEditDraft] = useState<EditFormDraft>({
     enterpriseName: "",
@@ -219,11 +458,26 @@ export function PlatformWorkspaceListView({
   const [isSaving, setIsSaving] = useState(false);
   const [isInspectingCurrent, setIsInspectingCurrent] = useState(false);
 
+  const [historyQuery, setHistoryQuery] =
+    useState<NormalizedWorkspaceHistoryQuery>({
+      page: 0,
+      size: DEFAULT_WORKSPACE_PAGE_SIZE,
+    });
+  const [historyState, setHistoryState] = useState<HistoryPanelState>({
+    status: "loading",
+    pageData: null,
+  });
+  const [expandedHistoryIds, setExpandedHistoryIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+
   const requestSeqRef = useRef(0);
   const activeAbortRef = useRef<AbortController | null>(null);
   const detailRequestSeqRef = useRef(0);
   const detailAbortRef = useRef<AbortController | null>(null);
   const saveAbortRef = useRef<AbortController | null>(null);
+  const historyRequestSeqRef = useRef(0);
+  const historyAbortRef = useRef<AbortController | null>(null);
   const isSavingRef = useRef(false);
   const openWorkspaceIdRef = useRef<string | null>(null);
   const rowTriggerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -237,6 +491,7 @@ export function PlatformWorkspaceListView({
   const latestHandlersRef = useRef({
     loadPage,
     loadDetail,
+    loadHistory,
     saveMetadata,
     onSessionExpired,
     onUnauthenticated,
@@ -246,6 +501,7 @@ export function PlatformWorkspaceListView({
   latestHandlersRef.current = {
     loadPage,
     loadDetail,
+    loadHistory,
     saveMetadata,
     onSessionExpired,
     onUnauthenticated,
@@ -253,16 +509,22 @@ export function PlatformWorkspaceListView({
     editCopy,
   };
 
-  const resetEditState = useCallback(() => {
+  const resetModalSubStates = useCallback(() => {
     saveAbortRef.current?.abort();
     saveAbortRef.current = null;
+    historyAbortRef.current?.abort();
+    historyAbortRef.current = null;
+    historyRequestSeqRef.current += 1;
     isSavingRef.current = false;
     setIsSaving(false);
     setIsInspectingCurrent(false);
-    setIsEditing(false);
+    setModalMode("view");
     setEditFieldErrors({});
     setEditBanner(null);
     setViewNotice("");
+    setHistoryQuery({ page: 0, size: DEFAULT_WORKSPACE_PAGE_SIZE });
+    setHistoryState({ status: "loading", pageData: null });
+    setExpandedHistoryIds(new Set());
   }, []);
 
   const clearPendingDebounce = useCallback(() => {
@@ -280,12 +542,14 @@ export function PlatformWorkspaceListView({
       authRedirectedRef.current = true;
       detailAbortRef.current?.abort();
       saveAbortRef.current?.abort();
+      historyAbortRef.current?.abort();
       detailRequestSeqRef.current += 1;
+      historyRequestSeqRef.current += 1;
       isSavingRef.current = false;
       openWorkspaceIdRef.current = null;
       setIsSaving(false);
       setIsInspectingCurrent(false);
-      setIsEditing(false);
+      setModalMode("view");
       setDetailState({ open: false });
       if (
         code === "UNAUTHENTICATED" &&
@@ -305,7 +569,7 @@ export function PlatformWorkspaceListView({
     detailAbortRef.current = null;
     detailRequestSeqRef.current += 1;
     openWorkspaceIdRef.current = null;
-    resetEditState();
+    resetModalSubStates();
     setDetailState({ open: false });
 
     if (returnFocusId) {
@@ -321,14 +585,14 @@ export function PlatformWorkspaceListView({
         }
       });
     }
-  }, [resetEditState]);
+  }, [resetModalSubStates]);
 
   const detailDialogRef = useDialogFocus(detailState.open, handleCloseDetail);
 
   const executeDetailLoad = useCallback(
     async (workspaceId: string, fallbackTitle: string) => {
       detailAbortRef.current?.abort();
-      resetEditState();
+      resetModalSubStates();
       const controller = new AbortController();
       detailAbortRef.current = controller;
       const requestId = detailRequestSeqRef.current + 1;
@@ -403,7 +667,84 @@ export function PlatformWorkspaceListView({
         });
       }
     },
-    [resetEditState, triggerAuthRedirect],
+    [resetModalSubStates, triggerAuthRedirect],
+  );
+
+  const executeHistoryLoad = useCallback(
+    async (
+      workspaceId: string,
+      targetHistoryQuery: NormalizedWorkspaceHistoryQuery,
+    ) => {
+      historyAbortRef.current?.abort();
+      const controller = new AbortController();
+      historyAbortRef.current = controller;
+      const reqId = historyRequestSeqRef.current + 1;
+      historyRequestSeqRef.current = reqId;
+
+      setExpandedHistoryIds(new Set());
+      setHistoryState((prev) => ({
+        status: "loading",
+        pageData: prev.pageData,
+      }));
+
+      try {
+        const result = await latestHandlersRef.current.loadHistory(
+          workspaceId,
+          targetHistoryQuery,
+          { signal: controller.signal },
+        );
+        if (
+          historyRequestSeqRef.current !== reqId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        if (
+          result.items.length === 0 &&
+          result.totalElements > 0 &&
+          result.totalPages > 0 &&
+          targetHistoryQuery.page >= result.totalPages
+        ) {
+          const clampedQuery = {
+            page: Math.max(0, result.totalPages - 1),
+            size: targetHistoryQuery.size,
+          };
+          setHistoryQuery(clampedQuery);
+          void executeHistoryLoad(workspaceId, clampedQuery);
+          return;
+        }
+        setHistoryState({
+          status: "ready",
+          pageData: result,
+        });
+      } catch (err) {
+        if (
+          isAbortError(err) ||
+          historyRequestSeqRef.current !== reqId ||
+          controller.signal.aborted ||
+          openWorkspaceIdRef.current !== workspaceId
+        ) {
+          return;
+        }
+        if (isWorkspaceError(err)) {
+          if (err.code === "SESSION_EXPIRED" || err.code === "UNAUTHENTICATED") {
+            triggerAuthRedirect(err.code);
+            return;
+          }
+          if (err.code === "FORBIDDEN") {
+            setHistoryState({ status: "forbidden", pageData: null });
+            return;
+          }
+          if (err.code === "NOT_FOUND") {
+            setHistoryState({ status: "not_found", pageData: null });
+            return;
+          }
+        }
+        setHistoryState({ status: "error", pageData: null });
+      }
+    },
+    [triggerAuthRedirect],
   );
 
   const handleOpenDetail = useCallback(
@@ -420,6 +761,74 @@ export function PlatformWorkspaceListView({
     }
     void executeDetailLoad(detailState.workspaceId, detailState.fallbackTitle);
   }, [detailState, executeDetailLoad]);
+
+  const handleOpenHistory = () => {
+    if (!detailState.open || detailState.status !== "ready" || !detailState.detail) {
+      return;
+    }
+    const nextHistoryQuery: NormalizedWorkspaceHistoryQuery = {
+      page: 0,
+      size: historyQuery.size,
+    };
+    setModalMode("history");
+    setHistoryQuery(nextHistoryQuery);
+    setHistoryState({ status: "loading", pageData: null });
+    void executeHistoryLoad(detailState.workspaceId, nextHistoryQuery);
+  };
+
+  const handleBackToDetailInfo = () => {
+    historyAbortRef.current?.abort();
+    historyAbortRef.current = null;
+    historyRequestSeqRef.current += 1;
+    setModalMode("view");
+  };
+
+  const handleHistoryPageChange = (nextZeroBasedPage: number) => {
+    if (
+      !detailState.open ||
+      nextZeroBasedPage < 0 ||
+      nextZeroBasedPage === historyQuery.page
+    ) {
+      return;
+    }
+    const nextQuery = {
+      page: nextZeroBasedPage,
+      size: historyQuery.size,
+    };
+    setHistoryQuery(nextQuery);
+    void executeHistoryLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleHistoryPageSizeChange = (nextSize: number) => {
+    if (!detailState.open) {
+      return;
+    }
+    const nextQuery = {
+      page: 0,
+      size: nextSize,
+    };
+    setHistoryQuery(nextQuery);
+    void executeHistoryLoad(detailState.workspaceId, nextQuery);
+  };
+
+  const handleRetryOrRefreshHistory = () => {
+    if (!detailState.open) {
+      return;
+    }
+    void executeHistoryLoad(detailState.workspaceId, historyQuery);
+  };
+
+  const toggleHistoryItemExpanded = (eventId: string) => {
+    setExpandedHistoryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) {
+        next.delete(eventId);
+      } else {
+        next.add(eventId);
+      }
+      return next;
+    });
+  };
 
   const mapMetadataFieldMessage = useCallback(
     (code: WorkspaceMetadataValidationCode): string => {
@@ -452,19 +861,21 @@ export function PlatformWorkspaceListView({
     if (!detailState.open || detailState.status !== "ready" || !detailState.detail) {
       return;
     }
+    historyAbortRef.current?.abort();
+    historyRequestSeqRef.current += 1;
     setViewNotice("");
     setEditFieldErrors({});
     setEditBanner(null);
     setEditBaseVersion(detailState.detail.version);
     setEditDraft(draftFromItem(detailState.detail));
-    setIsEditing(true);
+    setModalMode("edit");
   };
 
   const handleCancelEdit = () => {
     if (isSaving) {
       return;
     }
-    setIsEditing(false);
+    setModalMode("view");
     setEditFieldErrors({});
     setEditBanner(null);
   };
@@ -533,7 +944,7 @@ export function PlatformWorkspaceListView({
           return;
         }
         if (err.code === "NOT_FOUND") {
-          resetEditState();
+          resetModalSubStates();
           setDetailState({
             open: true,
             workspaceId: targetWorkspaceId,
@@ -620,7 +1031,7 @@ export function PlatformWorkspaceListView({
       setReloadNonce((n) => n + 1);
 
       if (matchesSubmittedDraft) {
-        setIsEditing(false);
+        setModalMode("view");
         setEditFieldErrors({});
         setEditBanner(null);
         setViewNotice(latestHandlersRef.current.editCopy.savedNotice);
@@ -646,7 +1057,7 @@ export function PlatformWorkspaceListView({
           return;
         }
         if (err.code === "NOT_FOUND") {
-          resetEditState();
+          resetModalSubStates();
           setDetailState({
             open: true,
             workspaceId: targetWorkspaceId,
@@ -725,7 +1136,6 @@ export function PlatformWorkspaceListView({
         { signal: controller.signal },
       );
 
-      // Refresh current directory query regardless so renamed records re-sort/re-filter accurately.
       setReloadNonce((n) => n + 1);
 
       if (
@@ -738,9 +1148,11 @@ export function PlatformWorkspaceListView({
 
       isSavingRef.current = false;
       setIsSaving(false);
-      setIsEditing(false);
+      setModalMode("view");
       setEditFieldErrors({});
       setEditBanner(null);
+      setHistoryState({ status: "loading", pageData: null });
+      setHistoryQuery((prev) => ({ page: 0, size: prev.size }));
       setViewNotice(latestHandlersRef.current.editCopy.savedNotice);
       setDetailState({
         open: true,
@@ -769,7 +1181,7 @@ export function PlatformWorkspaceListView({
           return;
         }
         if (err.code === "NOT_FOUND") {
-          resetEditState();
+          resetModalSubStates();
           setDetailState({
             open: true,
             workspaceId: targetWorkspaceId,
@@ -905,6 +1317,7 @@ export function PlatformWorkspaceListView({
       activeAbortRef.current?.abort();
       detailAbortRef.current?.abort();
       saveAbortRef.current?.abort();
+      historyAbortRef.current?.abort();
     };
   }, [clearPendingDebounce]);
 
@@ -1061,6 +1474,41 @@ export function PlatformWorkspaceListView({
     return `${showing} · ${pagePart}`;
   }, [copy.pagination.pageStatus, copy.pagination.showingRange, pageData]);
 
+  const historyPageData = historyState.pageData;
+  const historyTotalElements = historyPageData?.totalElements ?? 0;
+  const historyTotalPages = historyPageData?.totalPages ?? 0;
+  const currentHistoryPage = historyPageData?.page ?? historyQuery.page;
+  const currentHistorySize = historyPageData?.size ?? historyQuery.size;
+  const isHistoryLoading = historyState.status === "loading";
+
+  const historyPaginationTokens = useMemo(
+    () => buildPaginationTokens(currentHistoryPage, historyTotalPages),
+    [currentHistoryPage, historyTotalPages],
+  );
+
+  const historyRangeText = useMemo(() => {
+    if (
+      !historyPageData ||
+      historyPageData.totalElements === 0 ||
+      historyPageData.items.length === 0
+    ) {
+      return "";
+    }
+    const from = historyPageData.page * historyPageData.size + 1;
+    const to = Math.min(
+      historyPageData.page * historyPageData.size + historyPageData.items.length,
+      historyPageData.totalElements,
+    );
+    const showing = historyCopy.showingRange
+      .replace("{from}", String(from))
+      .replace("{to}", String(to))
+      .replace("{total}", String(historyPageData.totalElements));
+    const pagePart = copy.pagination.pageStatus
+      .replace("{page}", String(historyPageData.page + 1))
+      .replace("{totalPages}", String(Math.max(1, historyPageData.totalPages)));
+    return `${showing} · ${pagePart}`;
+  }, [copy.pagination.pageStatus, historyCopy.showingRange, historyPageData]);
+
   const renderContactCell = (item: WorkspaceDirectoryItem) => {
     const hasName = item.contactName.trim().length > 0;
     const hasEmail = item.contactEmail.trim().length > 0;
@@ -1160,6 +1608,353 @@ export function PlatformWorkspaceListView({
     );
   };
 
+  const renderHistoryMode = () => {
+    const historyItems =
+      historyState.status === "ready" && historyPageData
+        ? historyPageData.items
+        : [];
+
+    return (
+      <>
+        <div
+          className={`${styles.onboardingModalBody} ${styles.workspaceDetailBody}`}
+        >
+          <div className={styles.workspaceHistoryToolbar}>
+            <button
+              type="button"
+              className={styles.btnSecondary}
+              onClick={handleBackToDetailInfo}
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              <span>{historyCopy.backToInfoBtn}</span>
+            </button>
+
+            <div className={styles.workspaceHistoryMetaGroup}>
+              {historyState.status === "ready" && historyPageData && (
+                <span className={styles.tabCount}>
+                  {historyCopy.totalBadge.replace(
+                    "{count}",
+                    String(historyTotalElements),
+                  )}
+                </span>
+              )}
+              <select
+                className={styles.control}
+                aria-label={historyCopy.pageSizeAria}
+                value={currentHistorySize}
+                onChange={(e) =>
+                  handleHistoryPageSizeChange(Number(e.target.value))
+                }
+                disabled={isHistoryLoading}
+              >
+                {PAGE_SIZE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt} {historyCopy.perPageSuffix}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={styles.button}
+                onClick={handleRetryOrRefreshHistory}
+                disabled={isHistoryLoading}
+                aria-busy={isHistoryLoading}
+                aria-label={historyCopy.refreshBtn}
+                title={historyCopy.refreshBtn}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          {isHistoryLoading && (
+            <div
+              className={styles.workspaceStateBox}
+              role="status"
+              aria-live="polite"
+            >
+              <strong className={styles.workspaceStateTitle}>
+                {historyCopy.states.loadingTitle}
+              </strong>
+              <span className={styles.workspaceStateDesc}>
+                {historyCopy.states.loadingDesc}
+              </span>
+            </div>
+          )}
+
+          {historyState.status === "forbidden" && (
+            <div className={styles.workspaceStateBox} role="alert">
+              <ShieldAlert
+                size={22}
+                color="var(--high-text)"
+                aria-hidden="true"
+              />
+              <h3 className={styles.workspaceStateTitle}>
+                {historyCopy.states.forbiddenTitle}
+              </h3>
+              <p className={styles.workspaceStateDesc}>
+                {historyCopy.states.forbiddenDesc}
+              </p>
+            </div>
+          )}
+
+          {historyState.status === "not_found" && (
+            <div className={styles.workspaceStateBox} role="alert">
+              <AlertCircle
+                size={22}
+                color="var(--security-orange)"
+                aria-hidden="true"
+              />
+              <h3 className={styles.workspaceStateTitle}>
+                {historyCopy.states.notFoundTitle}
+              </h3>
+              <p className={styles.workspaceStateDesc}>
+                {historyCopy.states.notFoundDesc}
+              </p>
+            </div>
+          )}
+
+          {historyState.status === "error" && (
+            <div className={styles.workspaceStateBox} role="alert">
+              <AlertCircle
+                size={22}
+                color="var(--critical-text)"
+                aria-hidden="true"
+              />
+              <h3 className={styles.workspaceStateTitle}>
+                {historyCopy.states.errorTitle}
+              </h3>
+              <p className={styles.workspaceStateDesc}>
+                {historyCopy.states.errorDesc}
+              </p>
+              <div className={styles.workspaceStateActions}>
+                <button
+                  type="button"
+                  className={styles.btnPrimary}
+                  onClick={handleRetryOrRefreshHistory}
+                >
+                  <RefreshCw size={14} aria-hidden="true" />
+                  <span>{historyCopy.states.retryBtn}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {historyState.status === "ready" && historyItems.length === 0 && (
+            <div className={styles.workspaceStateBox}>
+              <strong className={styles.workspaceStateTitle}>
+                {historyCopy.states.emptyTitle}
+              </strong>
+              <span className={styles.workspaceStateDesc}>
+                {historyCopy.states.emptyDesc}
+              </span>
+            </div>
+          )}
+
+          {historyState.status === "ready" && historyItems.length > 0 && (
+            <ul className={styles.workspaceHistoryList}>
+              {historyItems.map((eventItem) => {
+                const described = describeWorkspaceHistoryEvent(
+                  eventItem,
+                  detailCopy,
+                );
+                const isExpanded = expandedHistoryIds.has(eventItem.id);
+
+                return (
+                  <li key={eventItem.id} className={styles.workspaceHistoryItem}>
+                    <div className={styles.workspaceHistoryRowHeader}>
+                      <div className={styles.workspaceHistoryHeadingGroup}>
+                        <strong className={styles.workspaceHistoryActionTitle}>
+                          {described.title}
+                        </strong>
+                        <span className={styles.workspaceHistoryTime}>
+                          {formatWorkspaceTimestamp(
+                            eventItem.occurredAt,
+                            language,
+                            copy.emptyValue,
+                          )}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={styles.workspaceHistoryToggleBtn}
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleHistoryItemExpanded(eventItem.id)}
+                      >
+                        <span>
+                          {isExpanded
+                            ? historyCopy.collapseBtn
+                            : historyCopy.expandBtn}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronUp size={14} aria-hidden="true" />
+                        ) : (
+                          <ChevronDown size={14} aria-hidden="true" />
+                        )}
+                      </button>
+                    </div>
+
+                    <ul className={styles.workspaceHistorySummaryList}>
+                      {described.summaryLines.map((line, idx) => (
+                        <li
+                          key={idx}
+                          className={
+                            !isExpanded && described.hasLongChangeText
+                              ? styles.workspaceHistorySummaryClamp
+                              : styles.workspaceHistorySummaryLine
+                          }
+                        >
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+
+                    {isExpanded && (
+                      <div className={styles.workspaceHistoryDetailBox}>
+                        {described.staffAssignmentDetail && (
+                          <div className={styles.workspaceHistoryMetaRow}>
+                            <span className={styles.workspaceHistoryMetaLabel}>
+                              {described.staffAssignmentDetail.label}:
+                            </span>
+                            <code className={styles.workspaceKeyCode}>
+                              {described.staffAssignmentDetail.staffId}
+                            </code>
+                          </div>
+                        )}
+
+                        {described.specBlocks &&
+                          described.specBlocks.map((block, bIdx) => (
+                            <div
+                              key={bIdx}
+                              className={styles.workspaceHistorySpecSection}
+                            >
+                              <strong className={styles.workspaceHistorySpecLabel}>
+                                {block.label}
+                              </strong>
+                              {block.before !== undefined ? (
+                                <div className={styles.workspaceHistorySpecDiffGrid}>
+                                  <div className={styles.workspaceHistorySpecPane}>
+                                    <span className={styles.workspaceHistoryMetaLabel}>
+                                      {historyCopy.specFields.beforeLabel}
+                                    </span>
+                                    <p className={styles.workspaceHistorySpecText}>
+                                      {block.before ||
+                                        historyCopy.specFields.emptyText}
+                                    </p>
+                                  </div>
+                                  <div className={styles.workspaceHistorySpecPane}>
+                                    <span className={styles.workspaceHistoryMetaLabel}>
+                                      {historyCopy.specFields.afterLabel}
+                                    </span>
+                                    <p className={styles.workspaceHistorySpecText}>
+                                      {block.after ||
+                                        historyCopy.specFields.emptyText}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className={styles.workspaceHistorySpecText}>
+                                  {block.after || historyCopy.specFields.emptyText}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+
+                        <div className={styles.workspaceHistoryMetaRow}>
+                          <span className={styles.workspaceHistoryMetaLabel}>
+                            {historyCopy.actorIdLabel}:
+                          </span>
+                          <code className={styles.workspaceKeyCode}>
+                            {eventItem.actorId}
+                          </code>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {historyState.status === "ready" && historyTotalElements > 0 && (
+            <div
+              className={`${styles.pagination} ${styles.workspaceHistoryPagination}`}
+            >
+              <span className={styles.paginationInfo}>{historyRangeText}</span>
+              <div className={styles.paginationControls}>
+                <button
+                  type="button"
+                  className={styles.paginationBtn}
+                  onClick={() => handleHistoryPageChange(currentHistoryPage - 1)}
+                  disabled={isHistoryLoading || currentHistoryPage <= 0}
+                >
+                  {copy.pagination.previous}
+                </button>
+
+                {historyPaginationTokens.map((token) =>
+                  typeof token === "number" ? (
+                    <button
+                      key={token}
+                      type="button"
+                      className={`${styles.paginationBtn} ${
+                        token === currentHistoryPage
+                          ? styles.paginationBtnActive
+                          : ""
+                      }`}
+                      aria-label={copy.pagination.goToPageAria.replace(
+                        "{page}",
+                        String(token + 1),
+                      )}
+                      aria-current={
+                        token === currentHistoryPage ? "page" : undefined
+                      }
+                      onClick={() => handleHistoryPageChange(token)}
+                      disabled={isHistoryLoading}
+                    >
+                      {token + 1}
+                    </button>
+                  ) : (
+                    <span
+                      key={token}
+                      className={styles.workspacePaginationEllipsis}
+                      aria-hidden="true"
+                    >
+                      ...
+                    </span>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  className={styles.paginationBtn}
+                  onClick={() => handleHistoryPageChange(currentHistoryPage + 1)}
+                  disabled={
+                    isHistoryLoading ||
+                    historyTotalPages === 0 ||
+                    currentHistoryPage + 1 >= historyTotalPages
+                  }
+                >
+                  {copy.pagination.next}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.onboardingModalFooter}>
+          <button
+            type="button"
+            className={styles.btnSecondary}
+            onClick={handleCloseDetail}
+          >
+            {detailCopy.closeBtn}
+          </button>
+        </div>
+      </>
+    );
+  };
+
   const renderDetailModal = () => {
     if (!detailState.open) {
       return null;
@@ -1167,10 +1962,12 @@ export function PlatformWorkspaceListView({
     const modalTitle =
       detailState.detail?.enterpriseName ?? detailState.fallbackTitle;
     const isDetailLoading = detailState.status === "loading";
-    const canShowEditBtn =
+    const isEditing = modalMode === "edit";
+    const isHistory = modalMode === "history";
+    const canShowReadyActions =
       detailState.status === "ready" &&
       detailState.detail !== null &&
-      !isEditing;
+      modalMode === "view";
 
     return (
       <div
@@ -1187,7 +1984,9 @@ export function PlatformWorkspaceListView({
           role="dialog"
           aria-modal="true"
           aria-labelledby="platform-workspace-detail-title"
-          aria-busy={isDetailLoading || isSaving}
+          aria-busy={
+            isDetailLoading || isSaving || (isHistory && isHistoryLoading)
+          }
           tabIndex={-1}
         >
           <div className={styles.onboardingModalHeader}>
@@ -1204,7 +2003,9 @@ export function PlatformWorkspaceListView({
                 >
                   {modalTitle}
                 </h2>
-                <p className={styles.onboardingCardSub}>{detailCopy.subtitle}</p>
+                <p className={styles.onboardingCardSub}>
+                  {isHistory ? historyCopy.subtitle : detailCopy.subtitle}
+                </p>
               </div>
             </div>
             <button
@@ -1217,7 +2018,11 @@ export function PlatformWorkspaceListView({
             </button>
           </div>
 
-          {isEditing && detailState.status === "ready" && detailState.detail ? (
+          {isHistory ? (
+            renderHistoryMode()
+          ) : isEditing &&
+            detailState.status === "ready" &&
+            detailState.detail ? (
             <form
               className={styles.workspaceDetailEditForm}
               onSubmit={handleEditFormSubmit}
@@ -1657,15 +2462,25 @@ export function PlatformWorkspaceListView({
                 >
                   {detailCopy.closeBtn}
                 </button>
-                {canShowEditBtn && (
-                  <button
-                    type="button"
-                    className={styles.btnPrimary}
-                    onClick={handleStartEdit}
-                  >
-                    <Pencil size={14} aria-hidden="true" />
-                    <span>{editCopy.editBtn}</span>
-                  </button>
+                {canShowReadyActions && (
+                  <>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      onClick={handleOpenHistory}
+                    >
+                      <History size={14} aria-hidden="true" />
+                      <span>{historyCopy.openBtn}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnPrimary}
+                      onClick={handleStartEdit}
+                    >
+                      <Pencil size={14} aria-hidden="true" />
+                      <span>{editCopy.editBtn}</span>
+                    </button>
+                  </>
                 )}
               </div>
             </>
