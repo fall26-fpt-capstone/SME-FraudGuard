@@ -65,6 +65,62 @@ export interface WorkspaceHistoryPageResponse {
   readonly totalPages: number;
 }
 
+export interface WorkspaceStaffAssignmentsQuery {
+  readonly page?: number;
+  readonly size?: number;
+}
+
+export type NormalizedWorkspaceStaffAssignmentsQuery =
+  NormalizedWorkspaceHistoryQuery;
+
+export interface WorkspaceStaffAssignmentItem {
+  readonly staffId: string;
+  readonly assignedAt: string;
+}
+
+export interface WorkspaceStaffAssignmentPageResponse {
+  readonly items: readonly WorkspaceStaffAssignmentItem[];
+  readonly workspaceVersion: number;
+  readonly page: number;
+  readonly size: number;
+  readonly totalElements: number;
+  readonly totalPages: number;
+}
+
+export interface WorkspaceEligibleStaffQuery {
+  readonly search?: string;
+  readonly page?: number;
+  readonly size?: number;
+}
+
+export type NormalizedWorkspaceEligibleStaffQuery =
+  NormalizedWorkspaceListQuery;
+
+export interface WorkspaceEligibleStaffItem {
+  readonly id: string;
+  readonly loginName: string;
+}
+
+export interface WorkspaceEligibleStaffPageResponse {
+  readonly items: readonly WorkspaceEligibleStaffItem[];
+  readonly page: number;
+  readonly size: number;
+  readonly totalElements: number;
+  readonly totalPages: number;
+}
+
+export interface WorkspaceAssignStaffPayload {
+  readonly staffId: string;
+  readonly version: number;
+}
+
+export interface WorkspaceStaffAssignmentResult {
+  readonly workspaceId: string;
+  readonly staffId: string;
+  readonly assigned: boolean;
+  readonly workspaceVersion: number;
+}
+
 export type WorkspaceErrorCode =
   | "UNAUTHENTICATED"
   | "SESSION_EXPIRED"
